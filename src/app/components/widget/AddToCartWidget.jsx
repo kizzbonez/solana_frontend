@@ -41,7 +41,7 @@ const AddToCartWidget = ({ product }) => {
   };
 
   return (
-    <div className="flex gap-5 items-center border-t border-neutral-200 py-[10px]">
+    <div className="flex flex-col sm:flex-row gap-5 items-center border-t border-neutral-200 py-[10px]">
       {/* QTY Section */}
       <div className="flex items-center gap-1 flex-col">
         <div className="font-bold text-base md:text-base text-stone-700">

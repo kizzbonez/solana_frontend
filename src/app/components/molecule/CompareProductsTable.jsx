@@ -82,6 +82,9 @@ function CompareProductsTable({ similar_products, product }) {
           <table className="table-auto">
             <thead>
               <tr>
+                {/* Empty header cell for label column */}
+                <th className="min-w-[200px] border-r border-gray-400 bg-gray-50"></th>
+                {/* Product cards header */}
                 {compare_products.map((item, index) => (
                   <th
                     key={`thead-${index}`}
@@ -98,9 +101,11 @@ function CompareProductsTable({ similar_products, product }) {
             <tbody>
               {filteredFields.map((prop_key, index) => (
                 <tr key={`th-${index}`} className="group">
-                  {/* <td className="p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm">
-                      {getPropLabel(prop_key)}
-                    </td> */}
+                  {/* Label column - first column */}
+                  <td className="p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm font-semibold bg-gray-50">
+                    {getPropLabel(prop_key)}
+                  </td>
+                  {/* Product data columns */}
                   {product_accentuate_data.map((spec, index2) => {
                     const value = spec[prop_key];
                     const displayValue =
@@ -114,9 +119,6 @@ function CompareProductsTable({ similar_products, product }) {
                         className="text-center p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm"
                       >
                         <div>{displayValue}</div>
-                        <div className="text-neutral-500">
-                          {getPropLabel(prop_key)}
-                        </div>
                       </td>
                     );
                   })}

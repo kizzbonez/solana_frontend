@@ -9,6 +9,16 @@ import { useSolanaCategories } from "@/app/context/category";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_BASE_URL;
 const COLLAPSED_LIMIT = 3;
 
+// Helper function to capitalize first letter of each word
+const capitalizeWords = (str) => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Helper component for hover container
 const HoverContainer = ({ children, className = "" }) => (
   <div className={`group hover:bg-stone-50 px-2 py-[5px] ${className}`}>
@@ -119,7 +129,7 @@ function SearchResultSection({ section, onOptionSelect }) {
           return {
             href: `${BASE_URL}/search?query=${item}`,
             key: `popular-search-${index}`,
-            content: <SimpleTextItem text={item} />,
+            content: <SimpleTextItem text={capitalizeWords(item)} />,
           };
         case "product":
           return {
@@ -173,7 +183,7 @@ function SearchResultSection({ section, onOptionSelect }) {
   const canExpand = section?.data?.length > COLLAPSED_LIMIT;
   const shouldShowButton =
     canExpand &&
-    ["product", "category", "brand", "collections"].includes(section?.prop);
+    ["popular", "product", "category", "brand", "collections"].includes(section?.prop);
 
   return (
     <div>

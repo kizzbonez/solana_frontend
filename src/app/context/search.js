@@ -26,6 +26,7 @@ const RECENT_SEARCH_KEY = "recent_searches";
 const SEARCH_RESULT_SIZE = 100;
 const MIN_SUGGESTION_LENGTH = 2;
 const DEBOUNCE_DELAY = 400; // milliseconds
+const HIDDEN_COLLECTIONS = ["American Outdoor Grill"];
 
 // ============================================================================
 // CONTEXT
@@ -314,14 +315,14 @@ export const SearchProvider = ({ children }) => {
                     should: [
                       {
                         multi_match: {
-                          query: trimmedQuery, // Using the variable directly
+                          query: trimmedQuery,
                           fields: ["title"],
-                          fuzziness: "AUTO:4,8",
+                          fuzziness: "AUTO:4,8", // Back to original
                         },
                       },
                       {
                         multi_match: {
-                          query: trimmedQuery, // Using the variable directly
+                          query: trimmedQuery,
                           fields: ["title"],
                           type: "bool_prefix",
                         },
@@ -505,100 +506,6 @@ export const SearchProvider = ({ children }) => {
   );
 
   // ---------------------------------------------------------------------------
-  // API: Fetch Products from Elasticsearch
-  // ---------------------------------------------------------------------------
-  const fetchProducts = useCallback(
-    async (query_string) => {
-      try {
-        // Cancel previous fetch if it exists
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
-
-        // Create new AbortController for this fetch
-        const abortController = new AbortController();
-        abortControllerRef.current = abortController;
-
-        const trim_query = query_string.trim();
-        const rawQuery = buildSearchQuery(trim_query);
-
-        const res = await fetch("/api/es/shopify/search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rawQuery),
-          signal: abortController.signal,
-        });
-
-        if (!res.ok) {
-          throw new Error(`[SHOPIFY SEARCH] Failed: ${res.status}`);
-        }
-
-        const data = await res.json();
-        const formatted_results = data?.hits?.hits?.map(
-          ({ _source }) => _source
-        );
-
-        // console.log("data", data);
-        const result_total_count = data?.hits?.total?.value;
-        const dym = data?.suggest?.did_you_mean?.[0];
-        const sku_ac = data?.suggest?.sku_autocomplete?.[0];
-        const suggest_options = dym?.options;
-        const sku_ac_options = sku_ac?.options || [];
-        const aggs_brands = data?.aggregations?.brands_facet?.buckets || [];
-        const aggs_collections = (
-          data?.aggregations?.collections_facet?.buckets || []
-        ).map((item) => {
-          const url = `search?query=${trim_query}&filter%3Acollections=${item?.key}`;
-          return { name: item?.key, url };
-        });
-
-        console.log("sku_ac_options", sku_ac_options);
-
-        setSkusResults(trim_query.length > 2 ? sku_ac_options || [] : []);
-        setCollectionsResults(aggs_collections);
-        setProductResults(formatted_results || []);
-        setSuggestionResults(
-          trim_query.length > MIN_SUGGESTION_LENGTH ? suggest_options || [] : []
-        );
-        setProductResultsCount(result_total_count || 0);
-        setLoading(false);
-        getSearchResults(
-          trim_query,
-          suggest_options?.[0]?.text || "",
-          aggs_brands
-        );
-        return data;
-      } catch (err) {
-        // Don't log abort errors as they're expected when canceling
-        if (err.name === "AbortError") {
-          return null;
-        }
-        console.error("[SHOPIFY SEARCH] Failed to fetch products:", err);
-        return null;
-      }
-    },
-    [buildSearchQuery]
-  );
-
-  // ---------------------------------------------------------------------------
-  // API: Add Popular Search
-  // ---------------------------------------------------------------------------
-  const addPopularSearches = useCallback(async (query) => {
-    try {
-      const res = await fetch("/api/add_popular_searches", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ term: query }),
-      });
-      await res.json();
-    } catch (err) {
-      console.error("[ERROR] Add Popular Searches:", err);
-    }
-  }, []);
-
-  // ---------------------------------------------------------------------------
   // API: Get Recent Searches
   // ---------------------------------------------------------------------------
   const getRecentSearch = useCallback(async () => {
@@ -651,19 +558,81 @@ export const SearchProvider = ({ children }) => {
                 )
                 .sort((a, b) => b.timestamp - a.timestamp);
 
-        const popular_searches = popularSearches
-          .filter((item) =>
-            item?.term?.toLowerCase()?.includes(query?.toLowerCase())
-          )
-          .sort((a, b) => b.score - a.score)
-          .map((item) => item?.term);
+        // Popular searches logic:
+        // - Show top 10 when query is empty
+        // - Filter and prioritize by relevance when user is typing
+        let popular_searches = [];
+
+        if (!query || query.trim() === "") {
+          // No query: show top 10 most popular
+          console.log(
+            "📊 popularSearches (no query):",
+            popularSearches.length,
+            popularSearches.slice(0, 3)
+          );
+
+          popular_searches = (popularSearches || [])
+            .filter((item) => item && typeof item === "object" && item.term)
+            .sort((a, b) => (b.score || 0) - (a.score || 0))
+            .slice(0, 10)
+            .map((item) => item.term);
+        } else {
+          // Has query: filter by relevance and sort
+          const queryLower = query.toLowerCase().trim();
+
+          console.log(
+            "🔍 popularSearches in getSearchResults:",
+            popularSearches.length,
+            popularSearches.slice(0, 3)
+          );
+
+          popular_searches = (popularSearches || [])
+            .filter((item) => {
+              // Defensive check: ensure item has a term property that's a string
+              if (!item || typeof item !== "object") {
+                console.warn("Invalid item in popularSearches:", item);
+                return false;
+              }
+              if (!item.term || typeof item.term !== "string") {
+                console.warn("Invalid term in popularSearches item:", item);
+                return false;
+              }
+              const termLower = item.term.toLowerCase();
+              return termLower.includes(queryLower);
+            })
+            .map((item) => {
+              const termLower = item?.term?.toLowerCase() || "";
+              // Prioritize: starts with query > contains query
+              const startsWithQuery = termLower.startsWith(queryLower);
+              const matchIndex = termLower.indexOf(queryLower);
+
+              return {
+                ...item,
+                startsWithQuery,
+                matchIndex,
+              };
+            })
+            .sort((a, b) => {
+              // First: higher score (popularity) - most important!
+              const scoreDiff = (b.score || 0) - (a.score || 0);
+              if (scoreDiff !== 0) return scoreDiff;
+
+              // Second: prioritize starts-with matches
+              if (a.startsWithQuery && !b.startsWithQuery) return -1;
+              if (!a.startsWithQuery && b.startsWithQuery) return 1;
+
+              // Third: earlier match position
+              return a.matchIndex - b.matchIndex;
+            })
+            .slice(0, 10)
+            .map((item) => item?.term);
+        }
 
         const category_searches = filterNavigationItems(
           "custom_page",
           query,
           suggest
         );
-        // const brand_searches = filterNavigationItems("brand", query, suggest); // results are based on query and suggestions
         const brand_searches = (brands || []).map((item) => ({
           name: item?.key,
           url: createSlug(item?.key),
@@ -686,6 +655,108 @@ export const SearchProvider = ({ children }) => {
     },
     [getRecentSearch, popularSearches, filterNavigationItems]
   );
+
+  // ---------------------------------------------------------------------------
+  // API: Fetch Products from Elasticsearch
+  // ---------------------------------------------------------------------------
+  const fetchProducts = useCallback(
+    async (query_string) => {
+      try {
+        // Cancel previous fetch if it exists
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+        }
+
+        // Create new AbortController for this fetch
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+
+        const trim_query = query_string.trim();
+        const rawQuery = buildSearchQuery(trim_query);
+
+        const res = await fetch("/api/es/shopify/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rawQuery),
+          signal: abortController.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`[SHOPIFY SEARCH] Failed: ${res.status}`);
+        }
+
+        const data = await res.json();
+        const formatted_results = data?.hits?.hits?.map(
+          ({ _source }) => _source
+        );
+
+        // console.log("data", data);
+        const result_total_count = data?.hits?.total?.value;
+        const dym = data?.suggest?.did_you_mean?.[0];
+        const sku_ac = data?.suggest?.sku_autocomplete?.[0];
+        const suggest_options = dym?.options;
+        const sku_ac_options = sku_ac?.options || [];
+        const aggs_brands = data?.aggregations?.brands_facet?.buckets || [];
+        const aggs_collections = (
+          data?.aggregations?.collections_facet?.buckets || []
+        ).map((item) => {
+          const url = `search?query=${trim_query}&filter%3Acollections=${item?.key}`;
+          return { name: item?.key, url };
+        });
+
+        console.log("🔎 fetchProducts results:", {
+          query: trim_query,
+          productsCount: formatted_results?.length,
+          brandsCount: aggs_brands?.length,
+          collectionsCount: aggs_collections?.length,
+          skusCount: sku_ac_options?.length,
+        });
+
+        setSkusResults(trim_query.length > 2 ? sku_ac_options || [] : []);
+        setCollectionsResults(
+          aggs_collections.filter((i) => !HIDDEN_COLLECTIONS.includes(i.name))
+        );
+        setProductResults(formatted_results || []);
+        setSuggestionResults(
+          trim_query.length > MIN_SUGGESTION_LENGTH ? suggest_options || [] : []
+        );
+        setProductResultsCount(result_total_count || 0);
+        setLoading(false);
+        getSearchResults(
+          trim_query,
+          suggest_options?.[0]?.text || "",
+          aggs_brands
+        );
+        return data;
+      } catch (err) {
+        // Don't log abort errors as they're expected when canceling
+        if (err.name === "AbortError") {
+          return null;
+        }
+        console.error("[SHOPIFY SEARCH] Failed to fetch products:", err);
+        return null;
+      }
+    },
+    [buildSearchQuery, getSearchResults]
+  );
+
+  // ---------------------------------------------------------------------------
+  // API: Add Popular Search
+  // ---------------------------------------------------------------------------
+  const addPopularSearches = useCallback(async (query) => {
+    try {
+      const res = await fetch("/api/add_popular_searches", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ term: query }),
+      });
+      await res.json();
+    } catch (err) {
+      console.error("[ERROR] Add Popular Searches:", err);
+    }
+  }, []);
 
   // ---------------------------------------------------------------------------
   // FUNCTION: Set Search with Debounce
@@ -760,9 +831,25 @@ export const SearchProvider = ({ children }) => {
 
     const fetchPopularSearches = async () => {
       try {
-        const res = await fetch("/api/popular_searches");
+        // Fetch top 100 popular searches for better filtering (NO query filter on initial load)
+        const res = await fetch("/api/popular_searches?limit=100");
         const data = await res.json();
+        console.log("📊 Popular searches fetched:", data?.length, data);
+
+        if (!data || data.length === 0) {
+          console.warn("⚠️ No popular searches returned from API");
+          return;
+        }
+
         setPopularSearches(data);
+
+        // Initialize popular results on mount (top 10)
+        const popular = data
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10)
+          .map((item) => item?.term);
+        console.log("📊 Popular results initialized:", popular);
+        setPopularResults(popular);
       } catch (err) {
         console.error("Failed to fetch popular searches", err);
       }
@@ -770,6 +857,21 @@ export const SearchProvider = ({ children }) => {
 
     fetchPopularSearches();
   }, []);
+
+  // ---------------------------------------------------------------------------
+  // EFFECT: Update popular results when popularSearches loads
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (popularSearches.length > 0 && searchQuery === "") {
+      // Re-run getSearchResults when popularSearches is loaded for empty query
+      const initPopular = popularSearches
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10)
+        .map((item) => item?.term);
+      setPopularResults(initPopular);
+      console.log("🔄 Popular results synced after load:", initPopular);
+    }
+  }, [popularSearches, searchQuery]);
 
   // ---------------------------------------------------------------------------
   // EFFECT: Sync URL Query with Search State (on /search page)
@@ -898,7 +1000,16 @@ export const SearchProvider = ({ children }) => {
       oldSearchResults.current = newSearchResults;
     }
 
-    return loading ? oldSearchResults.current : newSearchResults;
+    const finalResults = loading ? oldSearchResults.current : newSearchResults;
+    console.log(
+      "📋 searchResults memo:",
+      finalResults.map((s) => ({
+        prop: s.prop,
+        dataLength: s.data?.length,
+      }))
+    );
+
+    return finalResults;
   }, [
     suggestionResults,
     recentResults,

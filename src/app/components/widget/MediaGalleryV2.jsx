@@ -182,41 +182,9 @@ const MediaGallery = ({ mediaItems = [] }) => {
   return (
     <>
       {/* Main Gallery */}
-      <div className="flex flex-col sm:flex-row gap-4 md:gap-4">
-        {/* Thumbnail Gallery */}
-        <div
-          ref={thumbnailContainerRef}
-          className="w-full order-2 sm:order-1 p-1 sm:w-[110px] lg:w-[120px] sm:max-h-[400px] lg:max-h-[305px] xl:max-h-[455px] flex flex-row sm:flex-col gap-2 overflow-x-auto overflow-y-hidden sm:overflow-x-hidden sm:overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
-          role="tablist"
-          aria-label="Product image thumbnails"
-        >
-          {mediaItems.map((item, index) => (
-            <button
-              key={`thumbnail-${index}`}
-              data-thumbnail
-              onClick={() => handleThumbnailClick(index)}
-              className={`relative flex-shrink-0 w-[72px] h-[72px] sm:w-full sm:h-[72px] lg:h-[90px] bg-white rounded-md shadow-sm transition-all duration-200 border-2 ${
-                index === activeIndex
-                  ? "shadow-md border-neutral-300"
-                  : "hover:shadow-md border-[transparent]"
-              }`}
-              role="tab"
-              aria-selected={index === activeIndex}
-              aria-label={`View image ${index + 1} of ${mediaItems.length}`}
-            >
-              <Image
-                src={item.src}
-                alt={item.alt || `Thumbnail ${index + 1}`}
-                className="rounded-md object-contain p-1"
-                fill
-                sizes="(max-width: 640px) 72px, 120px"
-              />
-            </button>
-          ))}
-        </div>
-
+      <div className="flex flex-col gap-4">
         {/* Main Image Display */}
-        <div className="order-1 sm:order-2 w-full sm:w-[calc(100%-110px-1rem)] lg:w-[calc(100%-120px-1rem)] relative">
+        <div className="w-full relative">
           <div
             ref={mainImageRef}
             className="relative w-full aspect-[5/3] sm:aspect-1 bg-white rounded-lg shadow-md overflow-hidden group"
@@ -297,23 +265,38 @@ const MediaGallery = ({ mediaItems = [] }) => {
             )}
           </div>
 
-          {/* Mobile Navigation Dots */}
-          {mediaItems.length > 1 && (
-            <div className="flex sm:hidden justify-center gap-2 mt-3">
-              {mediaItems.map((_, index) => (
-                <button
-                  key={`dot-${index}`}
-                  onClick={() => handleThumbnailClick(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                    index === activeIndex
-                      ? "bg-pallete-green w-6"
-                      : "bg-gray-300 hover:bg-gray-400"
-                  }`}
-                  aria-label={`Go to image ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
+        </div>
+
+        {/* Thumbnail Gallery - Horizontal Below Main Image */}
+        <div
+          ref={thumbnailContainerRef}
+          className="w-full p-1 flex flex-row gap-2 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
+          role="tablist"
+          aria-label="Product image thumbnails"
+        >
+          {mediaItems.map((item, index) => (
+            <button
+              key={`thumbnail-${index}`}
+              data-thumbnail
+              onClick={() => handleThumbnailClick(index)}
+              className={`relative flex-shrink-0 w-[72px] h-[72px] sm:w-[90px] sm:h-[90px] bg-white rounded-md shadow-sm transition-all duration-200 border-2 ${
+                index === activeIndex
+                  ? "shadow-md border-neutral-300"
+                  : "hover:shadow-md border-[transparent]"
+              }`}
+              role="tab"
+              aria-selected={index === activeIndex}
+              aria-label={`View image ${index + 1} of ${mediaItems.length}`}
+            >
+              <Image
+                src={item.src}
+                alt={item.alt || `Thumbnail ${index + 1}`}
+                className="rounded-md object-contain p-1"
+                fill
+                sizes="(max-width: 640px) 72px, 90px"
+              />
+            </button>
+          ))}
         </div>
       </div>
 

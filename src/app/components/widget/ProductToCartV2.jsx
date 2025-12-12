@@ -165,7 +165,7 @@ const PriceDisplay = ({ variant, isFreeShipping }) => {
     );
   }
 
-  const { savings } = calculateSavings(comparePrice, price);
+  const { percentage, savings } = calculateSavings(comparePrice, price);
 
   return (
     <div className="flex flex-col gap-1">
@@ -173,14 +173,18 @@ const PriceDisplay = ({ variant, isFreeShipping }) => {
         <div className="text-3xl md:text-4xl font-extrabold text-pallete-green">
           ${formatPrice(price)}
         </div>
-        <div className="text-base md:text-lg font-semibold text-stone-400 line-through">
-          ${formatPrice(comparePrice)}
-        </div>
+        {percentage > 0 && (
+          <div className="text-base md:text-lg bg-red-600 px-3 rounded-full py-1 font-bold text-white select-none">
+            SAVE {percentage}%
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1">
-        <div className="text-base md:text-lg font-bold text-red-600">
-          Save ${formatPrice(savings)}
-        </div>
+        {percentage > 0 && (
+          <div className="text-base md:text-lg font-semibold text-stone-400 line-through">
+            ${formatPrice(comparePrice)}
+          </div>
+        )}
         {isFreeShipping && (
           <div className="text-base md:text-lg font-bold text-green-700">
             + Free Shipping
