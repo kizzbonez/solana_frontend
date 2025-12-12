@@ -43,6 +43,25 @@ function CompareProductsTable({ similar_products, product }) {
     return [];
   }, [similar_products, product]);
 
+  // Get all unique keys and filter out fields where all products have no value
+  const filteredFields = useMemo(() => {
+    if (product_accentuate_data.length === 0) return [];
+
+    // Collect all unique keys from all products
+    const allKeys = new Set();
+    product_accentuate_data.forEach((data) => {
+      Object.keys(data).forEach((key) => allKeys.add(key));
+    });
+
+    // Filter keys where at least one product has a non-empty value
+    return Array.from(allKeys).filter((key) => {
+      return product_accentuate_data.some((data) => {
+        const value = data[key];
+        return value !== undefined && value !== null && value !== "";
+      });
+    });
+  }, [product_accentuate_data]);
+
   const getPropLabel = (prop) => {
     const noPrefix = prop.replace("bbq.seo_meta_", "");
 
@@ -77,26 +96,32 @@ function CompareProductsTable({ similar_products, product }) {
               </tr>
             </thead>
             <tbody>
-              {Object.keys(product_accentuate_data[0]).map(
-                (prop_key, index) => (
-                  <tr key={`th-${index}`} className="group">
-                    {/* <td className="p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm">
+              {filteredFields.map((prop_key, index) => (
+                <tr key={`th-${index}`} className="group">
+                  {/* <td className="p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm">
                       {getPropLabel(prop_key)}
                     </td> */}
-                    {product_accentuate_data.map((spec, index2) => (
+                  {product_accentuate_data.map((spec, index2) => {
+                    const value = spec[prop_key];
+                    const displayValue =
+                      value !== undefined && value !== null && value !== ""
+                        ? value
+                        : "NA";
+
+                    return (
                       <td
                         key={`td-${index}-${index2}`}
                         className="text-center p-4 border-y border-r border-gray-400 group-hover:bg-neutral-200 text-sm"
                       >
-                        <div>{spec[prop_key]}</div>
+                        <div>{displayValue}</div>
                         <div className="text-neutral-500">
                           {getPropLabel(prop_key)}
                         </div>
                       </td>
-                    ))}
-                  </tr>
-                )
-              )}
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

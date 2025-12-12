@@ -23,6 +23,7 @@ import ProductCardLoader from "@/app/components/atom/ProductCardLoader";
 import { Eos3DotsLoading } from "@/app/components/icons/lib";
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 import AddToCartWidget from "@/app/components/widget/AddToCartWidget";
+import { Icon } from "@iconify/react";
 
 const BreadCrumbs = ({ slug, product_title }) => {
   const { getNameBySlug } = useSolanaCategories();
@@ -81,14 +82,40 @@ const CategoryChips = ({ categories }) => {
 };
 
 const ProductOptions = ({ product, slug }) => {
+  const [isGalleryFullscreen, setIsGalleryFullscreen] = useState(false);
+
+  // Monitor fullscreen state from MediaGallery
+  useEffect(() => {
+    const checkFullscreen = () => {
+      setIsGalleryFullscreen(
+        document.body.classList.contains("gallery-fullscreen-active")
+      );
+    };
+
+    // Check initially
+    checkFullscreen();
+
+    // Set up a MutationObserver to watch for class changes on body
+    const observer = new MutationObserver(checkFullscreen);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   if (!product && !product?.accentuate_data) {
     return;
   }
 
   const accentuate_data = product.accentuate_data;
 
+  // Dynamic z-index: negative when gallery is fullscreen, positive otherwise
+  const zIndexClass = isGalleryFullscreen ? "-z-20" : "z-0";
+
   return (
-    <div className="flex flex-col gap-[10px]">
+    <div className={`flex flex-col gap-[10px] relative ${zIndexClass}`}>
       {/* Gas type */}
       {accentuate_data?.["bbq.option_related_product"] && (
         <ProductOptionItem
@@ -653,39 +680,108 @@ const RecentViewedProducts = ({ recents }) => {
 };
 
 const DiscountLinksSection = () => {
+  const [isGalleryFullscreen, setIsGalleryFullscreen] = useState(false);
+
+  // Monitor fullscreen state from MediaGallery
+  useEffect(() => {
+    const checkFullscreen = () => {
+      setIsGalleryFullscreen(
+        document.body.classList.contains("gallery-fullscreen-active")
+      );
+    };
+
+    // Check initially
+    checkFullscreen();
+
+    // Set up a MutationObserver to watch for class changes on body
+    const observer = new MutationObserver(checkFullscreen);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const links = [
-    { hidden: false, url: `tel:${STORE_CONTACT}`, label: "Phone Discounts" },
-    { hidden: false, url: `${BASE_URL}/package-deals`, label: "Package Deals" },
-    { hidden: false, url: `${BASE_URL}/open-box`, label: "Open Box" },
-    { hidden: false, url: `${BASE_URL}/close-out-deals`, label: "Close Out" },
-    { hidden: false, url: ``, label: "Scratch + Dent" },
+    {
+      hidden: false,
+      url: `tel:${STORE_CONTACT}`,
+      label: "Phone Discounts",
+      icon: "mdi:phone",
+    },
+    {
+      hidden: false,
+      url: `${BASE_URL}/package-deals`,
+      label: "Package Deals",
+      icon: "mdi:package-variant-closed",
+    },
+    {
+      hidden: false,
+      url: `${BASE_URL}/open-box`,
+      label: "Open Box",
+      icon: "mdi:package-variant",
+    },
+    {
+      hidden: false,
+      url: `${BASE_URL}/close-out-deals`,
+      label: "Close Out",
+      icon: "mdi:sale",
+    },
+    {
+      hidden: false,
+      url: ``,
+      label: "Scratch + Dent",
+      icon: "mdi:hammer-wrench",
+    },
     {
       hidden: false,
       url: ``,
       label: "Low Monthly Payments",
+      icon: "mdi:calendar-month",
     },
     {
       hidden: false,
       url: ``,
       label: "Free Accessory Bundle",
+      icon: "mdi:gift",
     },
   ];
+
+  // Dynamic z-index: negative when gallery is fullscreen, positive otherwise
+  const zIndexClass = isGalleryFullscreen ? "-z-20" : "z-0";
+
   return (
-    <div className="p-3 bg-neutral-100 border shadow-lg">
-      <div className="text-center font-bold bg-green-700 text-white">
-        DISCOUNTS
+    <div className={`relative overflow-hidden ${zIndexClass}`}>
+      {/* Corner Badge */}
+      <div className="absolute top-0 right-0 z-10 pointer-events-none">
+        <div className="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 shadow-sm">
+          SPECIAL OFFERS
+        </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 mt-1">
+
+      {/* Header with Icons */}
+      <div className="font-bold bg-gradient-to-r from-green-600 to-emerald-600 text-white px-2 py-1.5 flex items-center justify-center gap-2 uppercase rounded relative z-0 text-sm">
+        <Icon icon="mdi:tag-multiple" className="text-green-200 text-lg" />
+        <span>Discounts & Savings</span>
+        <Icon icon="mdi:tag-multiple" className="text-green-200 text-lg" />
+      </div>
+
+      {/* Links Grid */}
+      <div className="grid grid-cols-2 gap-1.5 mt-2 relative z-0">
         {links
           .filter((item) => !item.hidden)
           .map((link, index) => (
             <Link
               key={`discount-section-link-item-${index}`}
               href={`${link.url || "#"}`}
-              className="flex gap-2 items-center group"
+              className="flex gap-1.5 items-center p-1.5 rounded-md bg-white border border-green-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md transition-all group"
             >
-              <div className="group-hover:text-theme-800">&#8226;</div>
-              <div className="text-sm text-stone-700 hover:text-theme-900 transition-all font-bold group-hover:underline">
+              <Icon
+                icon={link.icon}
+                className="text-green-600 group-hover:text-green-700 text-base flex-shrink-0"
+              />
+              <div className="text-xs text-stone-700 group-hover:text-green-800 transition-all font-semibold line-clamp-2">
                 {link.label}
               </div>
             </Link>
