@@ -166,3 +166,23 @@ export const validateToken = async (token) => {
     };
   }
 };
+
+export const getProductsByCollectionId = async (collection_id) => {
+  try {
+    return await fetch(
+      `/api/collections/collection-products/${collection_id}?limit=100`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (err) {
+    console.warn("[getProductsByCollectionId] API error:", err);
+    return {
+      success: false,
+      error: "getProductsByCollectionId Error",
+    };
+  }
+};

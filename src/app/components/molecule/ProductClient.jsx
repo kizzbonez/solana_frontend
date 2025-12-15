@@ -19,11 +19,13 @@ import YouMayAlsoLike from "@/app/components/molecule/YouMayAlsoLike";
 import CompareProductsTable from "@/app/components/molecule/CompareProductsTable";
 import ProductReviewSection from "@/app/components/molecule/ProductReviewSection";
 import ProductCard from "@/app/components/atom/ProductCard";
+import ProductCardV2 from "@/app/components/atom/ProductCardV2";
 import ProductCardLoader from "@/app/components/atom/ProductCardLoader";
 import { Eos3DotsLoading } from "@/app/components/icons/lib";
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 import AddToCartWidget from "@/app/components/widget/AddToCartWidget";
 import { Icon } from "@iconify/react";
+import { getProductsByCollectionId } from "@/app/lib/api";
 
 const BreadCrumbs = ({ slug, product_title }) => {
   const { getNameBySlug } = useSolanaCategories();
@@ -398,210 +400,6 @@ const ProductOptionItem = ({
   );
 };
 
-const FrequentlyBoughtItem = ({ product, onChange }) => {
-  const [checked, setChecked] = useState(true);
-  const handleCheckboxChange = (event) => {
-    const newChecked = event.target.checked;
-    setChecked(newChecked);
-    onChange({ id: product?.product_id, checked: newChecked });
-  };
-
-  useEffect(() => {
-    setChecked(product?.isSelected);
-  }, [product]);
-
-  const image_thumb = useMemo(() => {
-    if (!product || !product?.images) return null;
-
-    return product.images.find((image) => image.position == "1")?.src || null;
-  }, [product]);
-
-  return (
-    <label
-      htmlFor={product?.product_id}
-      className={`flex items-center gap-2 py-1.5 px-2 rounded cursor-pointer transition-all text-sm border ${
-        checked
-          ? "bg-neutral-50 border-neutral-300"
-          : "bg-white border-neutral-200 hover:bg-neutral-50"
-      }`}
-    >
-      {/* Checkbox */}
-      <div
-        className={`flex-shrink-0 w-3.5 h-3.5 rounded border flex items-center justify-center ${
-          checked
-            ? "bg-neutral-700 border-neutral-700"
-            : "border-neutral-400 bg-white"
-        }`}
-      >
-        {checked && (
-          <svg
-            className="w-2.5 h-2.5 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        )}
-      </div>
-
-      {/* Image */}
-      {image_thumb && (
-        <div className="flex-shrink-0 w-8 h-8">
-          <img
-            src={image_thumb}
-            alt={product?.title}
-            className="w-full h-full object-contain"
-          />
-        </div>
-      )}
-
-      {/* Product Info */}
-      <div className="flex-grow min-w-0">
-        <div className="text-xs text-neutral-700 line-clamp-1 leading-tight">
-          {product?.thisProduct ? (
-            <>
-              <span className="font-bold">THIS ITEM: </span> {product?.title}
-            </>
-          ) : (
-            product?.title
-          )}
-        </div>
-        <div className="text-xs font-medium text-neutral-900 mt-0.5">
-          ${formatPrice(product?.variants?.[0].price)}
-        </div>
-      </div>
-
-      {/* Hidden Input */}
-      <input
-        type="checkbox"
-        id={product?.product_id}
-        checked={checked}
-        onChange={handleCheckboxChange}
-        className="sr-only"
-      />
-    </label>
-  );
-};
-
-const FrequentlyBoughtBundle = ({ products, product }) => {
-  const { addItemsToCart, addToCartLoading } = useCart();
-  const [fbwProducts, setFbwProducts] = useState(null);
-  const [updateTrigger, setUpdateTrigger] = useState(0);
-
-  const handleAddSelectionToCart = async () => {
-    console.log("selectedItems", selectedItems);
-    try {
-      if (selectedCount === 0) return;
-      const result = await addItemsToCart(selectedItems);
-      if (result.status === "success") {
-        console.log(result.message);
-      }
-    } catch (error) {
-      console.log("[handleAddSelectionToCart]", error);
-    }
-  };
-
-  const handleCheckboxChange = (data) => {
-    const { id, checked } = data;
-    setFbwProducts((prev) => {
-      if (!id || !prev) return prev;
-      const newProducts = prev.map((item) => ({
-        ...item,
-        isSelected: item?.product_id === id ? checked : item?.isSelected,
-      }));
-      return newProducts;
-    });
-    setUpdateTrigger((prev) => prev + 1);
-  };
-
-  useEffect(() => {
-    if (!products) return;
-    const tmp_products = [product, ...products].map((item) => ({
-      ...item,
-      isSelected: true,
-      thisProduct: item?.product_id == product?.product_id,
-    }));
-    setFbwProducts(tmp_products);
-  }, [products, product]);
-
-  const total_price = useMemo(() => {
-    if (!fbwProducts) return `$${formatPrice("0.00")}`;
-
-    const total = fbwProducts
-      .filter((item) => item?.isSelected)
-      .map((item) => parseFloat(item.variants?.[0]?.price) || 0)
-      .reduce((sum, price) => sum + price, 0);
-
-    return `$${formatPrice(total.toFixed(2))}`;
-  }, [fbwProducts, updateTrigger]);
-
-  const hasSelectedItems = useMemo(() => {
-    return fbwProducts?.some((item) => item?.isSelected) || false;
-  }, [fbwProducts, updateTrigger]);
-
-  const selectedCount = useMemo(() => {
-    return fbwProducts?.filter((item) => item?.isSelected).length || 0;
-  }, [fbwProducts, updateTrigger]);
-
-  const selectedItems = useMemo(() => {
-    return (
-      fbwProducts
-        ?.filter((item) => item?.isSelected)
-        .map((item) => ({ ...item, quantity: 1 })) || []
-    );
-  }, [fbwProducts, updateTrigger]);
-
-  if (!fbwProducts || fbwProducts.length === 0) return null;
-
-  return (
-    <div className="mt-6 p-3 bg-neutral-50 rounded border border-neutral-200">
-      <h3 className="text-sm font-semibold text-neutral-700 mb-2">
-        Frequently Bought Together
-      </h3>
-      <div className="space-y-1.5">
-        {fbwProducts.map((product, index) => (
-          <FrequentlyBoughtItem
-            key={`fbw-item-${index}`}
-            product={product}
-            onChange={handleCheckboxChange}
-          />
-        ))}
-      </div>
-      <div className="mt-3 pt-2 border-t border-neutral-200 flex items-center justify-between text-sm">
-        <span className="text-neutral-600">Total:</span>
-        <span className="font-semibold text-neutral-900">{total_price}</span>
-      </div>
-      <button
-        disabled={!hasSelectedItems}
-        onClick={handleAddSelectionToCart}
-        className={`relative mt-2 w-full h-[32px] text-xs font-medium rounded transition-all ${
-          hasSelectedItems
-            ? "bg-neutral-800 hover:bg-neutral-900 text-white cursor-pointer"
-            : "bg-neutral-200 text-neutral-400 cursor-not-allowed"
-        }`}
-      >
-        <div className={addToCartLoading === true ? "hidden" : "block"}>
-          Add {selectedCount > 0 ? `${selectedCount} ` : ""}selected item
-          {selectedCount !== 1 ? "s" : ""} to cart
-        </div>
-        <div
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${
-            addToCartLoading === true ? "visible" : "invisible"
-          }`}
-        >
-          <Eos3DotsLoading width={50} height={50} />
-        </div>
-      </button>
-    </div>
-  );
-};
-
 const FBTSection = ({ products }) => {
   if (!products || !Array.isArray(products) || products.length === 0) return;
   const displayItems = 4;
@@ -923,40 +721,40 @@ const FrequentlyBoughtTogetherSection = ({ products, product }) => {
       </h3>
       <div className="flex flex-wrap md:flex-nowrap items-center mt-5 gap-1">
         {selectedItems?.map((item, index) => {
-            const productImage = item?.images?.find(
-              (img) => img.position === 1
-            )?.src;
+          const productImage = item?.images?.find(
+            (img) => img.position === 1
+          )?.src;
 
-            return (
-              <React.Fragment key={`fbt-product-${index}`}>
-                {index > 0 && (
-                  <Icon
-                    icon="mdi:plus"
-                    className="text-neutral-600 text-2xl font-bold"
+          return (
+            <React.Fragment key={`fbt-product-${index}`}>
+              {index > 0 && (
+                <Icon
+                  icon="mdi:plus"
+                  className="text-neutral-600 text-2xl font-bold"
+                />
+              )}
+              <Link
+                prefetch={false}
+                href={
+                  isActiveProduct(item, product) ? "#" : getProductUrl(item)
+                }
+                className="w-[120px] h-[120px] bg-white rounded-sm border border-neutral-300 relative overflow-hidden group"
+              >
+                {productImage && (
+                  <Image
+                    src={productImage}
+                    alt={item?.title || "Product"}
+                    fill
+                    className="object-contain p-2"
                   />
                 )}
-                <Link
-                  prefetch={false}
-                  href={
-                    isActiveProduct(item, product) ? "#" : getProductUrl(item)
-                  }
-                  className="w-[120px] h-[120px] bg-white rounded-sm border border-neutral-300 relative overflow-hidden group"
-                >
-                  {productImage && (
-                    <Image
-                      src={productImage}
-                      alt={item?.title || "Product"}
-                      fill
-                      className="object-contain p-2"
-                    />
-                  )}
-                  <div className="w-full aspect-1 bg-slate-950/70 absolute left-0 top-0 hidden group-hover:flex items-center justify-center transition-all text-white font-bold">
-                    {isActiveProduct(item, product) ? "Active" : "View Item"}
-                  </div>
-                </Link>
-              </React.Fragment>
-            );
-          })}
+                <div className="w-full aspect-1 bg-slate-950/70 absolute left-0 top-0 hidden group-hover:flex items-center justify-center transition-all text-white font-bold">
+                  {isActiveProduct(item, product) ? "Active" : "View Item"}
+                </div>
+              </Link>
+            </React.Fragment>
+          );
+        })}
         <div className="flex flex-col justify-between h-[120px] ml-5">
           <div>
             <div>Total</div>
@@ -1066,6 +864,65 @@ const FrequentlyBoughtItemV2 = ({ product, onChange }) => {
         className="sr-only"
       />
     </label>
+  );
+};
+
+const ShopCollectionSection = ({ product }) => {
+  const [collectionProducts, setCollectionProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const loader = [1, 2, 3, 4];
+
+  useEffect(() => {
+    const brand = product?.brand;
+    const collections = product?.collections;
+    if (brand && collections) {
+      const collection_id =
+        collections.find(({ name }) => name === brand)?.id || null;
+      if (collection_id) {
+        getProductsByCollectionId(collection_id)
+          .then((res) => res.json())
+          .then((res) => {
+            setCollectionProducts(res);
+          })
+          .catch((err) => {
+            console.log("Error", err);
+            setCollectionProducts([]);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
+      }
+    }
+  }, [product]);
+
+  return (
+    <div className="my-5">
+      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
+        Shop This Collection
+      </h3>
+      <div className="w-full flex gap-1 overflow-x-auto py-1">
+        {isLoading &&
+          loader &&
+          loader.map((item, index) => (
+            <div
+              key={`loader-collection-product-${index}`}
+              className="flex items-center justify-center py-1 px-5 flex-col gap-1  min-w-[220px] max-w-[220px] bg-neutral-100 border border-neutral-200 h-[360px] rounded-sm text-neutral-400"
+            >
+              Loading...
+            </div>
+          ))}
+        {!isLoading &&
+          collectionProducts &&
+          Array.isArray(collectionProducts) &&
+          collectionProducts.length > 0 &&
+          collectionProducts.map((product, index) => (
+            <ProductCardV2
+              key={`collection-product-${index}`}
+              product={product}
+            />
+          ))}
+      </div>
+    </div>
   );
 };
 
@@ -1202,6 +1059,7 @@ export default function ProductClient({ params }) {
                 products={product?.fbt_bundle || []}
                 product={product}
               />
+              <ShopCollectionSection product={product} />
             </div>
           </div>
           <div className="p-4">

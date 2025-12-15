@@ -1,138 +1,127 @@
 "use client";
-import { Icon } from "@iconify/react/dist/iconify.js";
-import { Rating } from "@smastrom/react-rating";
+import { useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import LoaderIcon from "../atom/LoaderIcon";
-import OnsaleTag from "@/app/components/atom/productCardOnsaleTag";
-import BrandDisplay from "@/app/components/atom/ProductCardBrandDisplay";
-import PriceDisplay from "@/app/components/atom/ProductCardPriceDisplay";
-import { ICRoundPhone } from "../icons/lib";
-import { STORE_CONTACT } from "@/app/lib/store_constants";
-// import { useQuickView } from "@/app/context/quickview";
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_BASE_URL;
-const ProductCard = ({ hit }) => {
-  //   const { viewItem } = useQuickView();
-  // console.log("hitCardV2 hits as hit", hit)
-  const [thumbnail, setThumbnail] = useState(null);
-  useEffect(() => {
-    if (hit) {
-      setThumbnail((prev) => {
-        if (hit.images.length > 0) {
-          // setImage
-          return hit.images.filter((i) => i.is_thumbnail)[0].url_thumbnail;
-        } else {
-          // setDefaultImage
-        }
-      });
-    }
-  }, [hit]);
-  const handleHeartButtonClick = () => {};
-  const handleProductItemClick = (e) => {
-    e.preventDefault();
-    const url = e.target.closest("a").getAttribute("href");
-    // console.log(url);
-    if (url) {
-      // router.push(url);
-      // setIsLoading(true);
-    } else {
-      alert("no url");
-    }
-  };
+import { Rating } from "@smastrom/react-rating";
+import { useSolanaCategories } from "@/app/context/category";
+import { formatPrice, parseRatingCount } from "@/app/lib/helpers";
+import AddToCartButtonWrap from "@/app/components/atom/AddToCartButtonWrap";
+import { useCart } from "@/app/context/cart";
 
-  const handleQuickViewClick = (e, item) => {
-    e.stopPropagation();
-    e.preventDefault();
-    // viewItem(item);
+function PriceDisplay({ price, compare_at_price }) {
+  const locale = "en-US";
+  const options = {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
   };
+  const display_price = useMemo(() => {
+    return Math.floor(price); // extract the dollar part
+  }, [price]);
 
-  const triggerCall = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.location.href = "tel:(888)%205759720";
-  };
+  const display_cents = useMemo(() => {
+    const cents = Math.round((price - Math.floor(price)) * 100);
+    return cents.toString().padStart(2, "0");
+  }, [price]);
+
+  const display_regular_price = useMemo(() => {
+    if (
+      compare_at_price &&
+      compare_at_price !== "" &&
+      compare_at_price !== 0 &&
+      compare_at_price !== "0"
+    ) {
+      return parseFloat(compare_at_price)?.toFixed(2);
+    }
+    return null;
+  }, [compare_at_price]);
+
+  if (!price || typeof price !== "number") return;
 
   return (
-    <Link
-      prefetch={false}
-      href={`${BASE_URL}/product/${hit.custom_url.url}`}
-      // onClick={handleProductItemClick}
-      className="flex w-full h-full bg-white overflow-hidden rounded-md border duration-500  hover:shadow-xl pb-[8px] hover:border-stone-700 group"
-    >
-      <div className="w-full">
-        <div
-          className={`w-full flex items-center justify-center h-[230px] overflow-hidden relative ${
-            hit.isSelected ? "bg-stone-600" : "bg-white"
-          }`}
-        >
-          <img
-            src={thumbnail}
-            alt=""
-            className={`object-contain h-full ${
-              hit?.isSelected ? "opacity-40" : "opacity-100"
-            }`}
-          />
-          <div className={`absolute ${hit?.isSelected ? "" : "hidden"}`}>
-            <LoaderIcon dark={false} />
-          </div>
-          <OnsaleTag categories={hit?.categories} />
-          <div
-            onClick={(e) => handleQuickViewClick(e, hit)}
-            className="absolute bottom-0 left-0 bg-theme-500 text-white text-[12px] py-[5px] md:py-[7px] md:px-[15px] flex items-center w-full justify-center gap-[5px] invisible group-hover:visible"
-          >
-            <div className="flex justify-center">
-              <div className="font-semibold text-[0.775rem] inline-block text-center">
-                <Icon
-                  icon="mi:shopping-cart-add"
-                  className="text-lg font-thin inline-block mr-[5px]"
-                />
-                {/* CUSTOMIZE TO PURCHASE */}
-                QUICK VIEW
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col px-[15px] pt-[5px] border-t">
-          <div
-            className="text-sm line-clamp-2 font-semibold text-stone-700"
-            title={hit.name}
-          >
-            {hit.name}
-          </div>
-          <div className={`flex items-center gap-[5px]`}>
-            <Rating
-              readOnly
-              value={hit.reviews_rating_sum}
-              fractions={2}
-              style={{ maxWidth: 100 }}
-            ></Rating>
-            <div className={`text-[0.75rem]`}>
-              ({hit.reviews_count}){/* (id:{hit.id}) */}
-            </div>
-          </div>
-          <div className="mt-3">
-            <BrandDisplay product={hit} />
-          </div>
-          <div className="mt-3">
-            <PriceDisplay product={hit} />
-          </div>
-          {/* <div className="flex  h-[48px] items-center">
-            <div className=" flex-wrap flex flex-col md:flex-row md:items-center justify-between gap-[5px]"></div>
-          </div> */}
-
-          <div className="text-xs my-[5px] text-blue-500 flex items-center cursor-default gap-[7px] flex-wrap">
-            Found It Cheaper?{" "}
-            <div
-              onClick={triggerCall}
-              className="hover:underline flex items-center gap-[3px] cursor-pointer"
-            >
-              <ICRoundPhone width={16} height={16} /> <div>{STORE_CONTACT}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
+    <div className="text-lg font-medium text-left text-stone-700">
+      {display_price.toLocaleString(locale, options)}
+      <sup className="text-xs">{display_cents}</sup>
+      {display_regular_price ? (
+        <sup className="text-xs ml-2 line-through font-normal">
+          ${display_regular_price}
+        </sup>
+      ) : null}
+    </div>
   );
-};
+}
 
-export default ProductCard;
+function ProductCardV2({ is_active = false, product }) {
+  const { getProductUrl } = useSolanaCategories();
+  const { addToCartLoading } = useCart();
+  const product_image = useMemo(() => {
+    if (product && product?.images) {
+      const img =
+        product.images.find(({ position }) => position === 1)?.src || null;
+      return img;
+    }
+    return null;
+  }, [product]);
+
+  return (
+    <div className="py-1 px-5 flex flex-col gap-1 justify-between min-w-[220px] max-w-[220px] group">
+      <div className="flex flex-col gap-1">
+        <div className="p-2">
+          <div className="aspect-1 relative bg-white border border-white">
+            {product_image && product && (
+              <Image
+                src={product_image}
+                alt={product?.title || "Product Image"}
+                title={product?.title || "Product Image"}
+                fill
+                style={{ objectFit: "contain" }}
+              />
+            )}
+          </div>
+        </div>
+        <Link prefetch={false} href={getProductUrl(product)}>
+          <h4
+            className="text-sm text-stone-900  line-clamp-3 text-left hover:underline group-hover:text-theme-600 min-h-[60px]"
+            title={product?.title}
+          >
+            {product?.title}
+          </h4>
+        </Link>
+
+        <Rating
+          readOnly
+          value={parseRatingCount(product?.ratings?.rating_count)}
+          fractions={2}
+          style={{ maxWidth: 80 }}
+        ></Rating>
+
+        <PriceDisplay
+          price={product?.variants?.[0]?.price}
+          compare_at_price={product?.variants?.[0]?.compare_at_price}
+        />
+
+        {/* <div className="text-xs underline text-stone-700">
+          As low as $84 per month*
+        </div>
+
+        <div className="text-green-700 text-sm mt-5">Free Shipping</div>
+        <div className="text-xs text-stone-700">
+          <div>Leaves Warehouse:</div>
+          <div>24hrs</div>
+        </div> */}
+      </div>
+      <div className="w-full flex justify-center items-center mt-3">
+        <AddToCartButtonWrap product={product}>
+          <button
+            disabled={addToCartLoading}
+            className="text-white font-bold uppercase py-2 px-5 rounded-sm bg-theme-600"
+          >
+            Add To Cart
+          </button>
+        </AddToCartButtonWrap>
+      </div>
+    </div>
+  );
+}
+
+export default ProductCardV2;
