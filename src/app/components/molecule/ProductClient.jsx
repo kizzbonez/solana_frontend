@@ -712,7 +712,7 @@ const FrequentlyBoughtTogetherSection = ({ products, product }) => {
     );
   }, [fbwProducts, updateTrigger]);
 
-  if (!fbwProducts || fbwProducts.length === 0) return null;
+  if (!fbwProducts || fbwProducts.length < 2) return null;
 
   return (
     <div className="my-5">
