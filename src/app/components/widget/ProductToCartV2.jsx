@@ -195,9 +195,9 @@ const PriceDisplay = ({ variant, isFreeShipping }) => {
   );
 };
 
-const ProductInfo = ({ product }) => {
+const ProductInfo = ({ product, reviews }) => {
   const sku = product?.variants?.[0]?.sku;
-  const ratingValue = parseRatingCount(product?.ratings?.rating_count);
+  const ratingValue = parseRatingCount(product?.ratings?.rating_count); // old ratingValue
 
   return (
     <>
@@ -219,7 +219,18 @@ const ProductInfo = ({ product }) => {
       </div>
 
       <div className="flex items-center gap-2">
-        <Rating value={ratingValue} style={{ maxWidth: 110 }} readOnly />
+        <Rating
+          value={reviews?.overall_rating || 5}
+          style={{ maxWidth: 110 }}
+          readOnly
+        />
+        <Link
+          href="#customer-review-section"
+          prefetch={false}
+          className="text-neutral-700 hover:text-neutral-800 hover:underline transition-all"
+        >
+          ({reviews?.count || 0})
+        </Link>
       </div>
 
       <div className="text-sm md:text-base flex items-center gap-2 text-stone-600 font-medium">
@@ -231,7 +242,7 @@ const ProductInfo = ({ product }) => {
 };
 
 // Main Component
-const ProductToCart = ({ product, loading }) => {
+const ProductToCart = ({ product, loading, reviews }) => {
   const { isPriceVisible } = useSolanaCategories();
   const [productData, setProductData] = useState(product);
   const [isGalleryFullscreen, setIsGalleryFullscreen] = useState(false);
@@ -272,7 +283,7 @@ const ProductToCart = ({ product, loading }) => {
 
   return (
     <div className={`flex flex-col gap-4 w-full relative ${zIndexClass}`}>
-      <ProductInfo product={productData} />
+      <ProductInfo product={productData} reviews={reviews} />
 
       {!showPrice ? (
         <div className="font-semibold text-base md:text-lg text-stone-700 py-2">

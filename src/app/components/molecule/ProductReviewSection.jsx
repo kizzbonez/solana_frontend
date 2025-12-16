@@ -8,6 +8,7 @@ import { getReviewsByProductId } from "@/app/lib/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
+
 const FirstReview = ({ openForm }) => {
   return (
     <div className="mt-2">
@@ -173,17 +174,6 @@ const InquiryForm = ({ product_id }) => {
 };
 
 const ReviewSummary = ({ summary }) => {
-  // const [summary, setReviewSummary] = useState({
-  //   overall_rating: 4.8,
-  //   by_star: [
-  //     { name: "lowest", star: 1, votes: 1 },
-  //     { name: "low", star: 2, votes: 0 },
-  //     { name: "mid", star: 3, votes: 2 },
-  //     { name: "high", star: 4, votes: 5 },
-  //     { name: "highest", star: 5, votes: 10 },
-  //   ],
-  // });
-
   const calculatePercentage = (totalVotes, individualVotes) => {
     if (
       totalVotes === 0 ||
@@ -255,86 +245,48 @@ const ReviewSummary = ({ summary }) => {
   );
 };
 
-function ProductReviewSection({ product }) {
-  const [visibleForm, setVisibleForm] = useState("review");
-  const [reviews, setReviews] = useState(null);
-
-  const handleFormToggle = (form) => {
-    setVisibleForm((prev) => {
-      if (prev === form) return null;
-      return form;
-    });
-  };
+function ProductReviewSection({ reviews: initialReviews }) {
+  const [reviews, setReviews] = useState(initialReviews);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const product_id = product?.product_id;
-    const fetchReviews = async () => {
-      try {
-        const response = await getReviewsByProductId(product_id);
-        if (!response?.ok) {
-          setReviews(null);
-          return;
-        }
-        const data = await response.json();
-        // console.log("[fetchReviews] data", data);
-        setReviews(data);
-      } catch (err) {
-        console.warn("[fetchReviews]", err);
+    setReviews(initialReviews);
+  }, [initialReviews]);
+
+  const handlePageChange = async (url) => {
+    if (!url || loading) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Failed to fetch paginated reviews");
+        return;
       }
-    };
-    console.log("[product_id]", product_id);
-    if (!product_id) {
-      return;
+      const data = await response.json();
+      setReviews(data);
+
+      // Scroll to reviews section
+      document.getElementById("customer-review-section")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    } catch (error) {
+      console.error("Error fetching paginated reviews:", error);
+    } finally {
+      setLoading(false);
     }
-    fetchReviews();
-  }, [product]);
-
-  const ratingSummary = useMemo(() => {
-    if (!reviews?.results) return 0;
-    if (reviews.results.length === 0) return 0;
-
-    const star1 = reviews.results.filter((review) => review?.rating === 1);
-    const starCount1 = star1.length;
-    const star2 = reviews.results.filter((review) => review?.rating === 2);
-    const starCount2 = star2.length;
-    const star3 = reviews.results.filter((review) => review?.rating === 3);
-    const starCount3 = star3.length;
-    const star4 = reviews.results.filter((review) => review?.rating === 4);
-    const starCount4 = star4.length;
-    const star5 = reviews.results.filter((review) => review?.rating === 5);
-    const starCount5 = star5.length;
-
-    const overall_rating =
-      (5 * starCount5 +
-        4 * starCount4 +
-        3 * starCount3 +
-        2 * starCount2 +
-        1 * starCount1) /
-      (starCount5 + starCount4 + starCount3 + starCount2 + starCount1);
-    const summary = {
-      overall_rating: overall_rating.toFixed(1),
-      by_star: [
-        { name: "highest", star: 5, votes: starCount5, data: star5 },
-        { name: "high", star: 4, votes: starCount4, data: star4 },
-        { name: "mid", star: 3, votes: starCount3, data: star3 },
-        { name: "low", star: 2, votes: starCount2, data: star2 },
-        { name: "lowest", star: 1, votes: starCount1, data: star1 },
-      ],
-    };
-
-    console.log("ratingSummary", summary);
-    return summary;
-  }, [reviews]);
+  };
 
   return (
-    <div className="">
+    <div id="customer-review-section">
       <h2>Customer Reviews</h2>
 
       <div className="mt-5 flex flex-col gap-[5px]">
         {!reviews && (
           <div className="bg-yellow-100 py-1 px-2 border-l-[5px] border-yellow-300">
             <h4 className="text-yellow-800 font-bold">
-              Couldn’t load product reviews
+              Couldn't load product reviews
               {/* <span className="font-light italic">{"<Displays only if app failed to fetch reviews>"}</span> */}
             </h4>
             <p className="text-yellow-700">
@@ -345,7 +297,7 @@ function ProductReviewSection({ product }) {
         {reviews && reviews?.results?.length > 0 && (
           <>
             <div className="w-full p-5 rounded-md border border-neutral-300">
-              <ReviewSummary summary={ratingSummary} />
+              <ReviewSummary summary={reviews} />
             </div>
             {reviews.results.map((review) => (
               <div
@@ -372,6 +324,39 @@ function ProductReviewSection({ product }) {
                 <div className="text-neutral-700">{review?.comment}</div>
               </div>
             ))}
+
+            {/* Pagination Controls */}
+            {(reviews?.next || reviews?.previous) && (
+              <div className="flex items-center justify-between mt-6 p-4 border-t border-neutral-300">
+                <div className="text-sm text-neutral-600">
+                  Showing {reviews?.results?.length || 0} of {reviews?.count || 0} reviews
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(reviews?.previous)}
+                    disabled={!reviews?.previous || loading}
+                    className={`px-4 py-2 border-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                      reviews?.previous && !loading
+                        ? "border-neutral-700 bg-neutral-800 hover:bg-neutral-900 text-white cursor-pointer"
+                        : "border-neutral-300 bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(reviews?.next)}
+                    disabled={!reviews?.next || loading}
+                    className={`px-4 py-2 border-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                      reviews?.next && !loading
+                        ? "border-neutral-700 bg-neutral-800 hover:bg-neutral-900 text-white cursor-pointer"
+                        : "border-neutral-300 bg-neutral-200 text-neutral-400 cursor-not-allowed"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
         {reviews && reviews?.results?.length === 0 && (
@@ -381,7 +366,7 @@ function ProductReviewSection({ product }) {
               {/* <span className="font-light italic">{"<Displays only if product has no reviews yet>"}</span> */}
             </h4>
             <p className="text-neutral-700">
-              This product hasn’t been reviewed yet. You can share your thoughts
+              This product hasn't been reviewed yet. You can share your thoughts
               after purchasing it.
             </p>
           </div>

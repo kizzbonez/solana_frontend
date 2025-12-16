@@ -72,7 +72,7 @@ function CompareProductsTable({ similar_products, product }) {
     return label;
   };
 
-  if (compare_products.length > 0) {
+  if (compare_products.length > 1) {
     return (
       <div>
         <h2 className="text-2xl font-semibold text-stone-900 my-[20px]">

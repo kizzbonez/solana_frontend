@@ -14,7 +14,12 @@ import ProductDescription from "@/app/components/product/ProductDescription";
 import ProductSpecifications from "@/app/components/product/ProductSpecifications";
 import ProductGuidesInstallations from "@/app/components/product/ProductGuidesInstallations";
 import ProductShippingInformation from "@/app/components/product/ProductShippingInformation";
-import { BASE_URL, createSlug, formatPrice } from "@/app/lib/helpers";
+import {
+  BASE_URL,
+  calculateRatingSummary,
+  createSlug,
+  formatPrice,
+} from "@/app/lib/helpers";
 import { useSolanaCategories } from "@/app/context/category";
 import { useCart } from "@/app/context/cart";
 import FaqSection from "@/app/components/molecule/SingleProductFaqSection";
@@ -28,7 +33,10 @@ import { Eos3DotsLoading } from "@/app/components/icons/lib";
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 import AddToCartWidget from "@/app/components/widget/AddToCartWidget";
 import { Icon } from "@iconify/react";
-import { getProductsByCollectionId } from "@/app/lib/api";
+import {
+  getProductsByCollectionId,
+  getReviewsByProductId,
+} from "@/app/lib/api";
 
 const BreadCrumbs = ({ slug, product_title }) => {
   const { getNameBySlug } = useSolanaCategories();
@@ -934,6 +942,7 @@ export default function ProductClient({ params }) {
   const [product, setProduct] = useState(null);
   const [forage, setForage] = useState(null);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [reviews, setReviews] = useState(null);
   const {
     product: fetchedProduct,
     loading,
@@ -980,6 +989,29 @@ export default function ProductClient({ params }) {
       }
     }
   }, [loading, fetchedProduct, error]);
+
+  useEffect(() => {
+    if (!product || !product?.product_id) return;
+    const product_id = product.product_id;
+    // load reviews
+    const fetchReviews = async () => {
+      try {
+        const response = await getReviewsByProductId(product_id);
+        if (!response?.ok) {
+          setReviews(null);
+          return;
+        }
+        const data = await response.json();
+        const reviewStats = calculateRatingSummary(data);
+        const reviews = { ...data, ...reviewStats };
+        console.log(reviews);
+        setReviews(reviews);
+      } catch (err) {
+        console.warn("[fetchReviews]", err);
+      }
+    };
+    fetchReviews();
+  }, [product]);
 
   if (!product && loading) {
     return <ProductPlaceholder />;
@@ -1041,7 +1073,11 @@ export default function ProductClient({ params }) {
                 </div>
               </div>
               <div className="w-full lg:w-[50%]">
-                <ProductToCart product={product} loading={loading} />
+                <ProductToCart
+                  product={product}
+                  loading={loading}
+                  reviews={reviews}
+                />
                 <div className="py-[10px] flex flex-col gap-[15px] ">
                   <ProductOptions product={product} slug={slug} />
                   {product?.product_category && (
@@ -1076,7 +1112,7 @@ export default function ProductClient({ params }) {
 
           <div className="p-4">
             <div className="container max-w-7xl px-[0px] sm:px-[20px] mx-auto">
-              <ProductReviewSection product={product} />
+              <ProductReviewSection reviews={reviews} />
             </div>
           </div>
           {product && product?.sp_product_options && product?.handle && (

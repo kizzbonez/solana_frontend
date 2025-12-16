@@ -24,8 +24,8 @@ export const MAIN_PRODUCT_KEYWORDS = [
 export const shouldApplyMainProductSort = (query) => {
   if (!query) return false;
   const lowerQuery = query.toLowerCase().trim();
-  return MAIN_PRODUCT_KEYWORDS.some((keyword) =>
-    lowerQuery === keyword.toLowerCase()
+  return MAIN_PRODUCT_KEYWORDS.some(
+    (keyword) => lowerQuery === keyword.toLowerCase()
   );
 };
 
@@ -544,4 +544,61 @@ export const getInitialUiStateFromUrl = (url) => {
   } catch (err) {
     console.warn("[getInitialUiStateFromUrl] error", err);
   }
+};
+
+/**
+ * Calculates the overall average rating and the count of reviews by star using reduce.
+ *
+ * @param {object} reviews - The reviews object, expected to have a 'results' array of review objects.
+ * @returns {object|number} The summary object or 0 if no valid reviews are found.
+ */
+export const calculateRatingSummary = (reviews) => {
+  const reviewList = reviews?.results;
+
+  if (!Array.isArray(reviewList) || reviewList.length === 0) {
+    return 0;
+  }
+
+  // Initialize counts and totals using reduce
+  const initialAccumulator = {
+    totalScore: 0,
+    totalVotes: 0,
+    starCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+  };
+
+  const { totalScore, totalVotes, starCounts } = reviewList.reduce(
+    (acc, review) => {
+      const rating = review?.rating;
+
+      // Ensure the rating is a valid number between 1 and 5
+      if (typeof rating === "number" && rating >= 1 && rating <= 5) {
+        acc.totalScore += rating;
+        acc.totalVotes += 1;
+        acc.starCounts[rating] += 1;
+      }
+      return acc;
+    },
+    initialAccumulator
+  );
+
+  // Check if any valid votes were processed
+  if (totalVotes === 0) {
+    return 0;
+  }
+
+  const overallRating = totalScore / totalVotes;
+
+  // Structure the star breakdown data
+  const byStar = [
+    { name: "highest", star: 5, votes: starCounts[5] },
+    { name: "high", star: 4, votes: starCounts[4] },
+    { name: "mid", star: 3, votes: starCounts[3] },
+    { name: "low", star: 2, votes: starCounts[2] },
+    { name: "lowest", star: 1, votes: starCounts[1] },
+  ];
+
+  return {
+    overall_rating: overallRating.toFixed(1),
+    by_star: byStar,
+  };
 };
