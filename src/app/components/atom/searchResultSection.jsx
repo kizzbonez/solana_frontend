@@ -3,7 +3,6 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-
 import { useSolanaCategories } from "@/app/context/category";
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_BASE_URL;
@@ -11,12 +10,12 @@ const COLLAPSED_LIMIT = 3;
 
 // Helper function to capitalize first letter of each word
 const capitalizeWords = (str) => {
-  if (!str) return '';
+  if (!str) return "";
   return str
     .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 // Helper component for hover container
@@ -77,7 +76,7 @@ const ProductItem = ({ product, label }) => (
 function SearchResultSection({ section, onOptionSelect }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { getProductUrl } = useSolanaCategories();
+  const { getProductUrl, getPopularSearchUrl } = useSolanaCategories();
   const [expanded, setExpanded] = useState(false);
 
   const sectionData = useMemo(() => {
@@ -127,7 +126,8 @@ function SearchResultSection({ section, onOptionSelect }) {
           };
         case "popular":
           return {
-            href: `${BASE_URL}/search?query=${item}`,
+            // href: `${BASE_URL}/search?query=${item}`,
+            href: getPopularSearchUrl(item),
             key: `popular-search-${index}`,
             content: <SimpleTextItem text={capitalizeWords(item)} />,
           };
@@ -183,7 +183,9 @@ function SearchResultSection({ section, onOptionSelect }) {
   const canExpand = section?.data?.length > COLLAPSED_LIMIT;
   const shouldShowButton =
     canExpand &&
-    ["popular", "product", "category", "brand", "collections"].includes(section?.prop);
+    ["popular", "product", "category", "brand", "collections"].includes(
+      section?.prop
+    );
 
   return (
     <div>
@@ -191,9 +193,7 @@ function SearchResultSection({ section, onOptionSelect }) {
         {section.label}
       </div>
       <div
-        className={`w-full ${
-          expanded ? "max-h-[60vh] overflow-y-auto" : ""
-        }`}
+        className={`w-full ${expanded ? "max-h-[60vh] overflow-y-auto" : ""}`}
       >
         {sectionData.map(renderItem)}
       </div>

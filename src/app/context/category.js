@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useMemo } from "react";
-import { hasCommonValue } from "@/app/lib/helpers";
+import { BASE_URL, hasCommonValue } from "@/app/lib/helpers";
 import { usePathname } from "next/navigation";
 const CategoriesContext = createContext([]);
 
@@ -163,6 +163,16 @@ export function CategoriesProvider({ categories, children }) {
     return flatCategories.find(({ url }) => slug === url)?.name || "";
   };
 
+  const getPopularSearchUrl = (query) => {
+    console.log("query", query);
+    const category_url = flatCategories.find(
+      ({ name }) => name.toLowerCase() === query.toLowerCase()
+    );
+    return category_url?.url
+      ? `${BASE_URL}/${category_url?.url}`
+      : `${BASE_URL}/search?query=${query}`;
+  };
+
   const solana_categories = useMemo(() => {
     return categories.map((item) => ({ ...item }));
   }, [categories]);
@@ -180,6 +190,7 @@ export function CategoriesProvider({ categories, children }) {
         flatCategories,
         isPriceVisible,
         getNameBySlug,
+        getPopularSearchUrl,
         getProductUrl,
         getProductUrls,
         getProductCategories,
