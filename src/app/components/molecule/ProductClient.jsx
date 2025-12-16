@@ -10,7 +10,10 @@ import Link from "next/link";
 import Image from "next/image";
 import MediaGallery from "@/app/components/widget/MediaGalleryV2";
 import ProductToCart from "@/app/components/widget/ProductToCartV2";
-import ProductMetaTabs from "@/app/components/product/meta/Tabs";
+import ProductDescription from "@/app/components/product/ProductDescription";
+import ProductSpecifications from "@/app/components/product/ProductSpecifications";
+import ProductGuidesInstallations from "@/app/components/product/ProductGuidesInstallations";
+import ProductShippingInformation from "@/app/components/product/ProductShippingInformation";
 import { BASE_URL, createSlug, formatPrice } from "@/app/lib/helpers";
 import { useSolanaCategories } from "@/app/context/category";
 import { useCart } from "@/app/context/cart";
@@ -1064,7 +1067,10 @@ export default function ProductClient({ params }) {
           </div>
           <div className="p-4">
             <div className="container max-w-7xl px-[0px] sm:px-[20px] mx-auto">
-              <ProductMetaTabs product={product} />
+              <ProductDescription product={product} />
+              <ProductSpecifications product={product} />
+              <ProductGuidesInstallations product={product} />
+              <ProductShippingInformation product={product} />
             </div>
           </div>
 
