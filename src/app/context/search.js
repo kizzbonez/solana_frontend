@@ -562,6 +562,8 @@ export const SearchProvider = ({ children }) => {
         // - Show top 10 when query is empty
         // - Filter and prioritize by relevance when user is typing
         let popular_searches = [];
+        let popular_nav_items =
+          flatCategories.map(({ name }) => name.toLowerCase()) || [];
 
         if (!query || query.trim() === "") {
           // No query: show top 10 most popular
@@ -579,12 +581,7 @@ export const SearchProvider = ({ children }) => {
         } else {
           // Has query: filter by relevance and sort
           const queryLower = query.toLowerCase().trim();
-
-          console.log(
-            "🔍 popularSearches in getSearchResults:",
-            popularSearches.length,
-            popularSearches.slice(0, 3)
-          );
+          const queryWords = queryLower.split(" ");
 
           popular_searches = (popularSearches || [])
             .filter((item) => {
@@ -625,7 +622,16 @@ export const SearchProvider = ({ children }) => {
               return a.matchIndex - b.matchIndex;
             })
             .slice(0, 10)
-            .map((item) => item?.term);
+            .map((item) => (item?.term || "").toLowerCase());
+          // get nav item name match and use it as a popular search keyword
+          popular_nav_items = popular_nav_items.filter((name) => {
+            const nameLower = name.toLowerCase();
+            return queryWords.some((term) => nameLower.includes(term));
+          });
+          // then merge with popular nav items on top
+          popular_searches = [
+            ...new Set([...popular_nav_items, ...popular_searches]),
+          ];
         }
 
         const category_searches = filterNavigationItems(

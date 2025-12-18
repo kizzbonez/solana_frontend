@@ -45,7 +45,7 @@ const BreadCrumbs = ({ slug, product_title }) => {
   }
 
   return (
-    <div className="flex items-center gap-[10px]">
+    <div className="flex items-center gap-[10px] text-sm">
       <Link
         prefetch={false}
         href={`/`}
