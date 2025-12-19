@@ -40,10 +40,9 @@ export default async function handler(req, res) {
     // return res.status(response.status).json(data);
 
     // fetch collection data
-    const ESURL = "http://164.92.65.4:9200";
+    const ESURL = process.env.NEXT_ES_URL;
     const ESShard = ES_INDEX;
-    const ESApiKey =
-      "apiKey eHgtQWI1VUI0Nm1Xbl9IdGNfRG46bFZqUjQtMzJRN3kzdllmVjVDemNHdw==";
+    const ESApiKey = `apiKey ${process.env.NEXT_ES_API_KEY}`;
 
     const es_query = {
       query: {

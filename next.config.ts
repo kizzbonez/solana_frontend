@@ -1,5 +1,5 @@
 // next.config.ts
-import type { NextConfig } from 'next';
+import type { NextConfig } from "next";
 
 // 1. Define all necessary external hostnames once
 const imageDomains = [
@@ -27,30 +27,33 @@ const connectDomains = [
   "https://www.paypal.com",
   "https://www.google.com", // reCAPTCHA
   "https://www.gstatic.com", // reCAPTCHA
-  // "http://164.92.65.4", // Assuming 9200 is unnecessary and you need the IP
+  "https://es.solanabbqgrills.com", // ES
 ];
 
-const styleSrcDomains = [
-  "https://assets.braintreegateway.com",
-
-];
+const styleSrcDomains = ["https://assets.braintreegateway.com"];
 
 const frameSrcDomains = [
   "https://tag.trovo-tag.com",
   "https://assets.braintreegateway.com",
   "https://www.google.com", // reCAPTCHA
-  "https://www.gstatic.com" // reCAPTCHA frames
-]
+  "https://www.gstatic.com", // reCAPTCHA frames
+];
 
 const config: NextConfig = {
   // Required: Next.js Image component configuration
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'cdn11.bigcommerce.com' },
-      { protocol: 'https', hostname: 'onsite-cdn.sfo3.cdn.digitaloceanspaces.com' },
-      { protocol: 'https', hostname: 'bbq-spaces.sfo3.digitaloceanspaces.com' },
-      { protocol: 'https', hostname: 'cdn.shopify.com' },
-      { protocol: 'https', hostname: 'bbq-spaces.sfo3.cdn.digitaloceanspaces.com' },
+      { protocol: "https", hostname: "cdn11.bigcommerce.com" },
+      {
+        protocol: "https",
+        hostname: "onsite-cdn.sfo3.cdn.digitaloceanspaces.com",
+      },
+      { protocol: "https", hostname: "bbq-spaces.sfo3.digitaloceanspaces.com" },
+      { protocol: "https", hostname: "cdn.shopify.com" },
+      {
+        protocol: "https",
+        hostname: "bbq-spaces.sfo3.cdn.digitaloceanspaces.com",
+      },
     ],
   },
 
@@ -62,7 +65,9 @@ const config: NextConfig = {
       
       style-src 'self' 'unsafe-inline' ${styleSrcDomains.join(" ")};
 
-      img-src 'self' data: blob: ${imageDomains.map(d => `https://${d}`).join(" ")};
+      img-src 'self' data: blob: ${imageDomains
+        .map((d) => `https://${d}`)
+        .join(" ")};
 
       connect-src 'self' ${connectDomains.join(" ")}; 
 
