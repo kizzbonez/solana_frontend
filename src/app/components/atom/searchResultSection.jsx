@@ -131,6 +131,12 @@ function SearchResultSection({ section, onOptionSelect }) {
             key: `popular-search-${index}`,
             content: <SimpleTextItem text={capitalizeWords(item)} />,
           };
+        case "top-product":
+          return {
+            href: getProductUrl(item),
+            key: `top-product-result-${item?.handle}-${index}`,
+            content: <ProductItem product={item} label={label} />,
+          };
         case "product":
           return {
             href: getProductUrl(item),

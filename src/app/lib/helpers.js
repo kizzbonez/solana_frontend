@@ -1,5 +1,8 @@
 import brands_json from "@/app/data/filters/brands.json";
 import products_json from "@/app/data/filters/products.json";
+import popular_keywords_json from "@/app/data/popular_keyword.json";
+
+export const popular_keywords = popular_keywords_json;
 
 export const BASE_URL = process.env.NEXT_PUBLIC_SITE_BASE_URL;
 export const store_domain = process.env.NEXT_PUBLIC_STORE_DOMAIN;

@@ -17,6 +17,7 @@ import {
   createSlug,
   main_products,
   shouldApplyMainProductSort,
+  popular_keywords,
 } from "@/app/lib/helpers";
 
 // ============================================================================
@@ -66,6 +67,7 @@ export const SearchProvider = ({ children }) => {
   // ---------------------------------------------------------------------------
   const [productResults, setProductResults] = useState([]);
   const [productResultsCount, setProductResultsCount] = useState(0);
+  const [productHit, setProductHit] = useState(null);
   const [suggestionResults, setSuggestionResults] = useState([]);
   const [recentResults, setRecentResults] = useState([]);
   const [popularResults, setPopularResults] = useState([]);
@@ -541,6 +543,222 @@ export const SearchProvider = ({ children }) => {
   );
 
   // ---------------------------------------------------------------------------
+  // HELPER: Match Query Words
+  // ---------------------------------------------------------------------------
+  const matchesQueryWords = useCallback((text, queryWords) => {
+    if (!text || !queryWords || queryWords.length === 0) return false;
+    const textLower = text.toLowerCase();
+    return queryWords.some((word) => textLower.includes(word));
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // FUNCTION: Process Popular Search Result
+  // ---------------------------------------------------------------------------
+  const processPopularSearchResult = useCallback(
+    (query) => {
+      const static_keywords = popular_keywords;
+
+      if (!query || query.trim() === "") {
+        // No query: show top 10 static keywords alphabetically
+        return (static_keywords || [])
+          .sort((a, b) => a.localeCompare(b))
+          .slice(0, 10)
+          .map((item) => (item || "").toLowerCase());
+      }
+
+      const queryLower = query.toLowerCase().trim();
+      const queryWords = queryLower.split(" ");
+
+      // Filter and sort dynamic popularSearches from API
+      const dynamicResults = (popularSearches || [])
+        .filter((item) => {
+          if (
+            !item ||
+            typeof item !== "object" ||
+            !item.term ||
+            typeof item.term !== "string"
+          ) {
+            return false;
+          }
+          return matchesQueryWords(item.term, queryWords);
+        })
+        .map((item) => {
+          const termLower = item.term.toLowerCase();
+          return {
+            ...item,
+            startsWithQuery: termLower.startsWith(queryLower),
+            matchIndex: termLower.indexOf(queryLower),
+          };
+        })
+        .sort((a, b) => {
+          // Prioritize by: score > starts-with > match position
+          const scoreDiff = (b.score || 0) - (a.score || 0);
+          if (scoreDiff !== 0) return scoreDiff;
+
+          if (a.startsWithQuery && !b.startsWithQuery) return -1;
+          if (!a.startsWithQuery && b.startsWithQuery) return 1;
+
+          return a.matchIndex - b.matchIndex;
+        })
+        .slice(0, 10)
+        .map((item) => item.term.toLowerCase());
+
+      // Filter static keywords
+      const staticResults = (static_keywords || []).filter((keyword) =>
+        matchesQueryWords(keyword, queryWords)
+      );
+
+      // Merge and deduplicate, prioritizing static keywords
+      return [...new Set([...staticResults, ...dynamicResults])];
+    },
+    [popularSearches, matchesQueryWords]
+  );
+
+  // ---------------------------------------------------------------------------
+  // FUNCTION: Process Brand Search Result
+  // ---------------------------------------------------------------------------
+  const processBrandSearchResult = useCallback(
+    (query, brands) => {
+      const allBrands = (brands || []).map((item) => ({
+        name: item?.key,
+        url: createSlug(item?.key),
+      }));
+
+      if (!query || query.trim() === "") {
+        return allBrands;
+      }
+
+      const queryWords = query.toLowerCase().trim().split(" ");
+
+      // Filter brands that match any query word
+      const matchingBrands = (brands || [])
+        .map(({ key }) => key)
+        .filter((brand) => matchesQueryWords(brand, queryWords));
+
+      // Merge: matching brands first, then all brands (deduplicated)
+      const mergedNames = [
+        ...new Set([...matchingBrands, ...allBrands.map((item) => item?.name)]),
+      ];
+
+      return mergedNames.map((name) => ({
+        name,
+        url: createSlug(name || ""),
+      }));
+    },
+    [matchesQueryWords]
+  );
+
+  // ---------------------------------------------------------------------------
+  // FUNCTION: Process Collection Search Result
+  // ---------------------------------------------------------------------------
+  const processCollectionSearchResult = useCallback(
+    (query, collections) => {
+      const allCollections = collections.filter(
+        (item) =>
+          !HIDDEN_COLLECTIONS.map((hcol) => hcol.toLowerCase()).includes(
+            item.key.toLowerCase()
+          )
+      );
+
+      if (!query || query.trim() === "") {
+        return allCollections.map((item) => ({
+          name: item?.key,
+          url: `search?query=${query}&filter%3Acollections=${item?.key}`,
+        }));
+      }
+
+      const queryWords = query.toLowerCase().trim().split(" ");
+
+      const matchingCollections = (allCollections || [])
+        .map(({ key }) => key)
+        .filter((collection) => matchesQueryWords(collection, queryWords));
+
+      const mergedNames = [
+        ...new Set([
+          ...matchingCollections,
+          ...(allCollections || []).map(({ key }) => key),
+        ]),
+      ];
+
+      return mergedNames.map((item) => ({
+        name: item,
+        url: `search?query=${query}&filter%3Acollections=${item}`,
+      }));
+    },
+    [matchesQueryWords]
+  );
+
+  // ---------------------------------------------------------------------------
+  // FUNCTION: Process Products Search Result
+  // ---------------------------------------------------------------------------
+  const processProductSearchResult = useCallback(
+    (query, products) => {
+      const allProducts = products;
+
+      if (!query || query.trim() === "") {
+        return {
+          exactMatch: null,
+          products: allProducts,
+        };
+      }
+
+      const queryWords = query.toLowerCase().trim().split(" ");
+
+      // Check for exact match on last substring of title
+      const exactLastSubstringMatches = (allProducts || []).filter(
+        (product) => {
+          const title = (product.title || "").toLowerCase();
+          // Split by spaces and get the last token
+          const titleTokens = title.trim().split(/\s+/);
+          const lastToken = titleTokens[titleTokens.length - 1];
+
+          // Check if any query word exactly matches the last token
+          return queryWords.some((word) => word === lastToken);
+        }
+      );
+
+      // Create a Map for O(1) product lookups by title
+      const productsByTitle = new Map(
+        allProducts.map((product) => [
+          (product.title || "").toLowerCase(),
+          product,
+        ])
+      );
+
+      const matchingProducts = (allProducts || [])
+        .map(({ title }) => (title || "").toLowerCase())
+        .filter((title) => matchesQueryWords(title, queryWords));
+
+      const mergedNames = [
+        ...new Set([
+          ...matchingProducts,
+          ...(allProducts || []).map(({ title }) => title.toLowerCase()),
+        ]),
+      ];
+
+      // Use Map.get() instead of find() for O(1) lookup
+      const mergedNamesProduct = mergedNames
+        .map((item) => productsByTitle.get(item))
+        .filter((product) => product !== undefined);
+
+      // Prioritize exact last substring matches at the top
+      const exactMatchTitles = new Set(
+        exactLastSubstringMatches.map(({ title }) => title.toLowerCase())
+      );
+
+      const otherProducts = mergedNamesProduct.filter(
+        (product) => !exactMatchTitles.has(product.title.toLowerCase())
+      );
+
+      return {
+        exactMatch: exactLastSubstringMatches[0] || null,
+        products: [...exactLastSubstringMatches, ...otherProducts],
+      };
+    },
+    [matchesQueryWords]
+  );
+
+  // ---------------------------------------------------------------------------
   // FUNCTION: Get Search Results (Recent, Popular, Categories, Brands)
   // ---------------------------------------------------------------------------
   const getSearchResults = useCallback(
@@ -558,94 +776,15 @@ export const SearchProvider = ({ children }) => {
                 )
                 .sort((a, b) => b.timestamp - a.timestamp);
 
-        // Popular searches logic:
-        // - Show top 10 when query is empty
-        // - Filter and prioritize by relevance when user is typing
-        let popular_searches = [];
-        let popular_nav_items =
-          flatCategories.map(({ name }) => name.toLowerCase()) || [];
-
-        if (!query || query.trim() === "") {
-          // No query: show top 10 most popular
-          console.log(
-            "📊 popularSearches (no query):",
-            popularSearches.length,
-            popularSearches.slice(0, 3)
-          );
-
-          popular_searches = (popularSearches || [])
-            .filter((item) => item && typeof item === "object" && item.term)
-            .sort((a, b) => (b.score || 0) - (a.score || 0))
-            .slice(0, 10)
-            .map((item) => item.term);
-        } else {
-          // Has query: filter by relevance and sort
-          const queryLower = query.toLowerCase().trim();
-          const queryWords = queryLower.split(" ");
-
-          popular_searches = (popularSearches || [])
-            .filter((item) => {
-              // Defensive check: ensure item has a term property that's a string
-              if (!item || typeof item !== "object") {
-                console.warn("Invalid item in popularSearches:", item);
-                return false;
-              }
-              if (!item.term || typeof item.term !== "string") {
-                console.warn("Invalid term in popularSearches item:", item);
-                return false;
-              }
-              const termLower = item.term.toLowerCase();
-              return termLower.includes(queryLower);
-            })
-            .map((item) => {
-              const termLower = item?.term?.toLowerCase() || "";
-              // Prioritize: starts with query > contains query
-              const startsWithQuery = termLower.startsWith(queryLower);
-              const matchIndex = termLower.indexOf(queryLower);
-
-              return {
-                ...item,
-                startsWithQuery,
-                matchIndex,
-              };
-            })
-            .sort((a, b) => {
-              // First: higher score (popularity) - most important!
-              const scoreDiff = (b.score || 0) - (a.score || 0);
-              if (scoreDiff !== 0) return scoreDiff;
-
-              // Second: prioritize starts-with matches
-              if (a.startsWithQuery && !b.startsWithQuery) return -1;
-              if (!a.startsWithQuery && b.startsWithQuery) return 1;
-
-              // Third: earlier match position
-              return a.matchIndex - b.matchIndex;
-            })
-            .slice(0, 10)
-            .map((item) => (item?.term || "").toLowerCase());
-          // get nav item name match and use it as a popular search keyword
-          popular_nav_items = popular_nav_items.filter((name) => {
-            const nameLower = name.toLowerCase();
-            return queryWords.some((term) => nameLower.includes(term));
-          });
-          // then merge with popular nav items on top
-          popular_searches = [
-            ...new Set([...popular_nav_items, ...popular_searches]),
-          ];
-        }
-
+        const popular_searches = processPopularSearchResult(query);
+        setPopularResults(popular_searches);
         const category_searches = filterNavigationItems(
           "custom_page",
           query,
           suggest
         );
-        const brand_searches = (brands || []).map((item) => ({
-          name: item?.key,
-          url: createSlug(item?.key),
-        }));
-
-        setPopularResults(popular_searches);
         setCategoryResults(category_searches);
+        const brand_searches = processBrandSearchResult(query, brands);
         setBrandResults(brand_searches);
 
         return {
@@ -703,31 +842,33 @@ export const SearchProvider = ({ children }) => {
         const suggest_options = dym?.options;
         const sku_ac_options = sku_ac?.options || [];
         const aggs_brands = data?.aggregations?.brands_facet?.buckets || [];
-        const aggs_collections = (
-          data?.aggregations?.collections_facet?.buckets || []
-        ).map((item) => {
-          const url = `search?query=${trim_query}&filter%3Acollections=${item?.key}`;
-          return { name: item?.key, url };
-        });
-
-        console.log("🔎 fetchProducts results:", {
-          query: trim_query,
-          productsCount: formatted_results?.length,
-          brandsCount: aggs_brands?.length,
-          collectionsCount: aggs_collections?.length,
-          skusCount: sku_ac_options?.length,
-        });
+        const aggs_collections =
+          data?.aggregations?.collections_facet?.buckets || [];
 
         setSkusResults(trim_query.length > 2 ? sku_ac_options || [] : []);
-        setCollectionsResults(
-          aggs_collections.filter((i) => !HIDDEN_COLLECTIONS.includes(i.name))
+
+        const collection_results = processCollectionSearchResult(
+          trim_query,
+          aggs_collections
         );
-        setProductResults(formatted_results || []);
+
+        setCollectionsResults(collection_results);
+        const { exactMatch, products } = processProductSearchResult(
+          trim_query,
+          formatted_results || []
+        );
+
+        setProductHit(exactMatch);
+        setProductResults(products);
+
         setSuggestionResults(
           trim_query.length > MIN_SUGGESTION_LENGTH ? suggest_options || [] : []
         );
+
         setProductResultsCount(result_total_count || 0);
+
         setLoading(false);
+
         getSearchResults(
           trim_query,
           suggest_options?.[0]?.text || "",
@@ -840,7 +981,6 @@ export const SearchProvider = ({ children }) => {
         // Fetch top 100 popular searches for better filtering (NO query filter on initial load)
         const res = await fetch("/api/popular_searches?limit=100");
         const data = await res.json();
-        console.log("📊 Popular searches fetched:", data?.length, data);
 
         if (!data || data.length === 0) {
           console.warn("⚠️ No popular searches returned from API");
@@ -854,7 +994,6 @@ export const SearchProvider = ({ children }) => {
           .sort((a, b) => b.score - a.score)
           .slice(0, 10)
           .map((item) => item?.term);
-        console.log("📊 Popular results initialized:", popular);
         setPopularResults(popular);
       } catch (err) {
         console.error("Failed to fetch popular searches", err);
@@ -875,7 +1014,6 @@ export const SearchProvider = ({ children }) => {
         .slice(0, 10)
         .map((item) => item?.term);
       setPopularResults(initPopular);
-      console.log("🔄 Popular results synced after load:", initPopular);
     }
   }, [popularSearches, searchQuery]);
 
@@ -936,29 +1074,37 @@ export const SearchProvider = ({ children }) => {
   // ---------------------------------------------------------------------------
   const searchResults = useMemo(() => {
     const newSearchResults = [
+      // {
+      //   total: skusResults.length,
+      //   prop: "skus",
+      //   label: "SKU",
+      //   visible: true,
+      //   data: skusResults,
+      //   showExpand: skusResults.length > 0,
+      // },
+      // {
+      //   total: suggestionResults?.length || 0,
+      //   prop: "suggestion",
+      //   label: "Did you mean",
+      //   visible: true,
+      //   data: suggestionResults || [],
+      //   showExpand: (suggestionResults?.length || 0) > 3,
+      // },
+      // {
+      //   total: recentResults.length,
+      //   prop: "recent",
+      //   label: "Recent",
+      //   visible: true,
+      //   data: recentResults,
+      //   showExpand: recentResults.length > 3,
+      // },
       {
-        total: skusResults.length,
-        prop: "skus",
-        label: "SKU",
+        total: productHit ? 1 : 0,
+        prop: "top-product",
+        label: "Top Result",
         visible: true,
-        data: skusResults,
-        showExpand: skusResults.length > 0,
-      },
-      {
-        total: suggestionResults?.length || 0,
-        prop: "suggestion",
-        label: "Did you mean",
-        visible: true,
-        data: suggestionResults || [],
-        showExpand: (suggestionResults?.length || 0) > 3,
-      },
-      {
-        total: recentResults.length,
-        prop: "recent",
-        label: "Recent",
-        visible: true,
-        data: recentResults,
-        showExpand: recentResults.length > 3,
+        data: productHit ? [productHit] : [],
+        showExpand: productHit !== null,
       },
       {
         total: popularResults?.length || 0,
@@ -1007,13 +1153,6 @@ export const SearchProvider = ({ children }) => {
     }
 
     const finalResults = loading ? oldSearchResults.current : newSearchResults;
-    console.log(
-      "📋 searchResults memo:",
-      finalResults.map((s) => ({
-        prop: s.prop,
-        dataLength: s.data?.length,
-      }))
-    );
 
     return finalResults;
   }, [
@@ -1021,6 +1160,7 @@ export const SearchProvider = ({ children }) => {
     recentResults,
     popularResults,
     productResults,
+    productHit,
     categoryResults,
     brandResults,
     collectionsResults,
