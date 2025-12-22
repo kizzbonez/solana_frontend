@@ -605,3 +605,12 @@ export const calculateRatingSummary = (reviews) => {
     by_star: byStar,
   };
 };
+
+export const STAR_FILTERS = {
+  5: "★★★★★",
+  4: "★★★★☆",
+  3: "★★★☆☆",
+  2: "★★☆☆☆",
+  1: "★☆☆☆☆",
+  0: "No Star",
+};

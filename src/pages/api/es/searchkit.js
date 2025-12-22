@@ -10,6 +10,7 @@ import {
   exclude_collections,
   main_products,
   shouldApplyMainProductSort,
+  STAR_FILTERS,
 } from "../../../app/lib/helpers";
 
 const createSortScriptWithQuery = (searchQuery) => ({
@@ -117,6 +118,163 @@ const apiClient = API({
     ],
     facet_attributes: [
       {
+        attribute: "ways_to_shop",
+        type: "string",
+
+        facetQuery: () => ({
+          filters: {
+            filters: {
+              "Top Rated": {
+                terms: { "ratings.rating_count.keyword": ["3", "4", "5"] },
+              },
+              "Clearance/Open Box": {
+                bool: {
+                  should: [
+                    {
+                      wildcard: {
+                        "collections.name.keyword": {
+                          value: "*clearance*",
+                          case_insensitive: true, // Added this
+                        },
+                      },
+                    },
+                    {
+                      wildcard: {
+                        "collections.name.keyword": {
+                          value: "*open box*",
+                          case_insensitive: true, // Added this
+                        },
+                      },
+                    },
+                  ],
+                },
+              },
+              "Package Deals": {
+                wildcard: {
+                  "collections.name.keyword": {
+                    value: "*package deal*",
+                    case_insensitive: true, // Added this
+                  },
+                },
+              },
+            },
+          },
+        }),
+
+        facetResponse: (aggregation) => {
+          const buckets = aggregation.buckets || {};
+          // Sort logic: Ensure they always appear in a specific order
+          const order = ["Top Rated", "Clearance/Open Box", "Package Deals"];
+
+          return order.reduce((acc, key) => {
+            const count = buckets[key]?.doc_count ?? 0;
+            if (count > 0) {
+              acc[key] = count;
+            }
+            return acc;
+          }, {});
+        },
+
+        filterQuery: (field, value) => {
+          const queries = {
+            "Top Rated": {
+              terms: { "ratings.rating_count.keyword": ["3", "4", "5"] },
+            },
+            "Clearance/Open Box": {
+              bool: {
+                should: [
+                  {
+                    wildcard: {
+                      "collections.name.keyword": {
+                        value: "*clearance*",
+                        case_insensitive: true,
+                      },
+                    },
+                  },
+                  {
+                    wildcard: {
+                      "collections.name.keyword": {
+                        value: "*open box*",
+                        case_insensitive: true,
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            "Package Deals": {
+              wildcard: {
+                "collections.name.keyword": {
+                  value: "*package deal*",
+                  case_insensitive: true,
+                },
+              },
+            },
+          };
+
+          return queries[value] || {};
+        },
+      },
+      {
+        attribute: "ratings",
+        field: "ratings.rating_count.keyword",
+        type: "string",
+
+        facetQuery: () => ({
+          filters: {
+            filters: {
+              [STAR_FILTERS[0]]: {
+                term: { "ratings.rating_count.keyword": "0" },
+              },
+              [STAR_FILTERS[1]]: {
+                term: { "ratings.rating_count.keyword": "1" },
+              },
+              [STAR_FILTERS[2]]: {
+                term: { "ratings.rating_count.keyword": "2" },
+              },
+              [STAR_FILTERS[3]]: {
+                term: { "ratings.rating_count.keyword": "3" },
+              },
+              [STAR_FILTERS[4]]: {
+                term: { "ratings.rating_count.keyword": "4" },
+              },
+              [STAR_FILTERS[5]]: {
+                term: { "ratings.rating_count.keyword": "5" },
+              },
+            },
+          },
+        }),
+
+        facetResponse: (aggregation) => {
+          const buckets = aggregation.buckets || {};
+          return Object.keys(buckets).reduce((acc, key) => {
+            const count = buckets[key]?.doc_count ?? 0;
+            if (count > 0) {
+              acc[key] = count;
+            }
+            return acc;
+          }, {});
+        },
+
+        filterQuery: (field, value) => {
+          // 'value' is the star string (e.g., "★★★★★")
+          // We find the numeric key ("5") that matches that string
+          const esValue = Object.keys(STAR_FILTERS).find(
+            (key) => STAR_FILTERS[key] === value
+          );
+
+          if (esValue !== undefined) {
+            return {
+              term: {
+                [field]: esValue,
+              },
+            };
+          }
+
+          return {};
+        },
+      },
+      {
         attribute: "product_category",
         field: "product_category.category_name.keyword",
         type: "string",
@@ -174,7 +332,6 @@ const apiClient = API({
           return {};
         },
       },
-
       {
         attribute: "no_of_burners",
         field: "accentuate_data.bbq.number_of_main_burners",
@@ -566,7 +723,10 @@ export default async function handler(req, res) {
               console.log(`\nRequest ${idx}:`);
               console.log("- Params:", JSON.stringify(req.params, null, 2));
               console.log("- Body keys:", Object.keys(req.body));
-              console.log("- Query keys:", req.body.query ? Object.keys(req.body.query) : "no query");
+              console.log(
+                "- Query keys:",
+                req.body.query ? Object.keys(req.body.query) : "no query"
+              );
             });
             console.log("============================\n");
 
@@ -580,7 +740,7 @@ export default async function handler(req, res) {
 
               // Helper function to recursively search for query in nested structures
               const extractQuery = (obj) => {
-                if (!obj || typeof obj !== 'object') return null;
+                if (!obj || typeof obj !== "object") return null;
 
                 // Check if current object has multi_match.query
                 if (obj.multi_match?.query) {
@@ -614,15 +774,22 @@ export default async function handler(req, res) {
               }
 
               // Check if main product sorting should be applied
-              const applyMainProductSort = shouldApplyMainProductSort(searchQuery);
+              const applyMainProductSort =
+                shouldApplyMainProductSort(searchQuery);
 
               console.log("=== [Searchkit API Debug] ===");
               console.log("Search Query:", searchQuery);
               console.log("Request Params:", sr.params);
-              console.log("Query structure:", JSON.stringify(sr.body.query, null, 2));
+              console.log(
+                "Query structure:",
+                JSON.stringify(sr.body.query, null, 2)
+              );
               console.log("Apply Main Product Sort:", applyMainProductSort);
               console.log("isPopular:", isPopular);
-              console.log("Sort being applied:", isPopular ? "Popular sort (with custom logic)" : "Other sort");
+              console.log(
+                "Sort being applied:",
+                isPopular ? "Popular sort (with custom logic)" : "Other sort"
+              );
               console.log("============================");
 
               // Replace the default query with our custom search logic to match context/search.js

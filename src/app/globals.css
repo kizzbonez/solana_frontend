@@ -911,3 +911,12 @@ body.gallery-fullscreen-active .product-option-item-link {
   z-index: -10 !important;
   pointer-events: none !important;
 }
+
+.ais-RefinementList-checkbox[value*="★"] + .ais-RefinementList-labelText,
+.ais-RefinementList-checkbox[value*="☆"] + .ais-RefinementList-labelText {
+  color: #fac411;
+  -webkit-text-stroke: 1px #2e2e2e;
+  font-size: 22px;
+  font-family: "Poppins", sans-serif; /* Ensures stars render consistently */
+  font-weight: thin;
+}
