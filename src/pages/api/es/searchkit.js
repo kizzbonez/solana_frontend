@@ -157,6 +157,14 @@ const apiClient = API({
                   },
                 },
               },
+              Promotions: {
+                wildcard: {
+                  "collections.name.keyword": {
+                    value: "*promotion*",
+                    case_insensitive: true, // Added this
+                  },
+                },
+              },
             },
           },
         }),
@@ -164,7 +172,12 @@ const apiClient = API({
         facetResponse: (aggregation) => {
           const buckets = aggregation.buckets || {};
           // Sort logic: Ensure they always appear in a specific order
-          const order = ["Top Rated", "Clearance/Open Box", "Package Deals"];
+          const order = [
+            "Top Rated",
+            "Clearance/Open Box",
+            "Package Deals",
+            "Promotions",
+          ];
 
           return order.reduce((acc, key) => {
             const count = buckets[key]?.doc_count ?? 0;
@@ -206,6 +219,14 @@ const apiClient = API({
               wildcard: {
                 "collections.name.keyword": {
                   value: "*package deal*",
+                  case_insensitive: true,
+                },
+              },
+            },
+            Promotions: {
+              wildcard: {
+                "collections.name.keyword": {
+                  value: "*promotion*",
                   case_insensitive: true,
                 },
               },
