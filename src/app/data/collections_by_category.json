@@ -1,0 +1,478 @@
+[
+  {
+    "category_name": "Fireplaces",
+    "collections": ["Shop All Outdoor Fireplaces"]
+  },
+  {
+    "category_name": "Patio Heaters",
+    "collections": [
+      "Electric Patio Heaters",
+      "Gas Patio Heaters",
+      "Freestanding Patio Heaters"
+    ]
+  },
+  {
+    "category_name": "Built-In Grills",
+    "collections": ["Shop All Built In Grills"]
+  },
+  {
+    "category_name": "Freestanding Grills",
+    "collections": ["Shop All Freestanding Grills"]
+  },
+  {
+    "category_name": "Open Box",
+    "collections": ["Shop All Open Box"]
+  },
+  {
+    "category_name": "Gas Fireplaces",
+    "collections": ["Gas Fireplaces"]
+  },
+  {
+    "category_name": "Electric Fireplaces",
+    "collections": ["Electric Fireplaces"]
+  },
+  {
+    "category_name": "Shop All Fireplaces",
+    "collections": ["Shop All Outdoor Fireplaces"]
+  },
+  {
+    "category_name": "Gas Patio Heaters",
+    "collections": ["Gas Patio Heaters"]
+  },
+  {
+    "category_name": "Electric Patio Heaters",
+    "collections": ["Electric Patio Heaters"]
+  },
+  {
+    "category_name": "Freestanding Patio Heaters",
+    "collections": ["Freestanding Gas Patio Heaters"]
+  },
+  {
+    "category_name": "Shop All Patio Heaters",
+    "collections": ["Shop All Patio Heaters"]
+  },
+  {
+    "category_name": "Built-In Grills",
+    "collections": ["Shop Built-In Grills"]
+  },
+  {
+    "category_name": "Shop Blaze Built-In Grills",
+    "collections": ["Blaze Built-In Grills"]
+  },
+  {
+    "category_name": "Shop Bull Built-In Grills",
+    "collections": ["Bull Built-In Grills"]
+  },
+  {
+    "category_name": "Shop Twin Eagles Built-In Grills",
+    "collections": ["Twin Eagles Built-In Grills"]
+  },
+  {
+    "category_name": "Shop Eloquence Built-In Grills",
+    "collections": ["Eloquence Grills"]
+  },
+  {
+    "category_name": "Shop All Built-In Grills",
+    "collections": ["Shop All Built In Grills"]
+  },
+  {
+    "category_name": "Shop Blaze Freestanding Grills",
+    "collections": ["Blaze Freestanding Grills"]
+  },
+  {
+    "category_name": "Shop Bull Freestanding Grills",
+    "collections": ["Bull Freestanding Grills"]
+  },
+  {
+    "category_name": "Shop Twin Eagles Freestanding Grills",
+    "collections": ["Twin Eagles Freestanding Grills"]
+  },
+  {
+    "category_name": "Shop All Freestanding Grills",
+    "collections": ["Shop All Freestanding Grills"]
+  },
+  {
+    "category_name": "Shop All Open Box",
+    "collections": ["Shop All Open Box"]
+  },
+  {
+    "category_name": "Shop Open Box Grills",
+    "collections": ["Shop Open Box Grills"]
+  },
+  {
+    "category_name": "Shop Open Box Storage",
+    "collections": ["Shop Open Box Storage"]
+  },
+  {
+    "category_name": "Shop Open Box Accessories",
+    "collections": ["Shop Open Box Accessories"]
+  },
+  {
+    "category_name": "Close Out Deals",
+    "collections": ["Close Out Deals"]
+  },
+  {
+    "category_name": "Package Deals",
+    "collections": ["Package Deals"]
+  },
+  {
+    "category_name": "Clearance Sale",
+    "collections": ["Clearance Sale"]
+  },
+  {
+    "category_name": "Blaze Open Box",
+    "collections": ["Blaze Open Box"]
+  },
+  {
+    "category_name": "Blaze Grills",
+    "collections": ["Blaze Grills"]
+  },
+  {
+    "category_name": "Blaze Side Burners",
+    "collections": ["Blaze Side Burners"]
+  },
+  {
+    "category_name": "Blaze Storage",
+    "collections": ["Blaze Storage"]
+  },
+  {
+    "category_name": "Blaze Refrigeration",
+    "collections": ["Blaze Refrigeration"]
+  },
+  {
+    "category_name": "Blaze Accessories",
+    "collections": ["Blaze Accessories"]
+  },
+  {
+    "category_name": "Blaze Island Packages",
+    "collections": ["Blaze Island Packages"]
+  },
+  {
+    "category_name": "Blaze Package Deals",
+    "collections": ["Blaze Package Deals"]
+  },
+  {
+    "category_name": "Bull Open Box",
+    "collections": ["Bull Open Box"]
+  },
+  {
+    "category_name": "Bull Grills",
+    "collections": ["Bull Grills"]
+  },
+  {
+    "category_name": "Bull Side Burners",
+    "collections": ["Bull Side Burners"]
+  },
+  {
+    "category_name": "Bull Storage",
+    "collections": ["Bull Storage"]
+  },
+  {
+    "category_name": "Bull Refrigeration",
+    "collections": ["Bull Refrigeration"]
+  },
+  {
+    "category_name": "Bull Accessories",
+    "collections": ["Bull Accessories"]
+  },
+  {
+    "category_name": "Bull Island Packages",
+    "collections": ["Bull Island Packages"]
+  },
+  {
+    "category_name": "Bull Package Deals",
+    "collections": ["Bull Package Deals"]
+  },
+  {
+    "category_name": "American Outdoor Grill (BBQ Grills)",
+    "collections": ["American Outdoor Grill (BBQ Grills)"]
+  },
+  {
+    "category_name": "American Outdoor Grill Side Burners",
+    "collections": ["American Outdoor Grill Side Burners"]
+  },
+  {
+    "category_name": "American Outdoor Grills Accessories",
+    "collections": ["American Outdoor Grill Accessories"]
+  },
+  {
+    "category_name": "AOG Package Deals",
+    "collections": ["AOG Package Deals"]
+  },
+  {
+    "category_name": "Bonfire Open Box",
+    "collections": ["Bonfire Open Box"]
+  },
+  {
+    "category_name": "Bonfire Grills",
+    "collections": ["Bonfire Grills"]
+  },
+  {
+    "category_name": "Bonfire Side Buners",
+    "collections": ["Bonfire Side Burners"]
+  },
+  {
+    "category_name": "Bonfire Storage",
+    "collections": ["Bonfire Storage"]
+  },
+  {
+    "category_name": "Bonfire Accessories",
+    "collections": ["Bonfire Accessories"]
+  },
+  {
+    "category_name": "Bonfire Package Deals",
+    "collections": ["Bonfire Package Deals"]
+  },
+  {
+    "category_name": "Delta Heat Open Box",
+    "collections": ["Delta Heat Open Box"]
+  },
+  {
+    "category_name": "Delta Heat Grills",
+    "collections": ["Delta Heat Grills"]
+  },
+  {
+    "category_name": "Delta Heat Side Burners",
+    "collections": ["Delta Heat Side Burners"]
+  },
+  {
+    "category_name": "Delta Heat Storage",
+    "collections": ["Delta Heat Storage"]
+  },
+  {
+    "category_name": "Delta Heat Refrigeration",
+    "collections": ["Delta Heat Refrigeration"]
+  },
+  {
+    "category_name": "Delta Heat Accessories",
+    "collections": ["Delta Heat Accessories"]
+  },
+  {
+    "category_name": "Delta Heat Package Deals",
+    "collections": ["Delta Heat Package Deals"]
+  },
+  {
+    "category_name": "Sunstone Open Box",
+    "collections": ["Sunstone Open Box"]
+  },
+  {
+    "category_name": "Sunstone Grills",
+    "collections": ["Sunstone Grills"]
+  },
+  {
+    "category_name": "Sunstone Side Burners",
+    "collections": ["Sunstone Side Burners"]
+  },
+  {
+    "category_name": "Sunstone Storage",
+    "collections": ["Sunstone Storage"]
+  },
+  {
+    "category_name": "Sunstone Refrigeration",
+    "collections": ["Sunstone Refrigeration"]
+  },
+  {
+    "category_name": "Sunstone Accessories",
+    "collections": ["Sunstone Accessories"]
+  },
+  {
+    "category_name": "Sunstone Package Deals",
+    "collections": ["Sunstone Package Deals"]
+  },
+  {
+    "category_name": "RCS Open Box",
+    "collections": ["RCS Open Box"]
+  },
+  {
+    "category_name": "RCS Grills",
+    "collections": ["RCS Grills"]
+  },
+  {
+    "category_name": "RCS Side Burners",
+    "collections": ["RCS Side Burners"]
+  },
+  {
+    "category_name": "RCS Storage",
+    "collections": ["RCS Storage"]
+  },
+  {
+    "category_name": "RCS Refrigeration",
+    "collections": ["RCS Refrigeration"]
+  },
+  {
+    "category_name": "RCS Accessories",
+    "collections": ["RCS Accessories"]
+  },
+  {
+    "category_name": "RCS Package Deals",
+    "collections": ["RCS Package Deals"]
+  },
+  {
+    "category_name": "Napoleon Open Box",
+    "collections": ["Napoleon Open Box"]
+  },
+  {
+    "category_name": "Napoleon Grills",
+    "collections": ["Napoleon Grills"]
+  },
+  {
+    "category_name": "Napoleon Side Burners",
+    "collections": ["Napoleon Side Burners"]
+  },
+  {
+    "category_name": "Napoleon Storage",
+    "collections": ["Napoleon Storage"]
+  },
+  {
+    "category_name": "Napoleon Refrigeration",
+    "collections": ["Napoleon Refrigeration"]
+  },
+  {
+    "category_name": "Napoleon Accessories",
+    "collections": ["Napoleon Accessories"]
+  },
+  {
+    "category_name": "Napoleon Package Deals",
+    "collections": ["Napoleon Package Deals"]
+  },
+  {
+    "category_name": "Summerset Open Box",
+    "collections": ["Summerset Open Box"]
+  },
+  {
+    "category_name": "Summerset Grills",
+    "collections": ["Summerset Grills"]
+  },
+  {
+    "category_name": "Summerset Side Burners",
+    "collections": ["Summerset Side Burners"]
+  },
+  {
+    "category_name": "Summerset Storage",
+    "collections": ["Summerset Storage"]
+  },
+  {
+    "category_name": "Summerset Refrigeration",
+    "collections": ["Summerset Refrigeration"]
+  },
+  {
+    "category_name": "Summerset Accessories",
+    "collections": ["Summerset Accessories"]
+  },
+  {
+    "category_name": "Summerset Package Deals",
+    "collections": ["Summerset Package Deals"]
+  },
+  {
+    "category_name": "TEC Open Box",
+    "collections": ["TEC Open Box"]
+  },
+  {
+    "category_name": "TEC BBQ Grills",
+    "collections": ["TEC Grills"]
+  },
+  {
+    "category_name": "TEC Side Burners",
+    "collections": ["TEC Side Burners"]
+  },
+  {
+    "category_name": "TEC Storage",
+    "collections": ["TEC Storage"]
+  },
+  {
+    "category_name": "TEC Refrigeration",
+    "collections": ["TEC Refrigeration"]
+  },
+  {
+    "category_name": "Le Griddle Grills",
+    "collections": ["Le Griddle Grills"]
+  },
+  {
+    "category_name": "Le Griddle Accessories",
+    "collections": ["Le Griddle Accessories"]
+  },
+  {
+    "category_name": "Le Griddle Package Deals",
+    "collections": ["Le Griddle Package Deals"]
+  },
+  {
+    "category_name": "Broilmaster Open Box",
+    "collections": ["Broilmaster Open Box"]
+  },
+  {
+    "category_name": "Broilmaster Grills",
+    "collections": ["Broilmaster Grills"]
+  },
+  {
+    "category_name": "Broilmaster Side Burners",
+    "collections": ["Broilmaster Side Burners"]
+  },
+  {
+    "category_name": "Broilmaster Storage",
+    "collections": ["Broilmaster Storage"]
+  },
+  {
+    "category_name": "Broilmaster Accessories",
+    "collections": ["Broilmaster Accessories"]
+  },
+  {
+    "category_name": "PGS Open Box",
+    "collections": ["PGS Open Box"]
+  },
+  {
+    "category_name": "PGS Grills",
+    "collections": ["PGS Grills"]
+  },
+  {
+    "category_name": "PGS Side Burners",
+    "collections": ["PGS Side Burners"]
+  },
+  {
+    "category_name": "PGS Storage",
+    "collections": ["PGS Storage"]
+  },
+  {
+    "category_name": "PGS Accessories",
+    "collections": ["PGS Accessories"]
+  },
+  {
+    "category_name": "PGS Package Deals",
+    "collections": ["PGS Package Deals"]
+  },
+  {
+    "category_name": "PCM Open Box",
+    "collections": ["PCM Open Box"]
+  },
+  {
+    "category_name": "PCM Storage",
+    "collections": ["PCM Storage"]
+  },
+  {
+    "category_name": "PCM Package Deals",
+    "collections": ["PCM Package Deals"]
+  },
+  {
+    "category_name": "MHP Grills",
+    "collections": ["MHP Grills"]
+  },
+  {
+    "category_name": "Eloquence",
+    "collections": ["Shop-Eloquence"]
+  },
+  {
+    "category_name": "Eloquence Grills",
+    "collections": ["Eloquence Grills"]
+  },
+  {
+    "category_name": "Eloquence Side Burners",
+    "collections": ["Eloquence Side Burners"]
+  },
+  {
+    "category_name": "Eloquence Storage",
+    "collections": ["Eloquence Storage"]
+  },
+  {
+    "category_name": "Eloquence Accessories",
+    "collections": ["Eloquence Accessories"]
+  }
+]

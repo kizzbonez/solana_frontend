@@ -1,6 +1,11 @@
 "use client";
 import { createContext, useContext, useMemo } from "react";
-import { BASE_URL, hasCommonValue } from "@/app/lib/helpers";
+import {
+  BASE_URL,
+  hasCommonValue,
+  BaseNavObj,
+  BaseNavKeys,
+} from "@/app/lib/helpers";
 import { usePathname } from "next/navigation";
 const CategoriesContext = createContext([]);
 
@@ -179,8 +184,27 @@ export function CategoriesProvider({ categories, children }) {
 
   const flatCategories = useMemo(() => {
     const _flatCategories = flattenCategories(categories);
-    return _flatCategories;
+    return _flatCategories || [];
   }, [categories]);
+
+  const collectionsByCategory = useMemo(() => {
+    const mapped = flatCategories
+      .filter(({ name }) => !["Home", "Search"].includes(name))
+      .filter((item) => !!item?.collection_display)
+      .map(({ name, collection_display }) => ({
+        category_name: name,
+        collections: [collection_display?.name],
+      }));
+
+    const baseNavItems = Object.entries(BaseNavObj).map(([key, value]) => ({
+      category_name: key,
+      collections: value,
+    }));
+
+    const result = [...baseNavItems, ...mapped];
+    // console.log("processed category", result);
+    return result;
+  }, [flatCategories]);
 
   return (
     <CategoriesContext.Provider

@@ -33,11 +33,11 @@ export default async function handler(req, res) {
   // Return top results (limited by limit parameter)
   const finalResults = filtered.slice(0, limit);
 
-  console.log("popular", {
-    query,
-    limit,
-    count: finalResults.length,
-    results: finalResults,
-  });
+  // console.log("popular", {
+  //   query,
+  //   limit,
+  //   count: finalResults.length,
+  //   results: finalResults,
+  // });
   res.status(200).json(finalResults);
 }

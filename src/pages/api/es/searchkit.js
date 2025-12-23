@@ -2,7 +2,6 @@
 import API from "@searchkit/api";
 
 import {
-  BaseNavKeys,
   BaseNavObj,
   burnerBuckets,
   ES_INDEX,
@@ -13,44 +12,7 @@ import {
   STAR_FILTERS,
 } from "../../../app/lib/helpers";
 
-const createSortScriptWithQuery = (searchQuery) => ({
-  _script: {
-    type: "number",
-    script: {
-      source: `
-        // Check for 100% exact title match (case-insensitive)
-        def searchQuery = params.search_query.toLowerCase();
-        def hasExactMatch = false;
-
-        if (doc.containsKey('title.keyword') && doc['title.keyword'].size() > 0) {
-          def title = doc['title.keyword'].value.toLowerCase();
-          if (title.equals(searchQuery)) {
-            return 0; // This IS the exact match - show it first
-          }
-        }
-
-        // For all other products (no exact match for this doc)
-        // Check if ANY product has exact match by checking main collections
-        def main_collections = params.main_products;
-        def product_collections = doc['collections.name.keyword'];
-
-        // If this product is a main product
-        for (collection in product_collections) {
-          if (main_collections.contains(collection)) {
-            return 1; // Main product - second priority
-          }
-        }
-
-        return 2; // Non-main product - third priority
-      `,
-      params: {
-        search_query: searchQuery,
-        main_products: main_products,
-      },
-    },
-    order: "asc",
-  },
-});
+import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
 
 const mainItemsScriptSort = {
   _script: {
@@ -297,8 +259,51 @@ const apiClient = API({
       },
       {
         attribute: "product_category",
-        field: "product_category.category_name.keyword",
         type: "string",
+
+        facetQuery: () => {
+          const dynamicFilters = {};
+          COLLECTIONS_BY_CATEGORY.forEach((item) => {
+            // Build the filter object dynamically for each category
+            dynamicFilters[item.category_name] = {
+              terms: { "collections.name.keyword": item.collections },
+            };
+          });
+          return {
+            filters: {
+              filters: dynamicFilters,
+            },
+          };
+        },
+
+        facetResponse: (aggregation) => {
+          const buckets = aggregation.buckets || {};
+          const navData = COLLECTIONS_BY_CATEGORY || [];
+
+          // Use the order from your dynamic array
+          return navData.reduce((acc, item) => {
+            const key = item.category_name;
+            const count = buckets[key]?.doc_count ?? 0;
+            if (count > 0) acc[key] = count;
+            return acc;
+          }, {});
+        },
+
+        filterQuery: (field, value) => {
+          const navData = COLLECTIONS_BY_CATEGORY || [];
+          const selectedCategory = navData.find(
+            (item) => item.category_name === value
+          );
+
+          if (selectedCategory) {
+            return {
+              terms: {
+                "collections.name.keyword": selectedCategory.collections,
+              },
+            };
+          }
+          return {};
+        },
       },
       { attribute: "brand", field: "brand.keyword", type: "string" },
       {
@@ -615,7 +620,6 @@ export default async function handler(req, res) {
 
   try {
     const check_filter = req.body?.[0]?.params?.filter;
-
     let filter_key = null;
     let filter_value = null;
     let filter_option = null;
@@ -738,18 +742,18 @@ export default async function handler(req, res) {
       filter_option = {
         hooks: {
           beforeSearch: async (searchRequests) => {
-            console.log("=== [Full Request Debug] ===");
-            console.log("Number of search requests:", searchRequests.length);
-            searchRequests.forEach((req, idx) => {
-              console.log(`\nRequest ${idx}:`);
-              console.log("- Params:", JSON.stringify(req.params, null, 2));
-              console.log("- Body keys:", Object.keys(req.body));
-              console.log(
-                "- Query keys:",
-                req.body.query ? Object.keys(req.body.query) : "no query"
-              );
-            });
-            console.log("============================\n");
+            // console.log("=== [Full Request Debug] ===");
+            // console.log("Number of search requests:", searchRequests.length);
+            // searchRequests.forEach((req, idx) => {
+            //   console.log(`\nRequest ${idx}:`);
+            //   console.log("- Params:", JSON.stringify(req.params, null, 2));
+            //   console.log("- Body keys:", Object.keys(req.body));
+            //   console.log(
+            //     "- Query keys:",
+            //     req.body.query ? Object.keys(req.body.query) : "no query"
+            //   );
+            // });
+            // console.log("============================\n");
 
             return searchRequests.map((sr) => {
               const sort = sr.body.sort;
@@ -798,20 +802,20 @@ export default async function handler(req, res) {
               const applyMainProductSort =
                 shouldApplyMainProductSort(searchQuery);
 
-              console.log("=== [Searchkit API Debug] ===");
-              console.log("Search Query:", searchQuery);
-              console.log("Request Params:", sr.params);
-              console.log(
-                "Query structure:",
-                JSON.stringify(sr.body.query, null, 2)
-              );
-              console.log("Apply Main Product Sort:", applyMainProductSort);
-              console.log("isPopular:", isPopular);
-              console.log(
-                "Sort being applied:",
-                isPopular ? "Popular sort (with custom logic)" : "Other sort"
-              );
-              console.log("============================");
+              // console.log("=== [Searchkit API Debug] ===");
+              // console.log("Search Query:", searchQuery);
+              // console.log("Request Params:", sr.params);
+              // console.log(
+              //   "Query structure:",
+              //   JSON.stringify(sr.body.query, null, 2)
+              // );
+              // console.log("Apply Main Product Sort:", applyMainProductSort);
+              // console.log("isPopular:", isPopular);
+              // console.log(
+              //   "Sort being applied:",
+              //   isPopular ? "Popular sort (with custom logic)" : "Other sort"
+              // );
+              // console.log("============================");
 
               // Replace the default query with our custom search logic to match context/search.js
               let customQuery = query;
