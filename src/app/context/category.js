@@ -109,6 +109,28 @@ export function CategoriesProvider({ categories, children }) {
       .map((menuItem) => menuItem.name);
   };
 
+  const getProductCategoriesV2 = (product) => {
+    if (!product || !collectionsByCategory) return [];
+
+    // Get all collection names associated with this product
+    const productCollectionNames = (product?.collections || []).map(
+      (c) => c.name
+    );
+
+    const matchedCategories = [];
+
+    collectionsByCategory.forEach((catObj) => {
+      const hasMatch = (catObj?.collections || []).some((colName) =>
+        productCollectionNames.includes(colName)
+      );
+
+      if (hasMatch) {
+        matchedCategories.push(catObj.category_name);
+      }
+    });
+
+    return [...new Set(matchedCategories)];
+  };
   const getProductUrls = (product_category, product_brand, handle) => {
     if (!product_brand || !handle) return [];
 
@@ -218,6 +240,7 @@ export function CategoriesProvider({ categories, children }) {
         getProductUrl,
         getProductUrls,
         getProductCategories,
+        getProductCategoriesV2,
       }}
     >
       {children}

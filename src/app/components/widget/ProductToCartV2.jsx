@@ -241,6 +241,31 @@ const ProductInfo = ({ product, reviews }) => {
   );
 };
 
+const ProductCategoryChips = ({ product }) => {
+  const [categories, setCategories] = useState([]);
+  const { getProductCategoriesV2 } = useSolanaCategories();
+  useEffect(() => {
+    if (product) {
+      const cats = getProductCategoriesV2(product);
+      setCategories(cats);
+    }
+  }, [product]);
+  return (
+    <div className="flex flex-wrap gap-1">
+      {categories.map((category, index) => (
+        <Link
+          prefetch={false}
+          href={`${BASE_URL}/${createSlug(category)}`}
+          key={`category-chip-item-${index}-${category}`}
+          className="bg-theme-600 text-xs text-white text-medium py-1 px-5 rounded-full border-2 border-neutral-900/10 hover:bg-theme-500"
+        >
+          {category}
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 // Main Component
 const ProductToCart = ({ product, loading, reviews }) => {
   const { isPriceVisible } = useSolanaCategories();
@@ -297,6 +322,8 @@ const ProductToCart = ({ product, loading, reviews }) => {
           />
         </div>
       )}
+
+      <ProductCategoryChips product={productData} />
 
       <ProductOffersSection
         products={productData?.open_box}
