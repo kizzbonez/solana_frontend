@@ -213,10 +213,14 @@ export function CategoriesProvider({ categories, children }) {
     const mapped = flatCategories
       .filter(({ name }) => !["Home", "Search"].includes(name))
       .filter((item) => !!item?.collection_display)
-      .map(({ name, collection_display }) => ({
-        category_name: name,
-        collections: [collection_display?.name],
-      }));
+      .map(({ name, collection_display, nav_type }) => {
+        const collections =
+          nav_type === "brand" ? [name] : [collection_display?.name];
+        return {
+          category_name: name,
+          collections,
+        };
+      });
 
     const baseNavItems = Object.entries(BaseNavObj).map(([key, value]) => ({
       category_name: key,
@@ -224,7 +228,7 @@ export function CategoriesProvider({ categories, children }) {
     }));
 
     const result = [...baseNavItems, ...mapped];
-    // console.log("processed category", result);
+    console.log("processed category", result);
     return result;
   }, [flatCategories]);
 

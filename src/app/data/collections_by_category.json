@@ -456,8 +456,168 @@
     "collections": ["MHP Grills"]
   },
   {
+    "category_name": "TrueFlame Grills",
+    "collections": ["TrueFlame Grills"]
+  },
+  {
+    "category_name": "TrueFlame Storage",
+    "collections": ["TrueFlame Storage"]
+  },
+  {
+    "category_name": "TrueFlame Side Burners",
+    "collections": ["TrueFlame Side Burners"]
+  },
+  {
+    "category_name": "TrueFlame Refrigeration",
+    "collections": ["TrueFlame Refrigeration"]
+  },
+  {
+    "category_name": "TrueFlame Accessories",
+    "collections": ["TrueFlame Accessories"]
+  },
+  {
+    "category_name": "TrueFlame Package Deals",
+    "collections": ["Trueflame Package Deals"]
+  },
+  {
+    "category_name": "Sole Gourmet Grills",
+    "collections": ["Sole Gourmet Grills"]
+  },
+  {
+    "category_name": "Sole Gourmet Side Burners",
+    "collections": ["Sole Gourmet Side Burners"]
+  },
+  {
+    "category_name": "Sole Gourmet Storage",
+    "collections": ["Sole Gourmet Storage"]
+  },
+  {
+    "category_name": "Sole Gourmet Refrigeration",
+    "collections": ["Sole Gourmet Refrigeration"]
+  },
+  {
+    "category_name": "Sole Gourmet Accessories",
+    "collections": ["Sole Gourmet Accessories"]
+  },
+  {
+    "category_name": "Sole Gourmet Package Deals",
+    "collections": ["Sole Gourmet Package Deals"]
+  },
+  {
+    "category_name": "Fire Magic BBQ Grills",
+    "collections": ["Fire Magic BBQ Grills"]
+  },
+  {
+    "category_name": "Fire Magic Storage",
+    "collections": ["Fire Magic Storage"]
+  },
+  {
+    "category_name": "Primo Grills",
+    "collections": ["Primo Grills"]
+  },
+  {
+    "category_name": "Primo Side Burners",
+    "collections": ["Primo Side Burners"]
+  },
+  {
+    "category_name": "Primo Storage",
+    "collections": ["Primo Storage"]
+  },
+  {
+    "category_name": "Primo Accessories",
+    "collections": ["Primo Accessories"]
+  },
+  {
+    "category_name": "Primo Package Deals",
+    "collections": ["Primo Package Deals"]
+  },
+  {
+    "category_name": "Infratech Patio Heaters",
+    "collections": ["Infratech Heaters"]
+  },
+  {
+    "category_name": "Infratech Electric Patio Heaters",
+    "collections": ["Infratech Electric Patio Heaters"]
+  },
+  {
+    "category_name": "Infratech Accessories",
+    "collections": ["Infratech Patio Heaters Accessories"]
+  },
+  {
+    "category_name": "Bromic Gas Patio Heaters",
+    "collections": ["Bromic Gas Patio Heaters"]
+  },
+  {
+    "category_name": "Bromic Electric Patio Heaters",
+    "collections": ["Bromic Electric Patio Heaters"]
+  },
+  {
+    "category_name": "Bromic Patio Heaters Accessories",
+    "collections": ["Bromic Patio Heaters Accessories"]
+  },
+  {
+    "category_name": "Sunglo Gas Patio Heaters",
+    "collections": ["Sunglo Gas Patio Heaters"]
+  },
+  {
+    "category_name": "Sunglo Heaters Accessories",
+    "collections": ["Sunglo Heaters Accessories"]
+  },
+  {
+    "category_name": "Sunpak Heaters",
+    "collections": ["Sunpak Heaters"]
+  },
+  {
+    "category_name": "Sunpak Heaters Accessories",
+    "collections": ["Sunpak Heaters Accessories"]
+  },
+  {
+    "category_name": "Summit Refrigeration",
+    "collections": ["Summit Refrigeration"]
+  },
+  {
+    "category_name": "Summit Cooking & Ventilation",
+    "collections": ["Summit Cooking & Ventilation"]
+  },
+  {
+    "category_name": "OCI Open Box",
+    "collections": ["OCI Open Box"]
+  },
+  {
+    "category_name": "OCI Storage",
+    "collections": ["OCI Storage"]
+  },
+  {
+    "category_name": "OCI Side Burners",
+    "collections": ["OCI Side Burners"]
+  },
+  {
+    "category_name": "OCI Package",
+    "collections": ["OCI Package deals"]
+  },
+  {
+    "category_name": "PGL Fire Pit Logs",
+    "collections": ["PGL Fire Pit Logs"]
+  },
+  {
+    "category_name": "PGL Fire Pit Burners",
+    "collections": ["PGL Fire Pit Burners"]
+  },
+  {
+    "category_name": "PGL Fire Pit Glasses",
+    "collections": ["PGL Fire Pit Glasses"]
+  },
+  {
+    "category_name": "Brand-Man BBQ Grills",
+    "collections": ["Brand-Man BBQ Grills"]
+  },
+  {
+    "category_name": "Brand-Man Accessories",
+    "collections": ["Brand-Man Accessories"]
+  },
+  {
     "category_name": "Eloquence",
-    "collections": ["Shop-Eloquence"]
+    "collections": ["Eloquence"]
   },
   {
     "category_name": "Eloquence Grills",
@@ -474,5 +634,65 @@
   {
     "category_name": "Eloquence Accessories",
     "collections": ["Eloquence Accessories"]
+  },
+  {
+    "category_name": "Grandeur Grills",
+    "collections": ["Grandeur Grills"]
+  },
+  {
+    "category_name": "Grandeur Side Burners",
+    "collections": ["Grandeur Side Burners"]
+  },
+  {
+    "category_name": "Grandeur Storage",
+    "collections": ["Grandeur Storage"]
+  },
+  {
+    "category_name": "Grandeur Accessories",
+    "collections": ["Grandeur Accessories"]
+  },
+  {
+    "category_name": "Dimplex Fireplaces",
+    "collections": ["Dimplex Fireplaces"]
+  },
+  {
+    "category_name": "Athena Fire Pit Tables",
+    "collections": ["Athena Fire Pit Tables"]
+  },
+  {
+    "category_name": "Athena Fire Pit Burners",
+    "collections": ["Athena Fire Pit Burners"]
+  },
+  {
+    "category_name": "Athena Fire Pit Accessories",
+    "collections": ["Athena Fire Pit Accessories"]
+  },
+  {
+    "category_name": "WPPO Pizza Ovens",
+    "collections": ["WPPO Pizza Ovens"]
+  },
+  {
+    "category_name": "WPPO Carts and Stands",
+    "collections": ["WPPO Carts and Stands"]
+  },
+  {
+    "category_name": "WPPO Pizza Oven Covers",
+    "collections": ["WPPO Pizza Oven Covers"]
+  },
+  {
+    "category_name": "WPPO Pizza Oven Accessories",
+    "collections": ["WPPO Pizza Oven Accessories"]
+  },
+  {
+    "category_name": "American Fryre Designs Fire Tables",
+    "collections": ["American Fyre Designs Firetables"]
+  },
+  {
+    "category_name": "American Fryre Designs Fireplaces",
+    "collections": ["American Fyre Designs Fireplaces"]
+  },
+  {
+    "category_name": "American Fryre Designs Fire Pits",
+    "collections": ["American Fyre Designs Fire Pits"]
   }
 ]
