@@ -4,12 +4,17 @@ import API from "@searchkit/api";
 import {
   BaseNavObj,
   burnerBuckets,
+  sizeBuckets,
   ES_INDEX,
   exclude_brands,
   exclude_collections,
   main_products,
   shouldApplyMainProductSort,
   STAR_FILTERS,
+  sizeBucketKeys,
+  widthBucketKeys,
+  depthBucketKeys,
+  heightBucketKeys,
 } from "../../../app/lib/helpers";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
@@ -78,6 +83,96 @@ const apiClient = API({
       "created_at",
       "updated_at",
     ],
+    runtime_mappings: {
+      size_group: {
+        type: "keyword", // Changed to keyword for grouping/faceting
+        script: {
+          source: `
+          def validSizes = ${JSON.stringify(
+            sizeBucketKeys.map((k) => k.toLowerCase())
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              // 3. Lowercase the tag from the document and check against the lowercase list
+              if (validSizes.contains(tag.toLowerCase())) {
+                // Emit the ORIGINAL tag so your UI display logic still works
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      width_group: {
+        type: "keyword", // Changed to keyword for grouping/faceting
+        script: {
+          source: `
+          def validSizes = ${JSON.stringify(
+            widthBucketKeys.map((k) => k.toLowerCase())
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              // 3. Lowercase the tag from the document and check against the lowercase list
+              if (validSizes.contains(tag.toLowerCase())) {
+                // Emit the ORIGINAL tag so your UI display logic still works
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      depth_group: {
+        type: "keyword", // Changed to keyword for grouping/faceting
+        script: {
+          source: `
+          def validSizes = ${JSON.stringify(
+            depthBucketKeys.map((k) => k.toLowerCase())
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              // 3. Lowercase the tag from the document and check against the lowercase list
+              if (validSizes.contains(tag.toLowerCase())) {
+                // Emit the ORIGINAL tag so your UI display logic still works
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      height_group: {
+        type: "keyword", // Changed to keyword for grouping/faceting
+        script: {
+          source: `
+          def validSizes = ${JSON.stringify(
+            heightBucketKeys.map((k) => k.toLowerCase())
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              // 3. Lowercase the tag from the document and check against the lowercase list
+              if (validSizes.contains(tag.toLowerCase())) {
+                // Emit the ORIGINAL tag so your UI display logic still works
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+    },
     facet_attributes: [
       {
         attribute: "ways_to_shop",
@@ -412,10 +507,24 @@ const apiClient = API({
       },
       {
         attribute: "size",
-        field: "accentuate_data.bbq.seo_meta_cooking_grid_dimensions",
+        field: "size_group",
         type: "string",
       },
-
+      {
+        attribute: "width",
+        field: "width_group",
+        type: "string",
+      },
+      {
+        attribute: "depth",
+        field: "depth_group",
+        type: "string",
+      },
+      {
+        attribute: "height",
+        field: "height_group",
+        type: "string",
+      },
       {
         attribute: "rear_infrared_burner",
         field: "accentuate_data.bbq.rear_infrared_burner",

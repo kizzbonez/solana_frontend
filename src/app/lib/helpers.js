@@ -433,6 +433,39 @@ export const burnerBuckets = {
   "8 Burners": ["8", "8 Burners"],
 };
 
+export const sizeBuckets = {
+  "0-26 Inches": "Small (0 - 26 Inches)",
+  "27-33 Inches": "Medium (27 - 33 Inches)",
+  "34-42 Inches": "Large (34 - 42 Inches)",
+  "43 Inches And Up": "XL (43 Inches And Up)",
+};
+
+export const widthBuckets = {
+  "Width 0-26 Inches": "Small (0 - 26 Inches)",
+  "Width 27-33 Inches": "Medium (27 - 33 Inches)",
+  "Width 34-42 Inches": "Large (34 - 42 Inches)",
+  "Width 43 Inches and up": "XL (43 Inches And Up)",
+};
+
+export const depthBuckets = {
+  "Depth 0-26 Inches": "Small (0 - 26 Inches)",
+  "Depth 27-33 Inches": "Medium (27 - 33 Inches)",
+  "Depth 34-42 Inches": "Large (34 - 42 Inches)",
+  "Depth 43 Inches and up": "XL (43 Inches And Up)",
+};
+
+export const heightBuckets = {
+  "Height 0-26 Inches": "Small (0 - 26 Inches)",
+  "Height 27-33 Inches": "Medium (27 - 33 Inches)",
+  "Height 34-42 Inches": "Large (34 - 42 Inches)",
+  "Height 43 Inches and Up": "XL (43 Inches And Up)",
+};
+
+export const sizeBucketKeys = Object.keys(sizeBuckets);
+export const widthBucketKeys = Object.keys(widthBuckets);
+export const depthBucketKeys = Object.keys(depthBuckets);
+export const heightBucketKeys = Object.keys(heightBuckets);
+
 export function capitalizeFirstLetter(str) {
   if (!str) return "";
   return str.charAt(0).toUpperCase() + str.slice(1);

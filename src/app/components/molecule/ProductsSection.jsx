@@ -27,6 +27,12 @@ import {
   getInitialUiStateFromUrl,
 } from "@/app/lib/helpers";
 import { STORE_CONTACT } from "@/app/lib/store_constants";
+import {
+  depthBuckets,
+  heightBuckets,
+  sizeBuckets,
+  widthBuckets,
+} from "../../lib/helpers";
 
 const es_index = ES_INDEX;
 
@@ -205,6 +211,51 @@ const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["grills"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: sizeBuckets[item.value],
+      }));
+    },
+  },
+  {
+    label: "width",
+    attribute: "width",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["grills"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: widthBuckets[item.value],
+      }));
+    },
+  },
+  {
+    label: "depth",
+    attribute: "depth",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["grills"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: depthBuckets[item.value],
+      }));
+    },
+  },
+  {
+    label: "height",
+    attribute: "height",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["grills"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: heightBuckets[item.value],
+      }));
+    },
   },
   {
     label: "Rear Infrared Burner",
@@ -464,6 +515,9 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                             <RefinementList
                               attribute={item?.attribute}
                               searchable={item?.searchable}
+                              {...(item?.transform
+                                ? { transformItems: item.transform }
+                                : {})}
                               showMore={true}
                             />
                           ) : (
@@ -833,6 +887,11 @@ function ProductsSection({ category, search = "" }) {
                 },
               ]}
             />
+            <RefinementList attribute="size" className="hidden" />
+            <RefinementList attribute="width" className="hidden" />
+            <RefinementList attribute="depth" className="hidden" />
+            <RefinementList attribute="height" className="hidden" />
+
             <RefinementList attribute="ways_to_shop" className="hidden" />
             <RefinementList attribute="ratings" className="hidden" />
             <RefinementList attribute="product_category" className="hidden" />
@@ -874,7 +933,6 @@ function ProductsSection({ category, search = "" }) {
             <RefinementList attribute="no_of_burners" className="hidden" />
             <RangeInput attribute="price" className="hidden" />
             <RefinementList attribute="grill_lights" className="hidden" />
-            <RefinementList attribute="size" className="hidden" />
             <RefinementList
               attribute="rear_infrared_burner"
               className="hidden"

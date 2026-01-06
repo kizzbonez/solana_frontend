@@ -228,7 +228,7 @@ export function CategoriesProvider({ categories, children }) {
     }));
 
     const result = [...baseNavItems, ...mapped];
-    console.log("processed category", result);
+    // console.log("processed category", result);
     return result;
   }, [flatCategories]);
 
