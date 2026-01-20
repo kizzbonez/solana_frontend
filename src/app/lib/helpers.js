@@ -28,7 +28,7 @@ export const shouldApplyMainProductSort = (query) => {
   if (!query) return false;
   const lowerQuery = query.toLowerCase().trim();
   return MAIN_PRODUCT_KEYWORDS.some(
-    (keyword) => lowerQuery === keyword.toLowerCase()
+    (keyword) => lowerQuery === keyword.toLowerCase(),
   );
 };
 
@@ -86,7 +86,7 @@ export function getFirstPathSegment(pathname) {
 
 export function getCategoryIds(category_slug, categories, bc_categories) {
   const category_keywords = categories.find(
-    (i) => i.url === (category_slug === "all-products" ? "" : category_slug)
+    (i) => i.url === (category_slug === "all-products" ? "" : category_slug),
   )?.key_words;
   // console.log("category_keywords",category_keywords)
   // console.log("Array.isArray(category_keywords)",Array.isArray(category_keywords))
@@ -97,8 +97,8 @@ export function getCategoryIds(category_slug, categories, bc_categories) {
         ? bc_categories
             .filter((i) =>
               category_keywords.some((keyword) =>
-                i?.url?.path.includes(keyword)
-              )
+                i?.url?.path.includes(keyword),
+              ),
             )
             .map((i) => i.category_id)
         : [];
@@ -127,7 +127,7 @@ export function getCategoryFilters(active_filters = {}) {
     : [];
 
   let productsList = products_json.filter((i) =>
-    hasEqualValue(i.categories, active_categories)
+    hasEqualValue(i.categories, active_categories),
   );
 
   const active_is_free_shipping = active_filters?.["is_free_shipping"];
@@ -152,7 +152,7 @@ export function getCategoryFilters(active_filters = {}) {
 
   if (active_brands !== null) {
     productsList = productsList.filter((i) =>
-      active_brands.includes(i.brand_id)
+      active_brands.includes(i.brand_id),
     );
   }
 
@@ -461,10 +461,29 @@ export const heightBuckets = {
   "Height 43 Inches and Up": "XL (43 Inches And Up)",
 };
 
+export const capacityBuckets = {
+  "1-3 Cu. Ft.": "Small (1 - 3 Cu. Ft.)",
+  "4-6 Cu. Ft.": "Medium (4 - 6 Cu. Ft.)",
+  "7-10 Cu. Ft.": "Large (7 - 10 Cu. Ft.)",
+};
+
+export const refVentBuckets = {
+  "Front Venting": "Front",
+  "Rear Venting": "Rear",
+};
+
+export const refHingeBuckets = {
+  "Left Hinged": "Left",
+  "Right Hinged": "Right",
+};
+
 export const sizeBucketKeys = Object.keys(sizeBuckets);
 export const widthBucketKeys = Object.keys(widthBuckets);
 export const depthBucketKeys = Object.keys(depthBuckets);
 export const heightBucketKeys = Object.keys(heightBuckets);
+export const capacityBucketKeys = Object.keys(capacityBuckets);
+export const refVentBucketKeys = Object.keys(refVentBuckets);
+export const refHingeBucketKeys = Object.keys(refHingeBuckets);
 
 export function capitalizeFirstLetter(str) {
   if (!str) return "";
@@ -614,7 +633,7 @@ export const calculateRatingSummary = (reviews) => {
       }
       return acc;
     },
-    initialAccumulator
+    initialAccumulator,
   );
 
   // Check if any valid votes were processed

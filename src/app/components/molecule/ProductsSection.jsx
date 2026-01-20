@@ -32,6 +32,7 @@ import {
   heightBuckets,
   sizeBuckets,
   widthBuckets,
+  capacityBuckets,
 } from "../../lib/helpers";
 
 const es_index = ES_INDEX;
@@ -42,21 +43,36 @@ const filters = [
     attribute: "ways_to_shop",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["Search"],
+    filter_type: ["Search", "refrigerators"],
   },
   {
     label: "Ratings",
     attribute: "ratings",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["Search"],
+    filter_type: ["Search", "refrigerators"],
+  },
+  {
+    label: "brand",
+    attribute: "brand",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: [
+      "grills",
+      "fireplaces",
+      "firepits",
+      "refrigerators",
+      "patio-heaters",
+      "open-box",
+      "Search",
+    ],
   },
   {
     label: "Category",
     attribute: "product_category",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["Search"],
+    filter_type: ["Search", "refrigerators"],
   },
   {
     label: "Power Source",
@@ -157,20 +173,6 @@ const filters = [
     filter_type: ["open-box", "Search"],
   },
   {
-    label: "brand",
-    attribute: "brand",
-    searchable: false,
-    type: "RefinementList",
-    filter_type: [
-      "grills",
-      "fireplaces",
-      "firepits",
-      "patio-heaters",
-      "open-box",
-      "Search",
-    ],
-  },
-  {
     label: "configuration",
     attribute: "configuration_type",
     searchable: false,
@@ -193,6 +195,7 @@ const filters = [
       "grills",
       "fireplaces",
       "firepits",
+      "refrigerators",
       "patio-heaters",
       "open-box",
       "Search",
@@ -204,6 +207,93 @@ const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["grills"],
+  },
+  {
+    label: "Type",
+    attribute: "ref_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Door Type",
+    attribute: "ref_door_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "capacity",
+    attribute: "capacity",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: capacityBuckets[item.value],
+      }));
+    },
+  },
+  {
+    label: "Vent",
+    attribute: "ref_vent",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Hinge",
+    attribute: "ref_hinge",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Storage Type",
+    attribute: "ref_storage_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Width",
+    attribute: "ref_width",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: `${item.value}-Inch`,
+      }));
+    },
+  },
+  {
+    label: "Depth",
+    attribute: "ref_depth",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: `${item.value}-Inch`,
+      }));
+    },
+  },
+  {
+    label: "Height",
+    attribute: "ref_height",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: `${item.value}-Inch`,
+      }));
+    },
   },
   {
     label: "size",
@@ -297,7 +387,7 @@ const filters = [
     attribute: "material",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills"],
+    filter_type: ["grills", "refrigerators"],
   },
   {
     label: "Thermometer",
@@ -321,6 +411,17 @@ const filters = [
     filter_type: ["grills"],
   },
 ];
+
+// generate refinementlist html for url-based filters
+console.log(
+  filters
+    .filter(({ attribute }) => attribute !== "price")
+    .map(
+      ({ attribute }) =>
+        `<RefinementList attribute="${attribute}" className="hidden" />`,
+    )
+    .join("\n"),
+);
 
 const searchClient = Client({
   url: `/api/es/searchkit/`,
@@ -414,7 +515,7 @@ const ProductCountUpdater = () => {
     // Alert if too many updates
     if (updateCountRef.current > 50) {
       console.error(
-        "[ProductCountUpdater] TOO MANY UPDATES! Something is causing a loop."
+        "[ProductCountUpdater] TOO MANY UPDATES! Something is causing a loop.",
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -503,7 +604,7 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                 <DynamicWidgets facets={["*"]}>
                   {filters
                     .filter((item) =>
-                      item?.filter_type.includes(page_details?.filter_type)
+                      item?.filter_type.includes(page_details?.filter_type),
                     )
                     .map((item) => (
                       <div
@@ -512,14 +613,25 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                       >
                         <Panel header={item?.label}>
                           {item?.attribute && item?.attribute !== "price" ? (
-                            <RefinementList
-                              attribute={item?.attribute}
-                              searchable={item?.searchable}
-                              {...(item?.transform
-                                ? { transformItems: item.transform }
-                                : {})}
-                              showMore={true}
-                            />
+                            <>
+                              {item?.attribute !== "ratings" ? (
+                                <RefinementList
+                                  attribute={item?.attribute}
+                                  searchable={item?.searchable}
+                                  {...(item?.transform
+                                    ? { transformItems: item.transform }
+                                    : {})}
+                                  showMore={true}
+                                />
+                              ) : (
+                                <RefinementList
+                                  attribute={item?.attribute}
+                                  searchable={item?.searchable}
+                                  classNames={{ labelText: "stars" }}
+                                  showMore={false}
+                                />
+                              )}
+                            </>
                           ) : (
                             <RangeInput attribute="price" />
                           )}
@@ -688,7 +800,7 @@ const Refresh = ({ search }) => {
       "[Refresh] Search changed from",
       prevSearchRef.current,
       "to",
-      search
+      search,
     );
     prevSearchRef.current = search;
 
@@ -887,15 +999,11 @@ function ProductsSection({ category, search = "" }) {
                 },
               ]}
             />
-            <RefinementList attribute="size" className="hidden" />
-            <RefinementList attribute="width" className="hidden" />
-            <RefinementList attribute="depth" className="hidden" />
-            <RefinementList attribute="height" className="hidden" />
-
+            {/* Refinement List Hack for URL-Based Filter */}
             <RefinementList attribute="ways_to_shop" className="hidden" />
             <RefinementList attribute="ratings" className="hidden" />
+            <RefinementList attribute="brand" className="hidden" />
             <RefinementList attribute="product_category" className="hidden" />
-
             <RefinementList attribute="features_fuel_type" className="hidden" />
             <RefinementList attribute="features_type" className="hidden" />
             <RefinementList attribute="features_inches" className="hidden" />
@@ -928,11 +1036,22 @@ function ProductsSection({ category, search = "" }) {
             />
             <RefinementList attribute="features_finish" className="hidden" />
             <RefinementList attribute="collections" className="hidden" />
-            <RefinementList attribute="brand" className="hidden" />
             <RefinementList attribute="configuration_type" className="hidden" />
             <RefinementList attribute="no_of_burners" className="hidden" />
-            <RangeInput attribute="price" className="hidden" />
             <RefinementList attribute="grill_lights" className="hidden" />
+            <RefinementList attribute="ref_type" className="hidden" />
+            <RefinementList attribute="ref_door_type" className="hidden" />
+            <RefinementList attribute="capacity" className="hidden" />
+            <RefinementList attribute="ref_vent" className="hidden" />
+            <RefinementList attribute="ref_hinge" className="hidden" />
+            <RefinementList attribute="ref_storage_type" className="hidden" />
+            <RefinementList attribute="ref_width" className="hidden" />
+            <RefinementList attribute="ref_depth" className="hidden" />
+            <RefinementList attribute="ref_height" className="hidden" />
+            <RefinementList attribute="size" className="hidden" />
+            <RefinementList attribute="width" className="hidden" />
+            <RefinementList attribute="depth" className="hidden" />
+            <RefinementList attribute="height" className="hidden" />
             <RefinementList
               attribute="rear_infrared_burner"
               className="hidden"

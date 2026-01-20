@@ -15,6 +15,9 @@ import {
   widthBucketKeys,
   depthBucketKeys,
   heightBucketKeys,
+  capacityBucketKeys,
+  refVentBucketKeys,
+  refHingeBucketKeys,
 } from "../../../app/lib/helpers";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
@@ -89,7 +92,7 @@ const apiClient = API({
         script: {
           source: `
           def validSizes = ${JSON.stringify(
-            sizeBucketKeys.map((k) => k.toLowerCase())
+            sizeBucketKeys.map((k) => k.toLowerCase()),
           )};
           if (params['_source']['tags'] != null) {
             for (def tag : params['_source']['tags']) {
@@ -111,7 +114,7 @@ const apiClient = API({
         script: {
           source: `
           def validSizes = ${JSON.stringify(
-            widthBucketKeys.map((k) => k.toLowerCase())
+            widthBucketKeys.map((k) => k.toLowerCase()),
           )};
           if (params['_source']['tags'] != null) {
             for (def tag : params['_source']['tags']) {
@@ -133,7 +136,7 @@ const apiClient = API({
         script: {
           source: `
           def validSizes = ${JSON.stringify(
-            depthBucketKeys.map((k) => k.toLowerCase())
+            depthBucketKeys.map((k) => k.toLowerCase()),
           )};
           if (params['_source']['tags'] != null) {
             for (def tag : params['_source']['tags']) {
@@ -155,7 +158,7 @@ const apiClient = API({
         script: {
           source: `
           def validSizes = ${JSON.stringify(
-            heightBucketKeys.map((k) => k.toLowerCase())
+            heightBucketKeys.map((k) => k.toLowerCase()),
           )};
           if (params['_source']['tags'] != null) {
             for (def tag : params['_source']['tags']) {
@@ -170,6 +173,87 @@ const apiClient = API({
             }
           }
         `,
+        },
+      },
+      capacity_group: {
+        type: "keyword",
+        script: {
+          source: `
+          def validCapacity = ${JSON.stringify(
+            capacityBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              if (validCapacity.contains(tag.toLowerCase())) {
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_vent: {
+        type: "keyword",
+        script: {
+          source: `
+          def validVent = ${JSON.stringify(
+            refVentBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              if (validVent.contains(tag.toLowerCase())) {
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_hinge: {
+        type: "keyword",
+        script: {
+          source: `
+          def validHinge = ${JSON.stringify(
+            refHingeBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              if (validHinge.contains(tag.toLowerCase())) {
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      rating_num: {
+        type: "keyword",
+        script: {
+          source: `
+      // Check if field exists and is not empty
+      if (doc['ratings.rating_count.keyword'].size() > 0 && doc['ratings.rating_count.keyword'].value != null) {
+        
+        String raw = doc['ratings.rating_count.keyword'].value;
+        String clean = /[^\d]/.matcher(raw).replaceAll('');
+        
+        if (clean.length() > 0) {
+          emit(clean);
+        } else {
+          emit("0"); // Fallback for empty strings
+        }
+      } else {
+        emit("0"); // Fallback for missing fields
+      }
+    `,
         },
       },
     },
@@ -338,7 +422,7 @@ const apiClient = API({
           // 'value' is the star string (e.g., "★★★★★")
           // We find the numeric key ("5") that matches that string
           const esValue = Object.keys(STAR_FILTERS).find(
-            (key) => STAR_FILTERS[key] === value
+            (key) => STAR_FILTERS[key] === value,
           );
 
           if (esValue !== undefined) {
@@ -387,7 +471,7 @@ const apiClient = API({
         filterQuery: (field, value) => {
           const navData = COLLECTIONS_BY_CATEGORY || [];
           const selectedCategory = navData.find(
-            (item) => item.category_name === value
+            (item) => item.category_name === value,
           );
 
           if (selectedCategory) {
@@ -470,7 +554,7 @@ const apiClient = API({
                       "accentuate_data.bbq.number_of_main_burners": values,
                     },
                   },
-                ])
+                ]),
               ),
             },
           };
@@ -498,11 +582,55 @@ const apiClient = API({
           };
         },
       },
-
       { attribute: "price", field: "variants.price", type: "numeric" },
       {
         attribute: "grill_lights",
         field: "accentuate_data.bbq.grill_lights",
+        type: "string",
+      },
+      {
+        attribute: "ref_type",
+        field: "accentuate_data.bbq.ref_specs_type",
+        type: "string",
+      },
+      {
+        attribute: "ref_door_type",
+        field: "accentuate_data.bbq.ref_specs_door_type",
+        type: "string",
+      },
+      {
+        attribute: "capacity",
+        field: "capacity_group",
+        type: "string",
+      },
+      {
+        attribute: "ref_vent",
+        field: "ref_vent",
+        type: "string",
+      },
+      {
+        attribute: "ref_hinge",
+        field: "ref_hinge",
+        type: "string",
+      },
+      {
+        attribute: "ref_storage_type",
+        field: "accentuate_data.bbq.brand_storage_specs_type",
+        type: "string",
+      },
+      {
+        attribute: "ref_width",
+        field: "accentuate_data.bbq.ref_specs_cutout_width",
+        type: "string",
+      },
+      {
+        attribute: "ref_height",
+        field: "accentuate_data.bbq.ref_specs_cutout_height",
+        type: "string",
+      },
+      {
+        attribute: "ref_depth",
+        field: "accentuate_data.bbq.ref_specs_cutout_depth",
         type: "string",
       },
       {
