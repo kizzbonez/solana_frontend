@@ -676,7 +676,28 @@ const apiClient = API({
         field: "accentuate_data.bbq.storage_specs_cutout_height",
         type: "string",
       },
-
+      // ####
+      {
+        attribute: "storage_mounting_type",
+        field: "accentuate_data.bbq.storage_specs_mounting_type",
+        type: "string",
+      },
+      {
+        attribute: "storage_no_of_drawers",
+        field: "accentuate_data.bbq.storage_specs_number_of_drawers",
+        type: "string",
+      },
+      {
+        attribute: "storage_no_of_doors",
+        field: "accentuate_data.bbq.storage_specs_number_of_doors",
+        type: "string",
+      },
+      {
+        attribute: "storage_orientation",
+        field: "accentuate_data.bbq.storage_specs_orientation",
+        type: "string",
+      },
+      // ####
       {
         attribute: "made_in_usa",
         field: "accentuate_data.bbq.seo_meta_made_in_usa",

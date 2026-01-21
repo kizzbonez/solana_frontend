@@ -385,11 +385,51 @@ const filters = [
     filter_type: ["grills", "fireplaces", "firepits"],
   },
   {
+    label: "Mounting Type",
+    attribute: "storage_mounting_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["storage"],
+  },
+  {
+    label: "No. of Drawers",
+    attribute: "storage_no_of_drawers",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["storage"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: `${parseInt(item.value)} Drawers`,
+      }));
+    },
+  },
+  {
+    label: "No. of Doors",
+    attribute: "storage_no_of_doors",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["storage"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: `${parseInt(item.value)} Doors`,
+      }));
+    },
+  },
+  {
+    label: "Orientation",
+    attribute: "storage_orientation",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["storage"],
+  },
+  {
     label: "Material",
     attribute: "material",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills", "refrigerators"],
+    filter_type: ["grills", "refrigerators", "storage"],
   },
   {
     label: "Thermometer",
