@@ -256,6 +256,78 @@ const apiClient = API({
     `,
         },
       },
+      cut_out_width: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_width'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_width'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      cut_out_depth: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_depth'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_depth'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      cut_out_height: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_height'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_height'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      ref_width: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.ref_specs_cutout_width'].size() > 0) {
+          def val = doc['accentuate_data.bbq.ref_specs_cutout_width'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      ref_depth: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.ref_specs_cutout_depth'].size() > 0) {
+          def val = doc['accentuate_data.bbq.ref_specs_cutout_depth'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      ref_height: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.ref_specs_cutout_height'].size() > 0) {
+          def val = doc['accentuate_data.bbq.ref_specs_cutout_height'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
     },
     facet_attributes: [
       {
@@ -620,17 +692,17 @@ const apiClient = API({
       },
       {
         attribute: "ref_width",
-        field: "accentuate_data.bbq.ref_specs_cutout_width",
+        field: "ref_width",
         type: "string",
       },
       {
         attribute: "ref_height",
-        field: "accentuate_data.bbq.ref_specs_cutout_height",
+        field: "ref_height",
         type: "string",
       },
       {
         attribute: "ref_depth",
-        field: "accentuate_data.bbq.ref_specs_cutout_depth",
+        field: "ref_depth",
         type: "string",
       },
       {
@@ -658,25 +730,23 @@ const apiClient = API({
         field: "accentuate_data.bbq.rear_infrared_burner",
         type: "string",
       },
-
       {
         attribute: "cut_out_width",
-        field: "accentuate_data.bbq.storage_specs_cutout_width",
+        field: "cut_out_width",
         type: "string",
       },
 
       {
         attribute: "cut_out_depth",
-        field: "accentuate_data.bbq.storage_specs_cutout_depth",
+        field: "cut_out_depth",
         type: "string",
       },
 
       {
         attribute: "cut_out_height",
-        field: "accentuate_data.bbq.storage_specs_cutout_height",
+        field: "cut_out_height",
         type: "string",
       },
-      // ####
       {
         attribute: "storage_mounting_type",
         field: "accentuate_data.bbq.storage_specs_mounting_type",
@@ -697,7 +767,6 @@ const apiClient = API({
         field: "accentuate_data.bbq.storage_specs_orientation",
         type: "string",
       },
-      // ####
       {
         attribute: "made_in_usa",
         field: "accentuate_data.bbq.seo_meta_made_in_usa",
@@ -756,7 +825,6 @@ const apiClient = API({
         field: "features.finish.keyword",
         type: "string",
       },
-      // additional Fireplaces Filters
       {
         attribute: "features_inches",
         field: "features.inches.keyword",

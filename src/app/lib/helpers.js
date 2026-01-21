@@ -666,3 +666,10 @@ export const STAR_FILTERS = {
   1: "★☆☆☆☆",
   0: "No Star",
 };
+
+export const formatToInches = (items) => {
+  return items.map((item) => ({
+    ...item,
+    label: `${item.value.match(/[\d.]+/)?.[0] || ""} Inches`,
+  }));
+};
