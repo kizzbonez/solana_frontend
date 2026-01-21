@@ -92,6 +92,82 @@
     "collections": ["Shop All Freestanding Grills"]
   },
   {
+    "category_name": "Outdoor Refrigeration",
+    "collections": ["Outdoor Refrigeration"]
+  },
+  {
+    "category_name": "Compact Refrigerators",
+    "collections": ["Compact Refrigerators"]
+  },
+  {
+    "category_name": "Outdoor Beverage Fridges",
+    "collections": ["Beverage Coolers"]
+  },
+  {
+    "category_name": "Outdoor Ice Makers",
+    "collections": ["Ice Makers"]
+  },
+  {
+    "category_name": "Outdoor Wine Coolers",
+    "collections": ["Wine Coolers"]
+  },
+  {
+    "category_name": "Outdoor Refrigerators",
+    "collections": ["Refrigerators"]
+  },
+  {
+    "category_name": "Outdoor Compact Freezers",
+    "collections": ["Compact Freezers"]
+  },
+  {
+    "category_name": "Outdoor Storage",
+    "collections": ["Outdoor Kitchen Storage"]
+  },
+  {
+    "category_name": "Shop All Outdoor Kitchen Storage",
+    "collections": ["Outdoor Kitchen Storage"]
+  },
+  {
+    "category_name": "Access Doors",
+    "collections": ["Access Doors"]
+  },
+  {
+    "category_name": "Storage Drawers",
+    "collections": ["Storage Drawers"]
+  },
+  {
+    "category_name": "Door & Drawer Combos",
+    "collections": ["Door and Drawer Combos"]
+  },
+  {
+    "category_name": "Storage Pantries",
+    "collections": ["Storage Pantries"]
+  },
+  {
+    "category_name": "Trash Bins",
+    "collections": ["Trash Bins"]
+  },
+  {
+    "category_name": "Ice Bins & Storage",
+    "collections": ["Ice Bins and Storage"]
+  },
+  {
+    "category_name": "Propane Tank Bins",
+    "collections": ["Propane Tank Bins"]
+  },
+  {
+    "category_name": "Paper Towel Bins",
+    "collections": ["Paper Towel Bins"]
+  },
+  {
+    "category_name": "Spice Racks",
+    "collections": ["Spice Racks"]
+  },
+  {
+    "category_name": "Warming Drawers",
+    "collections": ["Warming Drawers"]
+  },
+  {
     "category_name": "Shop All Open Box",
     "collections": ["Shop All Open Box"]
   },

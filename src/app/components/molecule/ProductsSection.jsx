@@ -361,21 +361,21 @@ const filters = [
     attribute: "cut_out_width",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills"],
+    filter_type: ["grills", "storage"],
   },
   {
     label: "Cut-Out Depth",
     attribute: "cut_out_depth",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills"],
+    filter_type: ["grills", "storage"],
   },
   {
     label: "Cut-Out Height",
     attribute: "cut_out_height",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills"],
+    filter_type: ["grills", "storage"],
   },
   {
     label: "Made In USA",
@@ -415,15 +415,15 @@ const filters = [
 ];
 
 // generate refinementlist html for url-based filters
-console.log(
-  filters
-    .filter(({ attribute }) => attribute !== "price")
-    .map(
-      ({ attribute }) =>
-        `<RefinementList attribute="${attribute}" className="hidden" />`,
-    )
-    .join("\n"),
-);
+// console.log(
+//   filters
+//     .filter(({ attribute }) => attribute !== "price")
+//     .map(
+//       ({ attribute }) =>
+//         `<RefinementList attribute="${attribute}" className="hidden" />`,
+//     )
+//     .join("\n"),
+// );
 
 const searchClient = Client({
   url: `/api/es/searchkit/`,

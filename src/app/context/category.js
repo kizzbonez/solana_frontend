@@ -97,14 +97,14 @@ export function CategoriesProvider({ categories, children }) {
     }
 
     const category_scope = solana_categories.filter(
-      ({ name }) => !["Home", "Search"].includes(name)
+      ({ name }) => !["Home", "Search"].includes(name),
     );
 
     return category_scope
       .filter((menuItem) =>
         product_category.some(
-          (category) => category.category_name === menuItem.origin_name
-        )
+          (category) => category.category_name === menuItem.origin_name,
+        ),
       )
       .map((menuItem) => menuItem.name);
   };
@@ -114,14 +114,14 @@ export function CategoriesProvider({ categories, children }) {
 
     // Get all collection names associated with this product
     const productCollectionNames = (product?.collections || []).map(
-      (c) => c.name
+      (c) => c.name,
     );
 
     const matchedCategories = [];
 
     collectionsByCategory.forEach((catObj) => {
       const hasMatch = (catObj?.collections || []).some((colName) =>
-        productCollectionNames.includes(colName)
+        productCollectionNames.includes(colName),
       );
 
       if (hasMatch) {
@@ -136,7 +136,7 @@ export function CategoriesProvider({ categories, children }) {
 
     const tmp_category = product_category || [];
     const valid_categories = flatCategories.filter(
-      ({ name }) => !["Home", "Search"].includes(name)
+      ({ name }) => !["Home", "Search"].includes(name),
     );
 
     const product_categories_brand = [
@@ -147,7 +147,7 @@ export function CategoriesProvider({ categories, children }) {
     ].filter(Boolean);
 
     const valid_product_categories = valid_categories.filter(
-      ({ origin_name }) => product_categories_brand.includes(origin_name)
+      ({ origin_name }) => product_categories_brand.includes(origin_name),
     );
 
     const result =
@@ -167,7 +167,7 @@ export function CategoriesProvider({ categories, children }) {
     const product_urls = getProductUrls(
       hit?.product_category,
       hit?.brand,
-      hit?.handle
+      hit?.handle,
     );
 
     if (product_urls.length === 0) {
@@ -191,9 +191,9 @@ export function CategoriesProvider({ categories, children }) {
   };
 
   const getPopularSearchUrl = (query) => {
-    console.log("query", query);
+    // console.log("query", query);
     const category_url = flatCategories.find(
-      ({ name }) => name.toLowerCase() === query.toLowerCase()
+      ({ name }) => name.toLowerCase() === query.toLowerCase(),
     );
     return category_url?.url
       ? `${BASE_URL}/${category_url?.url}`
@@ -228,7 +228,7 @@ export function CategoriesProvider({ categories, children }) {
     }));
 
     const result = [...baseNavItems, ...mapped];
-    // console.log("processed category", result);
+    // console.log("COLLECTIONS_BY_CATEGORY", result);
     return result;
   }, [flatCategories]);
 

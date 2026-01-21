@@ -219,7 +219,7 @@ const FaqItem = ({ faq, onUpdate = () => {}, onDelete = () => {} }) => {
 
   const handleFAQDelete = () => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this item?"
+      "Are you sure you want to delete this item?",
     );
     if (confirmed) {
       onDelete(faq);
@@ -326,7 +326,7 @@ const Faqs = ({ faqsProps, onChange }) => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleAddFaqItem = () => {
@@ -809,7 +809,7 @@ const ProductCollection = ({ menuItem, onChange }) => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleAddCollection = (item) => {
@@ -821,15 +821,15 @@ const ProductCollection = ({ menuItem, onChange }) => {
     const { active, over, items } = event;
     if (active.id !== over.id) {
       const oldIndex = menuItem?.collections?.findIndex(
-        (collection) => collection.mb_uid === active.id
+        (collection) => collection.mb_uid === active.id,
       );
       const newIndex = menuItem?.collections?.findIndex(
-        (collection) => collection.mb_uid === over.id
+        (collection) => collection.mb_uid === over.id,
       );
       const reorderedData = arrayMove(
         menuItem?.collections,
         oldIndex,
-        newIndex
+        newIndex,
       );
       const updatedData = { ...menuItem?.collections, data: reorderedData };
       onChange({
@@ -1045,7 +1045,7 @@ const CategoryCollection = ({ menuItem, allCategories, onChange }) => {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleCheckboxChange = (e) => {
@@ -1060,7 +1060,7 @@ const CategoryCollection = ({ menuItem, allCategories, onChange }) => {
 
   const handleAddCategoryCollection = () => {
     const selectedOptions = linkOptions.filter((i) => i?.is_selected);
-    console.log("[TEST] trigger handleAddCategoryCollection", selectedOptions);
+    // console.log("[TEST] trigger handleAddCategoryCollection", selectedOptions);
     if (selectedOptions.length === 0) return;
     onChange({
       target: {
@@ -1088,15 +1088,15 @@ const CategoryCollection = ({ menuItem, allCategories, onChange }) => {
     const { active, over, items } = event;
     if (active.id !== over.id) {
       const oldIndex = menuItem?.cat_collections?.findIndex(
-        (collection) => collection.id === active.id
+        (collection) => collection.id === active.id,
       );
       const newIndex = menuItem?.cat_collections?.findIndex(
-        (collection) => collection.id === over.id
+        (collection) => collection.id === over.id,
       );
       const reorderedData = arrayMove(
         menuItem?.cat_collections,
         oldIndex,
-        newIndex
+        newIndex,
       );
       const updatedData = { ...menuItem?.cat_collections, data: reorderedData };
       onChange({
@@ -1118,7 +1118,7 @@ const CategoryCollection = ({ menuItem, allCategories, onChange }) => {
 
   useEffect(() => {
     setLinkOptions(
-      allCategories.filter((i) => !["Home", "Search"].includes(i?.name))
+      allCategories.filter((i) => !["Home", "Search"].includes(i?.name)),
     );
   }, [allCategories]);
 
@@ -1170,7 +1170,7 @@ const CategoryCollection = ({ menuItem, allCategories, onChange }) => {
                   .filter((i) =>
                     i?.name
                       ?.toLowerCase()
-                      .includes(pageQuery.toLocaleLowerCase())
+                      .includes(pageQuery.toLocaleLowerCase()),
                   )
                   .map((category) => (
                     <div
@@ -1277,7 +1277,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
 
   const handleTabChange = (tab_id) => {
     setTabs((prev) =>
-      prev.map((tab) => ({ ...tab, isActive: tab.id === tab_id }))
+      prev.map((tab) => ({ ...tab, isActive: tab.id === tab_id })),
     );
   };
 
@@ -1402,7 +1402,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
         return {
           ...prev,
           collections: updateOrderValues(
-            collections.filter(({ mb_uid }) => mb_uid !== value?.mb_uid)
+            collections.filter(({ mb_uid }) => mb_uid !== value?.mb_uid),
           ),
         };
       });
@@ -1412,7 +1412,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
       setMenuItem((prev) => {
         const collections = prev?.collections || [];
         const filtered = collections.filter(
-          ({ mb_uid }) => mb_uid !== value?.mb_uid
+          ({ mb_uid }) => mb_uid !== value?.mb_uid,
         );
         const updated_collections = [...filtered, value];
         return { ...prev, collections: [...updated_collections] };
@@ -1429,7 +1429,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
 
   const handleCategoryCollectionChange = (e) => {
     const { name, value, id } = e.target;
-    console.log("[TEST] handleCategoryCollectionChange", e);
+    // console.log("[TEST] handleCategoryCollectionChange", e);
     if (name === "add-category-collection") {
       setMenuItem((prev) => {
         const cat_collections = prev?.cat_collections || [];
@@ -1437,7 +1437,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
       });
     }
     if (name === "collection-label-change") {
-      console.log("[TEST] collection-label-change", e);
+      // console.log("[TEST] collection-label-change", e);
       setMenuItem((prev) => {
         const cat_collections = prev?.cat_collections || [];
         const updated_collections = cat_collections.map((i) => ({
@@ -1451,7 +1451,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
       setMenuItem((prev) => {
         const cat_collections = prev?.cat_collections || [];
         const updated_collections = cat_collections.filter(
-          (i) => i?.id !== value
+          (i) => i?.id !== value,
         );
         return { ...prev, cat_collections: updated_collections };
       });
@@ -1505,7 +1505,7 @@ function EditMenuItem({ menu_id, images, feature_images }) {
   }
 
   useEffect(() => {
-    console.log("[TEST] menuItemChanged", menuItem);
+    // console.log("[TEST] menuItemChanged", menuItem);
   }, [menuItem]);
 
   return (
