@@ -18,6 +18,7 @@ import {
   capacityBucketKeys,
   refVentBucketKeys,
   refHingeBucketKeys,
+  refOutdoorCertBucketKeys,
 } from "../../../app/lib/helpers";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
@@ -195,6 +196,42 @@ const apiClient = API({
         `,
         },
       },
+      cut_out_width: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_width'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_width'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      cut_out_depth: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_depth'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_depth'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
+      cut_out_height: {
+        type: "keyword",
+        script: {
+          source: `
+        if (doc['accentuate_data.bbq.storage_specs_cutout_height'].size() > 0) {
+          def val = doc['accentuate_data.bbq.storage_specs_cutout_height'].value;
+          // Remove quotes, 'in', and spaces, then trim
+          emit(val.replace('"', '').replace('in', '').trim());
+        }
+      `,
+        },
+      },
       ref_vent: {
         type: "keyword",
         script: {
@@ -256,42 +293,6 @@ const apiClient = API({
     `,
         },
       },
-      cut_out_width: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_width'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_width'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      cut_out_depth: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_depth'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_depth'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      cut_out_height: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_height'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_height'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
       ref_width: {
         type: "keyword",
         script: {
@@ -326,6 +327,108 @@ const apiClient = API({
           emit(val.replace('"', '').replace('in', '').trim());
         }
       `,
+        },
+      },
+      ref_mounting_type: {
+        type: "keyword",
+        script: {
+          source: `
+      def tagsList = params['_source']['tags'];
+      def titleText = params['_source']['title'];
+      
+      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
+
+      boolean isFreestanding = false;
+      if (tagsList != null && tagsList.contains("Freestanding")) {
+          isFreestanding = true;
+      } else if (normalizedTitle.contains("freestanding")) {
+          isFreestanding = true;
+      }
+
+      if (isFreestanding) {
+          emit("Freestanding");
+          return; 
+      }
+
+      boolean isBuiltIn = false;
+      if (tagsList != null && tagsList.contains("Built In")) {
+          isBuiltIn = true;
+      } else if (normalizedTitle.contains("built-in") || normalizedTitle.contains("built in")) {
+          isBuiltIn = true;
+      }
+
+      if (isBuiltIn) {
+          emit("Built-In");
+          return;
+      }
+    `,
+        },
+      },
+      ref_ice_cube_type: {
+        type: "keyword",
+        script: {
+          source: `
+      def tagsList = params['_source']['tags'];
+      def titleText = params['_source']['title'];
+      
+      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
+
+      boolean isClear = false;
+      if (tagsList != null && tagsList.contains("Clear")) {
+          isClear = true;
+      } else if (normalizedTitle.contains("clear")) {
+          isClear = true;
+      }
+
+      if (isClear) {
+          emit("Clear");
+          return; 
+      }
+
+      boolean isCube = false;
+      if (tagsList != null && tagsList.contains("Cube")) {
+          isCube = true;
+      } else if (normalizedTitle.contains("cube")) {
+          isCube = true;
+      }
+
+      if (isCube) {
+          emit("Cube");
+          return;
+      }
+
+      boolean isGourmet = false;
+      if (tagsList != null && tagsList.contains("Gourmet")) {
+          isGourmet = true;
+      } else if (normalizedTitle.contains("gourmet")) {
+          isGourmet = true;
+      }
+
+      if (isGourmet) {
+          emit("Gourmet");
+          return;
+      }
+    `,
+        },
+      },
+      ref_outdoor_certification: {
+        type: "keyword",
+        script: {
+          source: `
+          def validOutdoorCert = ${JSON.stringify(
+            refOutdoorCertBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              if (validOutdoorCert.contains(tag.toLowerCase())) {
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
         },
       },
     },
@@ -655,6 +758,21 @@ const apiClient = API({
         },
       },
       { attribute: "price", field: "variants.price", type: "numeric" },
+      {
+        attribute: "ref_mounting_type",
+        field: "ref_mounting_type",
+        type: "string",
+      },
+      {
+        attribute: "ref_ice_cube_type",
+        field: "ref_ice_cube_type",
+        type: "string",
+      },
+      {
+        attribute: "ref_outdoor_certification",
+        field: "ref_outdoor_certification",
+        type: "string",
+      },
       {
         attribute: "grill_lights",
         field: "accentuate_data.bbq.grill_lights",

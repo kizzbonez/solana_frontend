@@ -5,6 +5,7 @@ import {
   widthBuckets,
   capacityBuckets,
   formatToInches,
+  refOutdoorCertBuckets,
 } from "@/app/lib/helpers";
 
 // used in ProductsSection Component
@@ -205,6 +206,33 @@ export const filters = [
       return items.map((item) => ({
         ...item,
         label: capacityBuckets[item.value],
+      }));
+    },
+  },
+  {
+    label: "Mount Type",
+    attribute: "ref_mounting_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Ice Cube Type",
+    attribute: "ref_ice_cube_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Outdoor Certification",
+    attribute: "ref_outdoor_certification",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+    transform: function (items) {
+      return items.map((item) => ({
+        ...item,
+        label: refOutdoorCertBuckets[item.value],
       }));
     },
   },

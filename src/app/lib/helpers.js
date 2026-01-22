@@ -477,6 +477,11 @@ export const refHingeBuckets = {
   "Right Hinged": "Right",
 };
 
+export const refOutdoorCertBuckets = {
+  ETL: "Edison Testing Laboratories",
+  UL: "Underwriters Laboratories",
+};
+
 export const sizeBucketKeys = Object.keys(sizeBuckets);
 export const widthBucketKeys = Object.keys(widthBuckets);
 export const depthBucketKeys = Object.keys(depthBuckets);
@@ -484,6 +489,7 @@ export const heightBucketKeys = Object.keys(heightBuckets);
 export const capacityBucketKeys = Object.keys(capacityBuckets);
 export const refVentBucketKeys = Object.keys(refVentBuckets);
 export const refHingeBucketKeys = Object.keys(refHingeBuckets);
+export const refOutdoorCertBucketKeys = Object.keys(refOutdoorCertBuckets);
 
 export function capitalizeFirstLetter(str) {
   if (!str) return "";
