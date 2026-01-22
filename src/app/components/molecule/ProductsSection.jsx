@@ -647,9 +647,22 @@ function ProductsSection({ category, search = "" }) {
             <RefinementList attribute="configuration_type" className="hidden" />
             <RefinementList attribute="no_of_burners" className="hidden" />
             <RefinementList attribute="grill_lights" className="hidden" />
-            <RefinementList attribute="ref_type" className="hidden" />
             <RefinementList attribute="ref_door_type" className="hidden" />
             <RefinementList attribute="capacity" className="hidden" />
+            <RefinementList attribute="ref_mounting_type" className="hidden" />
+            <RefinementList attribute="ref_ice_cube_type" className="hidden" />
+            <RefinementList
+              attribute="ref_outdoor_certification"
+              className="hidden"
+            />
+            <RefinementList attribute="ref_class" className="hidden" />
+            <RefinementList
+              attribute="ref_ice_daily_output"
+              className="hidden"
+            />
+            <RefinementList attribute="ref_config" className="hidden" />
+            <RefinementList attribute="ref_drain_type" className="hidden" />
+            <RefinementList attribute="ref_no_of_zones" className="hidden" />
             <RefinementList attribute="ref_vent" className="hidden" />
             <RefinementList attribute="ref_hinge" className="hidden" />
             <RefinementList attribute="ref_storage_type" className="hidden" />

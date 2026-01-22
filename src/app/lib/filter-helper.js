@@ -237,6 +237,41 @@ export const filters = [
     },
   },
   {
+    label: "Refrigerator Class",
+    attribute: "ref_class",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Daily Ice Output", // #
+    attribute: "ref_ice_daily_output",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Ref Configuration", // #
+    attribute: "ref_config",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "Drain Type", // #
+    attribute: "ref_drain_type",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
+    label: "No. Of Zones", // #
+    attribute: "ref_no_of_zones",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators"],
+  },
+  {
     label: "Vent",
     attribute: "ref_vent",
     searchable: false,
@@ -449,5 +484,19 @@ export const filters = [
 //       ({ attribute }) =>
 //         `<RefinementList attribute="${attribute}" className="hidden" />`,
 //     )
+//     .join("\n"),
+// );
+
+// console.log(
+//   filters
+//     .filter(({ filter_type }) => filter_type.includes("refrigerators"))
+//     .map(({ label }) => `- ${label}`)
+//     .join("\n"),
+// );
+
+// console.log(
+//   filters
+//     .filter(({ filter_type }) => filter_type.includes("storage"))
+//     .map(({ label }) => `- ${label}`)
 //     .join("\n"),
 // );

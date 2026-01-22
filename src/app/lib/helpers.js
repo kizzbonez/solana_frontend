@@ -478,8 +478,37 @@ export const refHingeBuckets = {
 };
 
 export const refOutdoorCertBuckets = {
-  ETL: "Edison Testing Laboratories",
-  UL: "Underwriters Laboratories",
+  ETL: "Edison Testing Laboratories (ETL)",
+  UL: "Underwriters Laboratories (UL)",
+};
+
+export const refClassBuckets = {
+  Luxury: "Luxury",
+  Premium: "Premium",
+  Standard: "Standard",
+};
+
+export const refDailyIceBuckets = {
+  "31-40 lbs": "31-40 lbs",
+  "41-50 lbs": "41-50 lbs",
+  "51-60 lbs": "51-60 lbs",
+  "61-70 lbs": "61-70 lbs",
+};
+
+export const refConfigBuckets = {
+  "Drop In": "Drop In",
+  "Roll Out": "Roll Out",
+  "Slide In": "Slide In",
+};
+
+export const refDrainTypeBuckets = {
+  Gravity: "Gravity",
+  Pump: "Pump",
+};
+
+export const refNoOfZonesBuckets = {
+  Single: "Single",
+  Dual: "Dual",
 };
 
 export const sizeBucketKeys = Object.keys(sizeBuckets);
@@ -490,6 +519,11 @@ export const capacityBucketKeys = Object.keys(capacityBuckets);
 export const refVentBucketKeys = Object.keys(refVentBuckets);
 export const refHingeBucketKeys = Object.keys(refHingeBuckets);
 export const refOutdoorCertBucketKeys = Object.keys(refOutdoorCertBuckets);
+export const refClassBucketKeys = Object.keys(refClassBuckets);
+export const refDailyIceBucketKeys = Object.keys(refDailyIceBuckets);
+export const refConfigBucketKeys = Object.keys(refConfigBuckets);
+export const refDrainTypeBucketKeys = Object.keys(refDrainTypeBuckets);
+export const refNoOfZonesBucketKeys = Object.keys(refNoOfZonesBuckets);
 
 export function capitalizeFirstLetter(str) {
   if (!str) return "";

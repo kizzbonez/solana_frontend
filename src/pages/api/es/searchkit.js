@@ -19,6 +19,11 @@ import {
   refVentBucketKeys,
   refHingeBucketKeys,
   refOutdoorCertBucketKeys,
+  refClassBucketKeys,
+  refDailyIceBucketKeys,
+  refConfigBucketKeys,
+  refDrainTypeBucketKeys,
+  refNoOfZonesBucketKeys,
 } from "../../../app/lib/helpers";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
@@ -431,6 +436,106 @@ const apiClient = API({
         `,
         },
       },
+      ref_class: {
+        type: "keyword",
+        script: {
+          source: `
+          def validClass = ${JSON.stringify(
+            refClassBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+              
+              if (validClass.contains(tag.toLowerCase())) {
+                emit(tag);
+                return; 
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_ice_daily_output: {
+        type: "keyword",
+        script: {
+          source: `
+          def validDIO = ${JSON.stringify(
+            refDailyIceBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+
+              if (validDIO.contains(tag.toLowerCase())) {
+                emit(tag);
+                return;
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_config: {
+        type: "keyword",
+        script: {
+          source: `
+          def validConfig = ${JSON.stringify(
+            refConfigBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+
+              if (validConfig.contains(tag.toLowerCase())) {
+                emit(tag);
+                return;
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_drain_type: {
+        type: "keyword",
+        script: {
+          source: `
+          def validDrainType = ${JSON.stringify(
+            refDrainTypeBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+
+              if (validDrainType.contains(tag.toLowerCase())) {
+                emit(tag);
+                return;
+              }
+            }
+          }
+        `,
+        },
+      },
+      ref_no_of_zones: {
+        type: "keyword",
+        script: {
+          source: `
+          def validNoOfZones = ${JSON.stringify(
+            refNoOfZonesBucketKeys.map((k) => k.toLowerCase()),
+          )};
+          if (params['_source']['tags'] != null) {
+            for (def tag : params['_source']['tags']) {
+              if (tag == null) continue;
+
+              if (validNoOfZones.contains(tag.toLowerCase())) {
+                emit(tag);
+                return;
+              }
+            }
+          }
+        `,
+        },
+      },
     },
     facet_attributes: [
       {
@@ -771,6 +876,31 @@ const apiClient = API({
       {
         attribute: "ref_outdoor_certification",
         field: "ref_outdoor_certification",
+        type: "string",
+      },
+      {
+        attribute: "ref_class",
+        field: "ref_class",
+        type: "string",
+      },
+      {
+        attribute: "ref_ice_daily_output",
+        field: "ref_ice_daily_output",
+        type: "string",
+      },
+      {
+        attribute: "ref_config",
+        field: "ref_config",
+        type: "string",
+      },
+      {
+        attribute: "ref_drain_type",
+        field: "ref_drain_type",
+        type: "string",
+      },
+      {
+        attribute: "ref_no_of_zones",
+        field: "ref_no_of_zones",
         type: "string",
       },
       {
