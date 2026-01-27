@@ -15,7 +15,12 @@ export const filters = [
     attribute: "ways_to_shop",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["Search", "refrigerators", "storage"],
+    filter_type: [
+      "Search",
+      "refrigerators",
+      "storage",
+      "compact-refrigerators",
+    ],
   },
   {
     label: "Ratings",
@@ -34,6 +39,7 @@ export const filters = [
       "fireplaces",
       "firepits",
       "refrigerators",
+      "compact-refrigerators",
       "patio-heaters",
       "storage",
       "open-box",
@@ -169,6 +175,7 @@ export const filters = [
       "fireplaces",
       "firepits",
       "refrigerators",
+      "compact-refrigerators",
       "patio-heaters",
       "storage",
       "open-box",
@@ -194,14 +201,14 @@ export const filters = [
     attribute: "ref_door_type",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "capacity",
     attribute: "capacity",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
     transform: function (items) {
       return items.map((item) => ({
         ...item,
@@ -214,21 +221,21 @@ export const filters = [
     attribute: "ref_mounting_type",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Ice Cube Type",
     attribute: "ref_ice_cube_type",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Outdoor Certification",
     attribute: "ref_outdoor_certification",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
     transform: function (items) {
       return items.map((item) => ({
         ...item,
@@ -241,63 +248,63 @@ export const filters = [
     attribute: "ref_class",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Daily Ice Output", // #
     attribute: "ref_ice_daily_output",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Ref Configuration", // #
     attribute: "ref_config",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Drain Type", // #
     attribute: "ref_drain_type",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "No. Of Zones", // #
     attribute: "ref_no_of_zones",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Vent",
     attribute: "ref_vent",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Hinge",
     attribute: "ref_hinge",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Storage Type",
     attribute: "ref_storage_type",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
   },
   {
     label: "Width",
     attribute: "ref_width",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
     transform: formatToInches,
   },
   {
@@ -305,7 +312,7 @@ export const filters = [
     attribute: "ref_depth",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
     transform: formatToInches,
   },
   {
@@ -313,7 +320,7 @@ export const filters = [
     attribute: "ref_height",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["refrigerators"],
+    filter_type: ["refrigerators", "compact-refrigerators"],
     transform: formatToInches,
   },
   {
@@ -451,7 +458,12 @@ export const filters = [
     attribute: "material",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["grills", "refrigerators", "storage"],
+    filter_type: [
+      "grills",
+      "refrigerators",
+      "storage",
+      "compact-refrigerators",
+    ],
   },
   {
     label: "Thermometer",
@@ -475,6 +487,27 @@ export const filters = [
     filter_type: ["grills"],
   },
 ];
+
+// order
+export const filtersOrder = {
+  "compact-refrigerators": [
+    "ways_to_shop",
+    "brand",
+    "capacity",
+    "glass_door",
+    "ref_door_type",
+    "ref_vent",
+    "price",
+    "cut_out_width",
+    "cut_out_height",
+    "material",
+    "ref_config",
+    "lock",
+    "ref_outdoor_certification",
+    "ref_hinge",
+    "cut_out_depth",
+  ],
+};
 
 // generate refinementlist html for url-based filters
 // console.log(
