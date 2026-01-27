@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSolanaCategories } from "@/app/context/category";
 import { useSearch } from "@/app/context/search";
 import SPProductCard from "@/app/components/atom/ProductCard";
@@ -39,12 +39,49 @@ const Panel = ({ header, children }) => {
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div className="panel border border-gray-200 shadow p-2">
+    // border-gray-200 shadow border
+    <div className="panel p-2">
+      {/* <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="w-full flex items-center gap-[20px] justify-between"
+      >
+        <h5 className=" font-semibold text-[14px] text-stone-800">{header}</h5>
+        {expanded ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path fill="currentColor" d="M19 13H5v-2h14z" />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+          >
+            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
+          </svg>
+        )}
+      </button> */}
+      <div className={`${expanded ? "" : "hidden"}`}>{children}</div>
+    </div>
+  );
+};
+
+const FilterGroup = ({ header, children }) => {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    // border-gray-200 shadow border
+    <div className="panel p-2">
       <button
         onClick={() => setExpanded((prev) => !prev)}
         className="w-full flex items-center gap-[20px] justify-between"
       >
-        <h5 className="uppercase font-semibold">{header}</h5>
+        <h5 className=" font-semibold text-[14px] text-stone-800">{header}</h5>
         {expanded ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -214,13 +251,17 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                     .filter((item) =>
                       item?.filter_type.includes(page_details?.filter_type),
                     )
+                    .filter(
+                      (item) =>
+                        !["price", "price_groups"].includes(item?.attribute),
+                    )
                     .map((item) => (
                       <div
                         key={`filter-item-${item?.attribute}`}
                         className={`facet-wrapper my-1 facet_${item?.attribute}`}
                       >
-                        <Panel header={item?.label}>
-                          {item?.attribute && item?.attribute !== "price" ? (
+                        <FilterGroup header={item?.label}>
+                          {item?.attribute && (
                             <>
                               {item?.attribute !== "ratings" ? (
                                 <RefinementList
@@ -229,23 +270,36 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                                   {...(item?.transform
                                     ? { transformItems: item.transform }
                                     : {})}
-                                  showMore={true}
+                                  showMore={item?.collapse ?? true}
                                 />
                               ) : (
                                 <RefinementList
                                   attribute={item?.attribute}
                                   searchable={item?.searchable}
                                   classNames={{ labelText: "stars" }}
-                                  showMore={false}
+                                  showMore={item?.collapse || false}
                                 />
                               )}
                             </>
-                          ) : (
-                            <RangeInput attribute="price" />
                           )}
-                        </Panel>
+                        </FilterGroup>
                       </div>
                     ))}
+
+                  <div>
+                    <FilterGroup header={"Price"}>
+                      <RefinementList
+                        attribute={"price_groups"}
+                        searchable={false}
+                        showMore={false}
+                      />
+                    </FilterGroup>
+                  </div>
+                  <div>
+                    <Panel>
+                      <RangeInput attribute="price" />
+                    </Panel>
+                  </div>
                 </DynamicWidgets>
               )}
 
@@ -266,14 +320,14 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                               <RefinementList
                                 attribute={item?.attribute}
                                 searchable={item?.searchable}
-                                showMore={true}
+                                showMore={item?.collapse || true}
                               />
                             ) : (
                               <RefinementList
                                 attribute={item?.attribute}
                                 searchable={item?.searchable}
                                 classNames={{ labelText: "stars" }}
-                                showMore={false}
+                                showMore={item?.collapse || true}
                               />
                             )}
                           </>
@@ -537,20 +591,20 @@ function ProductsSection({ category, search = "" }) {
         // Calculate filter string
         let result = "";
         if (details?.nav_type === "category") {
-          result = `page_category:${details?.origin_name}`;
+          result = `page_category:${details?.origin_name}${":" + details.filter_type}`;
         } else if (details?.nav_type === "brand") {
-          result = `page_brand:${details?.origin_name}`;
+          result = `page_brand:${details?.origin_name}${":" + details.filter_type}`;
         } else if (details?.nav_type === "custom_page") {
           if (details?.name === "Search") {
-            result = `custom_page:Search`;
+            result = `custom_page:Search:Search`;
           } else {
             const page_name = details?.name;
             if (BaseNavKeys.includes(page_name)) {
-              result = `custom_page:${page_name}`;
+              result = `custom_page:${page_name}:${details.filter_type}`;
             } else {
               result = `custom_page:${
                 details?.collection_display?.name || "NA"
-              }`;
+              }:${details.filter_type}`;
             }
           }
         }
@@ -608,6 +662,7 @@ function ProductsSection({ category, search = "" }) {
               ]}
             />
             {/* Refinement List Hack for URL-Based Filter */}
+            <RefinementList attribute="ref_depth" className="hidden" />
             <RefinementList attribute="ways_to_shop" className="hidden" />
             <RefinementList attribute="ratings" className="hidden" />
             <RefinementList attribute="brand" className="hidden" />
@@ -667,7 +722,6 @@ function ProductsSection({ category, search = "" }) {
             <RefinementList attribute="ref_hinge" className="hidden" />
             <RefinementList attribute="ref_storage_type" className="hidden" />
             <RefinementList attribute="ref_width" className="hidden" />
-            <RefinementList attribute="ref_depth" className="hidden" />
             <RefinementList attribute="ref_height" className="hidden" />
             <RefinementList attribute="size" className="hidden" />
             <RefinementList attribute="width" className="hidden" />

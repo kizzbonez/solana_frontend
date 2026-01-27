@@ -618,7 +618,10 @@ ol.ais-Hits-list {
 
 li.ais-Hits-item {
   width: calc(
-    (100% - (var(--pfd-product-grid-gap) * (var(--pfd-product-grid-cols) - 1))) /
+    (
+        100% -
+          (var(--pfd-product-grid-gap) * (var(--pfd-product-grid-cols) - 1))
+      ) /
       var(--pfd-product-grid-cols)
   );
 }
@@ -746,7 +749,7 @@ label.ais-RefinementList-label {
 }
 
 label.ais-RefinementList-label .ais-RefinementList-labelText {
-  font-size: 14px;
+  font-size: 12px;
   width: 80%;
 }
 
@@ -754,13 +757,14 @@ label.ais-RefinementList-label .ais-RefinementList-count {
   font-size: 10px;
   padding: 1px 1px;
   min-width: 26px;
-  background: #2e2e2e;
-  color: white;
-  border-radius: 4px;
+  background: #ccc;
+  color: #333333;
+  border-radius: 999px;
   margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* border: solid 1px #3a3a3a; */
 }
 
 .ais-RefinementList-list {
@@ -774,7 +778,7 @@ label.ais-RefinementList-label .ais-RefinementList-count {
 }
 
 .ais-RefinementList-item:hover {
-  background: #ccc;
+  background: #eee;
 }
 
 .ais-SearchBox-form {
@@ -789,7 +793,9 @@ label.ais-RefinementList-label .ais-RefinementList-count {
   border-radius: 0.25rem; /* rounded corners */
   font-size: 1rem;
   outline: none;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
   margin-bottom: 5px;
 }
 

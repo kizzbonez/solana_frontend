@@ -1,11 +1,41 @@
 import {
+  // etc
+  BaseNavObj,
+  ES_INDEX,
+  STAR_FILTERS,
+  exclude_brands,
+  exclude_collections,
+  main_products,
+  shouldApplyMainProductSort,
+  formatToInches,
+  // Bucket keys
+  capacityBucketKeys,
+  depthBucketKeys,
+  heightBucketKeys,
+  refClassBucketKeys,
+  refConfigBucketKeys,
+  refDailyIceBucketKeys,
+  refDrainTypeBucketKeys,
+  refHingeBucketKeys,
+  refNoOfZonesBucketKeys,
+  refOutdoorCertBucketKeys,
+  refVentBucketKeys,
+  sizeBucketKeys,
+  widthBucketKeys,
+  // Buckets
+  capacityBuckets,
   depthBuckets,
   heightBuckets,
+  refClassBuckets,
+  refConfigBuckets,
+  refDailyIceBuckets,
+  refDrainTypeBuckets,
+  refHingeBuckets,
+  refNoOfZonesBuckets,
+  refOutdoorCertBuckets,
+  refVentBuckets,
   sizeBuckets,
   widthBuckets,
-  capacityBuckets,
-  formatToInches,
-  refOutdoorCertBuckets,
 } from "@/app/lib/helpers";
 
 // used in ProductsSection Component
@@ -21,6 +51,129 @@ export const filters = [
       "storage",
       "compact-refrigerators",
     ],
+    filter_config: [
+      { type: "Search", order: 1, hide: false },
+      { type: "refrigerators", order: 1, hide: false },
+      { type: "storage", order: 1, hide: false },
+      { type: "compact-refrigerators", order: 1, hide: false },
+    ],
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ways_to_shop",
+      type: "string",
+      facetQuery: () => ({
+        filters: {
+          filters: {
+            "Top Rated": {
+              terms: { "ratings.rating_count.keyword": ["3", "4", "5"] },
+            },
+            "Clearance/Open Box": {
+              bool: {
+                should: [
+                  {
+                    wildcard: {
+                      "collections.name.keyword": {
+                        value: "*clearance*",
+                        case_insensitive: true, // Added this
+                      },
+                    },
+                  },
+                  {
+                    wildcard: {
+                      "collections.name.keyword": {
+                        value: "*open box*",
+                        case_insensitive: true, // Added this
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            "Package Deals": {
+              wildcard: {
+                "collections.name.keyword": {
+                  value: "*package deal*",
+                  case_insensitive: true, // Added this
+                },
+              },
+            },
+            Promotions: {
+              wildcard: {
+                "collections.name.keyword": {
+                  value: "*promotion*",
+                  case_insensitive: true, // Added this
+                },
+              },
+            },
+          },
+        },
+      }),
+      facetResponse: (aggregation) => {
+        const buckets = aggregation.buckets || {};
+        // Sort logic: Ensure they always appear in a specific order
+        const order = [
+          "Top Rated",
+          "Clearance/Open Box",
+          "Package Deals",
+          "Promotions",
+        ];
+        return order.reduce((acc, key) => {
+          const count = buckets[key]?.doc_count ?? 0;
+          if (count > 0) {
+            acc[key] = count;
+          }
+          return acc;
+        }, {});
+      },
+      filterQuery: (field, value) => {
+        const queries = {
+          "Top Rated": {
+            terms: { "ratings.rating_count.keyword": ["3", "4", "5"] },
+          },
+          "Clearance/Open Box": {
+            bool: {
+              should: [
+                {
+                  wildcard: {
+                    "collections.name.keyword": {
+                      value: "*clearance*",
+                      case_insensitive: true,
+                    },
+                  },
+                },
+                {
+                  wildcard: {
+                    "collections.name.keyword": {
+                      value: "*open box*",
+                      case_insensitive: true,
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          "Package Deals": {
+            wildcard: {
+              "collections.name.keyword": {
+                value: "*package deal*",
+                case_insensitive: true,
+              },
+            },
+          },
+          Promotions: {
+            wildcard: {
+              "collections.name.keyword": {
+                value: "*promotion*",
+                case_insensitive: true,
+              },
+            },
+          },
+        };
+
+        return queries[value] || {};
+      },
+    },
+    collapse: false,
   },
   {
     label: "Ratings",
@@ -28,23 +181,107 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["Search", "refrigerators", "storage"],
+    filter_config: [
+      { type: "Search", order: 2, hide: false },
+      { type: "refrigerators", order: 2, hide: false },
+      { type: "storage", order: 2, hide: false },
+    ],
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ratings",
+      field: "ratings.rating_count.keyword",
+      type: "string",
+
+      facetQuery: () => ({
+        filters: {
+          filters: {
+            [STAR_FILTERS[0]]: {
+              term: { "ratings.rating_count.keyword": "0" },
+            },
+            [STAR_FILTERS[1]]: {
+              term: { "ratings.rating_count.keyword": "1" },
+            },
+            [STAR_FILTERS[2]]: {
+              term: { "ratings.rating_count.keyword": "2" },
+            },
+            [STAR_FILTERS[3]]: {
+              term: { "ratings.rating_count.keyword": "3" },
+            },
+            [STAR_FILTERS[4]]: {
+              term: { "ratings.rating_count.keyword": "4" },
+            },
+            [STAR_FILTERS[5]]: {
+              term: { "ratings.rating_count.keyword": "5" },
+            },
+          },
+        },
+      }),
+
+      facetResponse: (aggregation) => {
+        const buckets = aggregation.buckets || {};
+        return Object.keys(buckets).reduce((acc, key) => {
+          const count = buckets[key]?.doc_count ?? 0;
+          if (count > 0) {
+            acc[key] = count;
+          }
+          return acc;
+        }, {});
+      },
+
+      filterQuery: (field, value) => {
+        // 'value' is the star string (e.g., "★★★★★")
+        // We find the numeric key ("5") that matches that string
+        const esValue = Object.keys(STAR_FILTERS).find(
+          (key) => STAR_FILTERS[key] === value,
+        );
+
+        if (esValue !== undefined) {
+          return {
+            term: {
+              [field]: esValue,
+            },
+          };
+        }
+
+        return {};
+      },
+    },
+    collapse: false,
   },
   {
-    label: "brand",
+    label: "Brand",
     attribute: "brand",
     searchable: false,
     type: "RefinementList",
     filter_type: [
+      "Search",
       "grills",
       "fireplaces",
       "firepits",
+      "patio-heaters",
+      "open-box",
       "refrigerators",
       "compact-refrigerators",
-      "patio-heaters",
       "storage",
-      "open-box",
-      "Search",
     ],
+    filter_config: [
+      { type: "Search", order: 3, hide: false },
+      { type: "grills", order: 3, hide: false },
+      { type: "fireplaces", order: 3, hide: false },
+      { type: "firepits", order: 3, hide: false },
+      { type: "patio-heaters", order: 3, hide: false },
+      { type: "open-box", order: 3, hide: false },
+      { type: "refrigerators", order: 3, hide: false },
+      { type: "compact-refrigerators", order: 3, hide: false },
+      { type: "storage", order: 3, hide: false },
+    ],
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "brand",
+      field: "brand.keyword",
+      type: "string",
+    },
+    collapse: true,
   },
   {
     label: "Category",
@@ -145,28 +382,36 @@ export const filters = [
     filter_type: ["patio-heaters"],
   },
   {
-    label: "collections",
+    label: "Collections",
     attribute: "collections",
     searchable: false,
     type: "RefinementList",
     filter_type: ["open-box", "Search"],
   },
   {
-    label: "configuration",
+    label: "Configuration",
     attribute: "configuration_type",
     searchable: false,
     type: "RefinementList",
     filter_type: ["grills"],
   },
   {
-    label: "number of burners",
+    label: "Number of burners",
     attribute: "no_of_burners",
     searchable: false,
     type: "RefinementList",
     filter_type: ["grills"],
   },
   {
-    label: "price",
+    label: "Price Groups",
+    attribute: "price_groups",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["compact-refrigerators"],
+    collapse: false,
+  },
+  {
+    label: "Price",
     attribute: "price",
     searchable: false,
     type: "RangeInput",
@@ -183,28 +428,22 @@ export const filters = [
     ],
   },
   {
-    label: "lights",
+    label: "Lights",
     attribute: "grill_lights",
     searchable: false,
     type: "RefinementList",
     filter_type: ["grills"],
   },
-  //   { // used Category Instead
-  //     label: "Type",
-  //     attribute: "ref_type",
-  //     searchable: false,
-  //     type: "RefinementList",
-  //     filter_type: ["refrigerators"],
-  //   },
   {
     label: "Door Type",
     attribute: "ref_door_type",
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
-    label: "capacity",
+    label: "Capacity",
     attribute: "capacity",
     searchable: false,
     type: "RefinementList",
@@ -215,6 +454,7 @@ export const filters = [
         label: capacityBuckets[item.value],
       }));
     },
+    collapse: false,
   },
   {
     label: "Mount Type",
@@ -222,6 +462,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Ice Cube Type",
@@ -229,6 +470,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Outdoor Certification",
@@ -242,6 +484,7 @@ export const filters = [
         label: refOutdoorCertBuckets[item.value],
       }));
     },
+    collapse: false,
   },
   {
     label: "Refrigerator Class",
@@ -249,6 +492,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Daily Ice Output", // #
@@ -256,6 +500,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Ref Configuration", // #
@@ -263,6 +508,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Drain Type", // #
@@ -270,6 +516,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "No. Of Zones", // #
@@ -277,6 +524,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Vent",
@@ -284,6 +532,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Hinge",
@@ -291,6 +540,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Storage Type",
@@ -298,6 +548,7 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
+    collapse: false,
   },
   {
     label: "Width",
@@ -324,7 +575,7 @@ export const filters = [
     transform: formatToInches,
   },
   {
-    label: "size",
+    label: "Size",
     attribute: "size",
     searchable: false,
     type: "RefinementList",
@@ -337,7 +588,7 @@ export const filters = [
     },
   },
   {
-    label: "width",
+    label: "Width",
     attribute: "width",
     searchable: false,
     type: "RefinementList",
@@ -350,7 +601,7 @@ export const filters = [
     },
   },
   {
-    label: "depth",
+    label: "Depth",
     attribute: "depth",
     searchable: false,
     type: "RefinementList",
@@ -363,7 +614,7 @@ export const filters = [
     },
   },
   {
-    label: "height",
+    label: "Height",
     attribute: "height",
     searchable: false,
     type: "RefinementList",
@@ -464,6 +715,7 @@ export const filters = [
       "storage",
       "compact-refrigerators",
     ],
+    collapse: false,
   },
   {
     label: "Thermometer",
@@ -488,26 +740,20 @@ export const filters = [
   },
 ];
 
-// order
-export const filtersOrder = {
-  "compact-refrigerators": [
-    "ways_to_shop",
-    "brand",
-    "capacity",
-    "glass_door",
-    "ref_door_type",
-    "ref_vent",
-    "price",
-    "cut_out_width",
-    "cut_out_height",
-    "material",
-    "ref_config",
-    "lock",
-    "ref_outdoor_certification",
-    "ref_hinge",
-    "cut_out_depth",
-  ],
+export const getFacetAttributesByFilterType = (type) => {
+  const targetFilter = filters.filter((f) =>
+    f.filter_config?.some((config) => config.type === type),
+  );
+
+  return targetFilter ?? null;
 };
+
+console.log(
+  "facetAttributes[compact-refrigerators]",
+  getFacetAttributesByFilterType("compact-refrigerators"),
+);
+
+export const getRuntimeMappingsByFilterType = (type) => {};
 
 // generate refinementlist html for url-based filters
 // console.log(
