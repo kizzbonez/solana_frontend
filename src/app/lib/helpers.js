@@ -478,6 +478,7 @@ export const refHingeBuckets = {
 };
 
 export const refOutdoorCertBuckets = {
+  CSA: "Canadian Standards Association (CSA)",
   ETL: "Edison Testing Laboratories (ETL)",
   UL: "Underwriters Laboratories (UL)",
 };

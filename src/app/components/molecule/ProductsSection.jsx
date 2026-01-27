@@ -25,7 +25,7 @@ import {
   ES_INDEX,
   getInitialUiStateFromUrl,
 } from "@/app/lib/helpers";
-import { filters } from "@/app/lib/filter-helper";
+import { getFacetAttributesByFilterType } from "@/app/lib/filter-helper";
 
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 
@@ -201,6 +201,8 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
       hasLoadedResults.current = true;
     }
   }, [results]);
+
+  const filters = getFacetAttributesByFilterType(page_details?.filter_type);
 
   // Only show "No Results" if we're done loading AND have received results AND count is 0
   const shouldShowNoResults =

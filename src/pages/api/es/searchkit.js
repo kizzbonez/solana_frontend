@@ -27,7 +27,10 @@ import {
 } from "../../../app/lib/helpers";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
-import { getFacetAttributesByFilterType } from "../../../app/lib/filter-helper";
+import {
+  getFacetAttributesByFilterType,
+  getRuntimeMappingsByFilterType,
+} from "../../../app/lib/filter-helper";
 
 const priceBuckets = {
   "Under $1,000": { gte: 0, lt: 1000 },
@@ -70,7 +73,6 @@ export default async function handler(req, res) {
 
   try {
     const check_filter = req.body?.[0]?.params?.filter;
-    console.log("check_filter", check_filter);
     let filter_key = null;
     let filter_value = null;
     let filter_option = null;
@@ -109,7 +111,6 @@ export default async function handler(req, res) {
       filter_key = check_filter.split(":")[0];
       filter_value = check_filter.split(":")[1];
       filter_type = check_filter.split(":")[2];
-      console.log("filter_type", filter_type);
     }
 
     if (filter_key === "page_category") {
@@ -520,7 +521,6 @@ export default async function handler(req, res) {
     //     attribute: "price_groups",
     //     field: "variants.price",
     //     type: "numeric",
-
     //     facetQuery: () => ({
     //       filters: {
     //         filters: {
@@ -534,12 +534,10 @@ export default async function handler(req, res) {
     //         },
     //       },
     //     }),
-
     //     facetResponse: (aggregation) => {
     //       const buckets = aggregation.buckets || {};
     //       // Sort logic: Ensure they always appear in a specific order
     //       const order = Object.keys(priceBuckets);
-
     //       return order.reduce((acc, key) => {
     //         const count = buckets[key]?.doc_count ?? 0;
     //         if (count > 0) {
@@ -548,7 +546,6 @@ export default async function handler(req, res) {
     //         return acc;
     //       }, {});
     //     },
-
     //     filterQuery: (field, value) => {
     //       // 1. Dynamically build the queries object from your priceBuckets
     //       const priceQueries = Object.fromEntries(
@@ -557,9 +554,7 @@ export default async function handler(req, res) {
     //           { range: { "variants.price": range } },
     //         ]),
     //       );
-
     //       const allQueries = { ...priceQueries };
-
     //       return allQueries[value] || null;
     //     },
     //   },
@@ -861,451 +856,453 @@ export default async function handler(req, res) {
     const facetAttributes = (
       getFacetAttributesByFilterType(filter_type) || []
     ).map(({ facet_attribute }) => facet_attribute);
-    const runtimeMappings = {
-      size_group: {
-        type: "keyword", // Changed to keyword for grouping/faceting
-        script: {
-          source: `
-          def validSizes = ${JSON.stringify(
-            sizeBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              // 3. Lowercase the tag from the document and check against the lowercase list
-              if (validSizes.contains(tag.toLowerCase())) {
-                // Emit the ORIGINAL tag so your UI display logic still works
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      width_group: {
-        type: "keyword", // Changed to keyword for grouping/faceting
-        script: {
-          source: `
-          def validSizes = ${JSON.stringify(
-            widthBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              // 3. Lowercase the tag from the document and check against the lowercase list
-              if (validSizes.contains(tag.toLowerCase())) {
-                // Emit the ORIGINAL tag so your UI display logic still works
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      depth_group: {
-        type: "keyword", // Changed to keyword for grouping/faceting
-        script: {
-          source: `
-          def validSizes = ${JSON.stringify(
-            depthBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              // 3. Lowercase the tag from the document and check against the lowercase list
-              if (validSizes.contains(tag.toLowerCase())) {
-                // Emit the ORIGINAL tag so your UI display logic still works
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      height_group: {
-        type: "keyword", // Changed to keyword for grouping/faceting
-        script: {
-          source: `
-          def validSizes = ${JSON.stringify(
-            heightBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              // 3. Lowercase the tag from the document and check against the lowercase list
-              if (validSizes.contains(tag.toLowerCase())) {
-                // Emit the ORIGINAL tag so your UI display logic still works
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      capacity_group: {
-        type: "keyword",
-        script: {
-          source: `
-          def validCapacity = ${JSON.stringify(
-            capacityBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              if (validCapacity.contains(tag.toLowerCase())) {
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      cut_out_width: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_width'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_width'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      cut_out_depth: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_depth'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_depth'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      cut_out_height: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.storage_specs_cutout_height'].size() > 0) {
-          def val = doc['accentuate_data.bbq.storage_specs_cutout_height'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      ref_vent: {
-        type: "keyword",
-        script: {
-          source: `
-          def validVent = ${JSON.stringify(
-            refVentBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              if (validVent.contains(tag.toLowerCase())) {
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_hinge: {
-        type: "keyword",
-        script: {
-          source: `
-          def validHinge = ${JSON.stringify(
-            refHingeBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              if (validHinge.contains(tag.toLowerCase())) {
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      rating_num: {
-        type: "keyword",
-        script: {
-          source: `
-      // Check if field exists and is not empty
-      if (doc['ratings.rating_count.keyword'].size() > 0 && doc['ratings.rating_count.keyword'].value != null) {
-        
-        String raw = doc['ratings.rating_count.keyword'].value;
-        String clean = /[^\d]/.matcher(raw).replaceAll('');
-        
-        if (clean.length() > 0) {
-          emit(clean);
-        } else {
-          emit("0"); // Fallback for empty strings
-        }
-      } else {
-        emit("0"); // Fallback for missing fields
-      }
-    `,
-        },
-      },
-      ref_width: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_width'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_width'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      ref_depth: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_depth'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_depth'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      ref_height: {
-        type: "keyword",
-        script: {
-          source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_height'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_height'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
-        },
-      },
-      ref_mounting_type: {
-        type: "keyword",
-        script: {
-          source: `
-      def tagsList = params['_source']['tags'];
-      def titleText = params['_source']['title'];
-      
-      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
+    // const runtimeMappings = {
+    //   size_group: {
+    //     type: "keyword", // Changed to keyword for grouping/faceting
+    //     script: {
+    //       source: `
+    //       def validSizes = ${JSON.stringify(
+    //         sizeBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      boolean isFreestanding = false;
-      if (tagsList != null && tagsList.contains("Freestanding")) {
-          isFreestanding = true;
-      } else if (normalizedTitle.contains("freestanding")) {
-          isFreestanding = true;
-      }
+    //           // 3. Lowercase the tag from the document and check against the lowercase list
+    //           if (validSizes.contains(tag.toLowerCase())) {
+    //             // Emit the ORIGINAL tag so your UI display logic still works
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   width_group: {
+    //     type: "keyword", // Changed to keyword for grouping/faceting
+    //     script: {
+    //       source: `
+    //       def validSizes = ${JSON.stringify(
+    //         widthBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      if (isFreestanding) {
-          emit("Freestanding");
-          return; 
-      }
+    //           // 3. Lowercase the tag from the document and check against the lowercase list
+    //           if (validSizes.contains(tag.toLowerCase())) {
+    //             // Emit the ORIGINAL tag so your UI display logic still works
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   depth_group: {
+    //     type: "keyword", // Changed to keyword for grouping/faceting
+    //     script: {
+    //       source: `
+    //       def validSizes = ${JSON.stringify(
+    //         depthBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      boolean isBuiltIn = false;
-      if (tagsList != null && tagsList.contains("Built In")) {
-          isBuiltIn = true;
-      } else if (normalizedTitle.contains("built-in") || normalizedTitle.contains("built in")) {
-          isBuiltIn = true;
-      }
+    //           // 3. Lowercase the tag from the document and check against the lowercase list
+    //           if (validSizes.contains(tag.toLowerCase())) {
+    //             // Emit the ORIGINAL tag so your UI display logic still works
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   height_group: {
+    //     type: "keyword", // Changed to keyword for grouping/faceting
+    //     script: {
+    //       source: `
+    //       def validSizes = ${JSON.stringify(
+    //         heightBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      if (isBuiltIn) {
-          emit("Built-In");
-          return;
-      }
-    `,
-        },
-      },
-      ref_ice_cube_type: {
-        type: "keyword",
-        script: {
-          source: `
-      def tagsList = params['_source']['tags'];
-      def titleText = params['_source']['title'];
-      
-      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
+    //           // 3. Lowercase the tag from the document and check against the lowercase list
+    //           if (validSizes.contains(tag.toLowerCase())) {
+    //             // Emit the ORIGINAL tag so your UI display logic still works
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   capacity_group: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validCapacity = ${JSON.stringify(
+    //         capacityBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      boolean isClear = false;
-      if (tagsList != null && tagsList.contains("Clear")) {
-          isClear = true;
-      } else if (normalizedTitle.contains("clear")) {
-          isClear = true;
-      }
+    //           if (validCapacity.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   cut_out_width: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.storage_specs_cutout_width'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.storage_specs_cutout_width'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   cut_out_depth: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.storage_specs_cutout_depth'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.storage_specs_cutout_depth'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   cut_out_height: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.storage_specs_cutout_height'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.storage_specs_cutout_height'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   ref_vent: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validVent = ${JSON.stringify(
+    //         refVentBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      if (isClear) {
-          emit("Clear");
-          return; 
-      }
+    //           if (validVent.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_hinge: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validHinge = ${JSON.stringify(
+    //         refHingeBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
 
-      boolean isCube = false;
-      if (tagsList != null && tagsList.contains("Cube")) {
-          isCube = true;
-      } else if (normalizedTitle.contains("cube")) {
-          isCube = true;
-      }
+    //           if (validHinge.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   rating_num: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //   // Check if field exists and is not empty
+    //   if (doc['ratings.rating_count.keyword'].size() > 0 && doc['ratings.rating_count.keyword'].value != null) {
 
-      if (isCube) {
-          emit("Cube");
-          return;
-      }
+    //     String raw = doc['ratings.rating_count.keyword'].value;
+    //     String clean = /[^\d]/.matcher(raw).replaceAll('');
 
-      boolean isGourmet = false;
-      if (tagsList != null && tagsList.contains("Gourmet")) {
-          isGourmet = true;
-      } else if (normalizedTitle.contains("gourmet")) {
-          isGourmet = true;
-      }
+    //     if (clean.length() > 0) {
+    //       emit(clean);
+    //     } else {
+    //       emit("0"); // Fallback for empty strings
+    //     }
+    //   } else {
+    //     emit("0"); // Fallback for missing fields
+    //   }
+    // `,
+    //     },
+    //   },
+    //   ref_width: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.ref_specs_cutout_width'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.ref_specs_cutout_width'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   ref_depth: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.ref_specs_cutout_depth'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.ref_specs_cutout_depth'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   ref_height: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //     if (doc['accentuate_data.bbq.ref_specs_cutout_height'].size() > 0) {
+    //       def val = doc['accentuate_data.bbq.ref_specs_cutout_height'].value;
+    //       // Remove quotes, 'in', and spaces, then trim
+    //       emit(val.replace('"', '').replace('in', '').trim());
+    //     }
+    //   `,
+    //     },
+    //   },
+    //   ref_mounting_type: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //   def tagsList = params['_source']['tags'];
+    //   def titleText = params['_source']['title'];
 
-      if (isGourmet) {
-          emit("Gourmet");
-          return;
-      }
-    `,
-        },
-      },
-      ref_outdoor_certification: {
-        type: "keyword",
-        script: {
-          source: `
-          def validOutdoorCert = ${JSON.stringify(
-            refOutdoorCertBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              if (validOutdoorCert.contains(tag.toLowerCase())) {
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_class: {
-        type: "keyword",
-        script: {
-          source: `
-          def validClass = ${JSON.stringify(
-            refClassBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-              
-              if (validClass.contains(tag.toLowerCase())) {
-                emit(tag);
-                return; 
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_ice_daily_output: {
-        type: "keyword",
-        script: {
-          source: `
-          def validDIO = ${JSON.stringify(
-            refDailyIceBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
+    //   def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
 
-              if (validDIO.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_config: {
-        type: "keyword",
-        script: {
-          source: `
-          def validConfig = ${JSON.stringify(
-            refConfigBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
+    //   boolean isFreestanding = false;
+    //   if (tagsList != null && tagsList.contains("Freestanding")) {
+    //       isFreestanding = true;
+    //   } else if (normalizedTitle.contains("freestanding")) {
+    //       isFreestanding = true;
+    //   }
 
-              if (validConfig.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_drain_type: {
-        type: "keyword",
-        script: {
-          source: `
-          def validDrainType = ${JSON.stringify(
-            refDrainTypeBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
+    //   if (isFreestanding) {
+    //       emit("Freestanding");
+    //       return;
+    //   }
 
-              if (validDrainType.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-      ref_no_of_zones: {
-        type: "keyword",
-        script: {
-          source: `
-          def validNoOfZones = ${JSON.stringify(
-            refNoOfZonesBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
+    //   boolean isBuiltIn = false;
+    //   if (tagsList != null && tagsList.contains("Built In")) {
+    //       isBuiltIn = true;
+    //   } else if (normalizedTitle.contains("built-in") || normalizedTitle.contains("built in")) {
+    //       isBuiltIn = true;
+    //   }
 
-              if (validNoOfZones.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    };
+    //   if (isBuiltIn) {
+    //       emit("Built-In");
+    //       return;
+    //   }
+    // `,
+    //     },
+    //   },
+    //   ref_ice_cube_type: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //   def tagsList = params['_source']['tags'];
+    //   def titleText = params['_source']['title'];
+
+    //   def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
+
+    //   boolean isClear = false;
+    //   if (tagsList != null && tagsList.contains("Clear")) {
+    //       isClear = true;
+    //   } else if (normalizedTitle.contains("clear")) {
+    //       isClear = true;
+    //   }
+
+    //   if (isClear) {
+    //       emit("Clear");
+    //       return;
+    //   }
+
+    //   boolean isCube = false;
+    //   if (tagsList != null && tagsList.contains("Cube")) {
+    //       isCube = true;
+    //   } else if (normalizedTitle.contains("cube")) {
+    //       isCube = true;
+    //   }
+
+    //   if (isCube) {
+    //       emit("Cube");
+    //       return;
+    //   }
+
+    //   boolean isGourmet = false;
+    //   if (tagsList != null && tagsList.contains("Gourmet")) {
+    //       isGourmet = true;
+    //   } else if (normalizedTitle.contains("gourmet")) {
+    //       isGourmet = true;
+    //   }
+
+    //   if (isGourmet) {
+    //       emit("Gourmet");
+    //       return;
+    //   }
+    // `,
+    //     },
+    //   },
+    //   ref_outdoor_certification: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validOutdoorCert = ${JSON.stringify(
+    //         refOutdoorCertBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validOutdoorCert.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_class: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validClass = ${JSON.stringify(
+    //         refClassBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validClass.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_ice_daily_output: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validDIO = ${JSON.stringify(
+    //         refDailyIceBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validDIO.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_config: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validConfig = ${JSON.stringify(
+    //         refConfigBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validConfig.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_drain_type: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validDrainType = ${JSON.stringify(
+    //         refDrainTypeBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validDrainType.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    //   ref_no_of_zones: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //       def validNoOfZones = ${JSON.stringify(
+    //         refNoOfZonesBucketKeys.map((k) => k.toLowerCase()),
+    //       )};
+    //       if (params['_source']['tags'] != null) {
+    //         for (def tag : params['_source']['tags']) {
+    //           if (tag == null) continue;
+
+    //           if (validNoOfZones.contains(tag.toLowerCase())) {
+    //             emit(tag);
+    //             return;
+    //           }
+    //         }
+    //       }
+    //     `,
+    //     },
+    //   },
+    // };
+
+    const runtimeMappings = getRuntimeMappingsByFilterType(filter_type);
 
     const apiClient = API({
       connection: {
