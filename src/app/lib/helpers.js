@@ -512,6 +512,18 @@ export const refNoOfZonesBuckets = {
   Dual: "Dual",
 };
 
+export const refGlassDoorBuckets = {
+  Yes: "Yes",
+  No: "No",
+};
+
+export const refDimensionGroupBuckets = {
+  "Under 14": "Under 14",
+  "14-22 Inches": "14 Inches - 22 Inches",
+  "22-24 Inches": "22 Inches -  24 Inches",
+  "24 and up": "24 Inches And Up",
+};
+
 export const sizeBucketKeys = Object.keys(sizeBuckets);
 export const widthBucketKeys = Object.keys(widthBuckets);
 export const depthBucketKeys = Object.keys(depthBuckets);
@@ -525,6 +537,10 @@ export const refDailyIceBucketKeys = Object.keys(refDailyIceBuckets);
 export const refConfigBucketKeys = Object.keys(refConfigBuckets);
 export const refDrainTypeBucketKeys = Object.keys(refDrainTypeBuckets);
 export const refNoOfZonesBucketKeys = Object.keys(refNoOfZonesBuckets);
+export const refGlassDoorBucketKeys = Object.keys(refGlassDoorBuckets);
+export const refDimensionGroupBucketKeys = Object.keys(
+  refDimensionGroupBuckets,
+);
 
 export function capitalizeFirstLetter(str) {
   if (!str) return "";

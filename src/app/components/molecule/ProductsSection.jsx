@@ -25,7 +25,10 @@ import {
   ES_INDEX,
   getInitialUiStateFromUrl,
 } from "@/app/lib/helpers";
-import { getFacetAttributesByFilterType } from "@/app/lib/filter-helper";
+import {
+  priceBucketKeys,
+  getFacetAttributesByFilterType,
+} from "@/app/lib/filter-helper";
 
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 
@@ -34,6 +37,13 @@ const es_index = ES_INDEX;
 const searchClient = Client({
   url: `/api/es/searchkit/`,
 });
+
+const sortPriceItems = (items) => {
+  return [...items].sort(
+    (a, b) =>
+      priceBucketKeys.indexOf(a.value) - priceBucketKeys.indexOf(b.value),
+  );
+};
 
 const Panel = ({ header, children }) => {
   const [expanded, setExpanded] = useState(true);
@@ -294,6 +304,7 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
                         attribute={"price_groups"}
                         searchable={false}
                         showMore={false}
+                        transformItems={sortPriceItems}
                       />
                     </FilterGroup>
                   </div>

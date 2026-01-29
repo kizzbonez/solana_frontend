@@ -15,7 +15,9 @@ import {
   refClassBucketKeys,
   refConfigBucketKeys,
   refDailyIceBucketKeys,
+  refDimensionGroupBucketKeys,
   refDrainTypeBucketKeys,
+  refGlassDoorBucketKeys,
   refHingeBucketKeys,
   refNoOfZonesBucketKeys,
   refOutdoorCertBucketKeys,
@@ -29,8 +31,10 @@ import {
   refClassBuckets,
   refConfigBuckets,
   refDailyIceBuckets,
+  refDimensionGroupBuckets,
   refDrainTypeBuckets,
   refHingeBuckets,
+  refGlassDoorBuckets,
   refNoOfZonesBuckets,
   refOutdoorCertBuckets,
   refVentBuckets,
@@ -39,14 +43,17 @@ import {
 } from "@/app/lib/helpers";
 import COLLECTIONS_BY_CATEGORY from "@/app/data/collections_by_category";
 
-const priceBuckets = {
+const yesNo = ["Yes", "No"]; // used for transform sort
+
+export const priceBuckets = {
   "Under $500": { gte: 0, lt: 500 },
   "$500 - $1,000": { gte: 500, lt: 1000 },
-  "$1,0000 - $1,500": { gte: 1000, lt: 1500 },
+  "$1,000 - $1,500": { gte: 1000, lt: 1500 },
   "$1,500 - $2,500": { gte: 1500, lt: 2500 },
   "Over $2,500": { gte: 2500 },
 };
 
+export const priceBucketKeys = Object.keys(priceBuckets);
 // used in ProductsSection Component
 export const filters = [
   // GENERAL FILTERS
@@ -366,10 +373,70 @@ export const filters = [
     attribute: "price_groups",
     searchable: false,
     type: "RefinementList",
-    filter_type: ["compact-refrigerators"],
+    filter_type: [
+      "Search",
+      "grills",
+      "fireplaces",
+      "firepits",
+      "patio-heaters",
+      "open-box",
+      "refrigerators",
+      "compact-refrigerators",
+      "storage",
+    ],
+    transform: function (items) {
+      return [...items].sort((a, b) => {
+        console.log("a", a);
+        console.log("b", b);
+        const indexA = priceBucketKeys.indexOf(a.value);
+        const indexB = priceBucketKeys.indexOf(b.value);
+
+        return indexA - indexB;
+      });
+    },
     filter_config: [
       {
+        type: "Search",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "grills",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "fireplaces",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "firepits",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "patio-heaters",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "open-box",
+        order: 6,
+        hide: false,
+      },
+      {
+        type: "refrigerators",
+        order: 6,
+        hide: false,
+      },
+      {
         type: "compact-refrigerators",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "storage",
         order: 6,
         hide: false,
       },
@@ -396,13 +463,14 @@ export const filters = [
         const buckets = aggregation.buckets || {};
         // Sort logic: Ensure they always appear in a specific order
         const order = Object.keys(priceBuckets);
-        return order.reduce((acc, key) => {
+        const result = order.reduce((acc, key) => {
           const count = buckets[key]?.doc_count ?? 0;
           if (count > 0) {
             acc[key] = count;
           }
           return acc;
         }, {});
+        return result;
       },
       filterQuery: (field, value) => {
         // 1. Dynamically build the queries object from your priceBuckets
@@ -436,7 +504,47 @@ export const filters = [
     ],
     filter_config: [
       {
+        type: "Search",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "grills",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "fireplaces",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "firepits",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "patio-heaters",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "open-box",
+        order: 7,
+        hide: false,
+      },
+      {
+        type: "refrigerators",
+        order: 7,
+        hide: false,
+      },
+      {
         type: "compact-refrigerators",
+        order: 8,
+        hide: false,
+      },
+      {
+        type: "storage",
         order: 7,
         hide: false,
       },
@@ -457,10 +565,18 @@ export const filters = [
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
     transform: function (items) {
-      return items.map((item) => ({
-        ...item,
-        label: capacityBuckets[item.value],
-      }));
+      return items
+        .map((item) => ({
+          ...item,
+          label: capacityBuckets[item.value],
+        }))
+        .sort((a, b) => {
+          // 2. Sort based on the index in our desiredOrder array
+          return (
+            capacityBucketKeys.indexOf(a.value) -
+            capacityBucketKeys.indexOf(b.value)
+          );
+        });
     },
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
@@ -496,6 +612,29 @@ export const filters = [
     collapse: false,
   },
   {
+    label: "Glass Door",
+    attribute: "ref_glass_door",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators", "compact-refrigerators"],
+    transform: function (items) {
+      return items.sort((a, b) => {
+        return yesNo.indexOf(a.value) - yesNo.indexOf(b.value);
+      });
+    },
+    filter_config: [
+      { type: "refrigerators", order: 1, hide: false },
+      { type: "compact-refrigerators", order: 4, hide: false },
+    ],
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_glass_door",
+      field: "accentuate_data.bbq.ref_specs_is_glass_door",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
     label: "Door Type",
     attribute: "ref_door_type",
     searchable: false,
@@ -503,7 +642,7 @@ export const filters = [
     filter_type: ["refrigerators", "compact-refrigerators"],
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 4, hide: false },
+      { type: "compact-refrigerators", order: 5, hide: false },
     ],
     runtime_mapping: null,
     facet_attribute: {
@@ -521,7 +660,7 @@ export const filters = [
     filter_type: ["refrigerators", "compact-refrigerators"],
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 5, hide: false },
+      { type: "compact-refrigerators", order: 6, hide: false },
     ],
     runtime_mapping: {
       ref_vent: {
@@ -558,22 +697,56 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
-    transform: formatToInches,
+    transform: function (items) {
+      return items
+        .map((item) => ({
+          ...item,
+          label: refDimensionGroupBuckets[item.value],
+        }))
+        .sort((a, b) => {
+          // 2. Sort based on the index in our desiredOrder array
+          return (
+            refDimensionGroupBucketKeys.indexOf(a.value) -
+            refDimensionGroupBucketKeys.indexOf(b.value)
+          );
+        });
+    },
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 8, hide: false },
+      { type: "compact-refrigerators", order: 9, hide: false },
     ],
     runtime_mapping: {
       ref_width: {
         type: "keyword",
         script: {
           source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_width'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_width'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
+      if (params['_source']['accentuate_data'] == null || 
+          params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'] == null) {
+        return;
+      }
+
+      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'];
+      
+      double width = 0;
+      try {
+        // Remove "Inches" and whitespace to parse the number
+        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
+        width = Double.parseDouble(cleanValue);
+      } catch (Exception e) {
+        return; 
+      }
+
+      // Logic mapping to refDimensionGroupBuckets
+      if (width < 14) {
+        emit("Under 14");
+      } else if (width >= 14 && width <= 22) {
+        emit("14-22 Inches");
+      } else if (width > 22 && width <= 24) {
+        emit("22-24 Inches");
+      } else if (width > 24) {
+        emit("24 and up");
+      }
+    `,
         },
       },
     },
@@ -590,22 +763,56 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
-    transform: formatToInches,
+    transform: function (items) {
+      return items
+        .map((item) => ({
+          ...item,
+          label: refDimensionGroupBuckets[item.value],
+        }))
+        .sort((a, b) => {
+          // 2. Sort based on the index in our desiredOrder array
+          return (
+            refDimensionGroupBucketKeys.indexOf(a.value) -
+            refDimensionGroupBucketKeys.indexOf(b.value)
+          );
+        });
+    },
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 9, hide: false },
+      { type: "compact-refrigerators", order: 10, hide: false },
     ],
     runtime_mapping: {
       ref_height: {
         type: "keyword",
         script: {
           source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_height'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_height'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
+      if (params['_source']['accentuate_data'] == null || 
+          params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'] == null) {
+        return;
+      }
+
+      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'];
+      
+      double height = 0;
+      try {
+        // Remove "Inches" and whitespace to parse the number
+        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
+        height = Double.parseDouble(cleanValue);
+      } catch (Exception e) {
+        return; 
+      }
+
+      // Logic mapping to refDimensionGroupBuckets
+      if (height < 14) {
+        emit("Under 14");
+      } else if (height >= 14 && height <= 22) {
+        emit("14-22 Inches");
+      } else if (height > 22 && height <= 24) {
+        emit("22-24 Inches");
+      } else if (height > 24) {
+        emit("24 and up");
+      }
+    `,
         },
       },
     },
@@ -642,7 +849,7 @@ export const filters = [
     filter_type: ["refrigerators", "compact-refrigerators"],
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 10, hide: false },
+      { type: "compact-refrigerators", order: 11, hide: false },
     ],
     runtime_mapping: {
       ref_mounting_type: {
@@ -689,6 +896,29 @@ export const filters = [
     collapse: false,
   },
   {
+    label: "Lock",
+    attribute: "ref_with_lock",
+    searchable: false,
+    type: "RefinementList",
+    filter_type: ["refrigerators", "compact-refrigerators"],
+    filter_config: [
+      { type: "refrigerators", order: 1, hide: false },
+      { type: "compact-refrigerators", order: 12, hide: false },
+    ],
+    transform: function (items) {
+      return items.sort((a, b) => {
+        return yesNo.indexOf(a.value) - yesNo.indexOf(b.value);
+      });
+    },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_with_lock",
+      field: "accentuate_data.bbq.ref_specs_with_lock",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
     label: "Outdoor Certification",
     attribute: "ref_outdoor_certification",
     searchable: false,
@@ -702,7 +932,7 @@ export const filters = [
     },
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 11, hide: false },
+      { type: "compact-refrigerators", order: 13, hide: false },
     ],
     runtime_mapping: {
       ref_outdoor_certification: {
@@ -741,7 +971,7 @@ export const filters = [
     filter_type: ["refrigerators", "compact-refrigerators"],
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 12, hide: false },
+      { type: "compact-refrigerators", order: 14, hide: false },
     ],
     runtime_mapping: {
       ref_hinge: {
@@ -778,22 +1008,56 @@ export const filters = [
     searchable: false,
     type: "RefinementList",
     filter_type: ["refrigerators", "compact-refrigerators"],
-    transform: formatToInches,
+    transform: function (items) {
+      return items
+        .map((item) => ({
+          ...item,
+          label: refDimensionGroupBuckets[item.value],
+        }))
+        .sort((a, b) => {
+          // 2. Sort based on the index in our desiredOrder array
+          return (
+            refDimensionGroupBucketKeys.indexOf(a.value) -
+            refDimensionGroupBucketKeys.indexOf(b.value)
+          );
+        });
+    },
     filter_config: [
       { type: "refrigerators", order: 1, hide: false },
-      { type: "compact-refrigerators", order: 13, hide: false },
+      { type: "compact-refrigerators", order: 15, hide: false },
     ],
     runtime_mapping: {
       ref_depth: {
         type: "keyword",
         script: {
           source: `
-        if (doc['accentuate_data.bbq.ref_specs_cutout_depth'].size() > 0) {
-          def val = doc['accentuate_data.bbq.ref_specs_cutout_depth'].value;
-          // Remove quotes, 'in', and spaces, then trim
-          emit(val.replace('"', '').replace('in', '').trim());
-        }
-      `,
+      if (params['_source']['accentuate_data'] == null || 
+          params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'] == null) {
+        return;
+      }
+
+      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'];
+      
+      double depth = 0;
+      try {
+        // Remove "Inches" and whitespace to parse the number
+        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
+        depth = Double.parseDouble(cleanValue);
+      } catch (Exception e) {
+        return; 
+      }
+
+      // Logic mapping to refDimensionGroupBuckets
+      if (depth < 14) {
+        emit("Under 14");
+      } else if (depth >= 14 && depth <= 22) {
+        emit("14-22 Inches");
+      } else if (depth > 22 && depth <= 24) {
+        emit("22-24 Inches");
+      } else if (depth > 24) {
+        emit("24 and up");
+      }
+    `,
         },
       },
     },
@@ -972,31 +1236,31 @@ export const filters = [
     type: "RefinementList",
     filter_type: ["grills"],
   },
-  {
-    label: "Price Groups",
-    attribute: "price_groups",
-    searchable: false,
-    type: "RefinementList",
-    filter_type: ["compact-refrigerators"],
-    collapse: false,
-  },
-  {
-    label: "Price",
-    attribute: "price",
-    searchable: false,
-    type: "RangeInput",
-    filter_type: [
-      "grills",
-      "fireplaces",
-      "firepits",
-      "refrigerators",
-      "compact-refrigerators",
-      "patio-heaters",
-      "storage",
-      "open-box",
-      "Search",
-    ],
-  },
+  // {
+  //   label: "Price Groups",
+  //   attribute: "price_groups",
+  //   searchable: false,
+  //   type: "RefinementList",
+  //   filter_type: ["compact-refrigerators"],
+  //   collapse: false,
+  // },
+  // {
+  //   label: "Price",
+  //   attribute: "price",
+  //   searchable: false,
+  //   type: "RangeInput",
+  //   filter_type: [
+  //     "grills",
+  //     "fireplaces",
+  //     "firepits",
+  //     "refrigerators",
+  //     "compact-refrigerators",
+  //     "patio-heaters",
+  //     "storage",
+  //     "open-box",
+  //     "Search",
+  //   ],
+  // },
   {
     label: "Lights",
     attribute: "grill_lights",
@@ -1196,12 +1460,12 @@ export const getFacetAttributesByFilterType = (type) => {
     });
 };
 
-console.log(
-  "facetAttributes[compact-refrigerators]",
-  (getFacetAttributesByFilterType("compact-refrigerators") || []).map(
-    ({ facet_attribute }) => facet_attribute,
-  ),
-);
+// console.log(
+//   "facetAttributes[compact-refrigerators]",
+//   (getFacetAttributesByFilterType("compact-refrigerators") || []).map(
+//     ({ facet_attribute }) => facet_attribute,
+//   ),
+// );
 
 export const getRuntimeMappingsByFilterType = (type) => {
   return filters.reduce((acc, filter) => {
@@ -1219,10 +1483,10 @@ export const getRuntimeMappingsByFilterType = (type) => {
   }, {});
 };
 
-console.log(
-  "RuntimeMappings[compact-refrigerators]",
-  getRuntimeMappingsByFilterType("compact-refrigerators"),
-);
+// console.log(
+//   "RuntimeMappings[compact-refrigerators]",
+//   getRuntimeMappingsByFilterType("compact-refrigerators"),
+// );
 
 // generate refinementlist html for url-based filters
 // console.log(
