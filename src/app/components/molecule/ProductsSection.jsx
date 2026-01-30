@@ -25,10 +25,7 @@ import {
   ES_INDEX,
   getInitialUiStateFromUrl,
 } from "@/app/lib/helpers";
-import {
-  priceBucketKeys,
-  getFacetAttributesByFilterType,
-} from "@/app/lib/filter-helper";
+import { priceBucketKeys, getActiveFacets } from "@/app/lib/filter-helper";
 
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 
@@ -212,7 +209,7 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
     }
   }, [results]);
 
-  const filters = getFacetAttributesByFilterType(page_details?.filter_type);
+  const filters = getActiveFacets(page_details?.filter_type);
 
   // Only show "No Results" if we're done loading AND have received results AND count is 0
   const shouldShowNoResults =
@@ -260,9 +257,6 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
               page_details?.name !== "Search" && (
                 <DynamicWidgets facets={["*"]}>
                   {filters
-                    .filter((item) =>
-                      item?.filter_type.includes(page_details?.filter_type),
-                    )
                     .filter(
                       (item) =>
                         !["price", "price_groups"].includes(item?.attribute),
@@ -319,37 +313,35 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
             {((page_details && page_details?.nav_type === "brand") ||
               page_details?.name === "Search") && (
               <DynamicWidgets facets={["*"]}>
-                {filters
-                  .filter((item) => item?.filter_type.includes("Search"))
-                  .map((item) => (
-                    <div
-                      key={`filter-item-${item?.attribute}`}
-                      className={`my-1 facet_${item?.attribute}`}
-                    >
-                      <Panel header={item?.label}>
-                        {item?.attribute && item?.attribute !== "price" ? (
-                          <>
-                            {item?.attribute !== "ratings" ? (
-                              <RefinementList
-                                attribute={item?.attribute}
-                                searchable={item?.searchable}
-                                showMore={item?.collapse || true}
-                              />
-                            ) : (
-                              <RefinementList
-                                attribute={item?.attribute}
-                                searchable={item?.searchable}
-                                classNames={{ labelText: "stars" }}
-                                showMore={item?.collapse || true}
-                              />
-                            )}
-                          </>
-                        ) : (
-                          <RangeInput attribute="price" />
-                        )}
-                      </Panel>
-                    </div>
-                  ))}
+                {filters.map((item) => (
+                  <div
+                    key={`filter-item-${item?.attribute}`}
+                    className={`my-1 facet_${item?.attribute}`}
+                  >
+                    <Panel header={item?.label}>
+                      {item?.attribute && item?.attribute !== "price" ? (
+                        <>
+                          {item?.attribute !== "ratings" ? (
+                            <RefinementList
+                              attribute={item?.attribute}
+                              searchable={item?.searchable}
+                              showMore={item?.collapse || true}
+                            />
+                          ) : (
+                            <RefinementList
+                              attribute={item?.attribute}
+                              searchable={item?.searchable}
+                              classNames={{ labelText: "stars" }}
+                              showMore={item?.collapse || true}
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <RangeInput attribute="price" />
+                      )}
+                    </Panel>
+                  </div>
+                ))}
               </DynamicWidgets>
             )}
 

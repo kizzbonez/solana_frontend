@@ -455,6 +455,14 @@ const Settings = ({ menuItem, onChange, feature_images }) => {
     "Fireplaces",
     "Firepits",
     "Patio-Heaters",
+    "Refrigerators",
+    "Compact-Refrigerators",
+    "Outdoor-Beverage-Refrigerators",
+    "Outdoor-Ice-Makers",
+    "Outdoor-Wine-Coolers",
+    "Outdoor-Kegerators",
+    "Outdoor-Compact-Freezers",
+    "Storage",
     "Open-box",
   ];
 

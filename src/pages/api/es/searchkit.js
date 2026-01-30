@@ -28,9 +28,10 @@ import {
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
 import {
-  getFacetAttributesByFilterType,
-  getRuntimeMappingsByFilterType,
+  getActiveFacets,
+  getActiveRuntimeMappings,
 } from "../../../app/lib/filter-helper";
+import { fixObservableSubclass } from "@apollo/client/utilities";
 
 const priceBuckets = {
   "Under $1,000": { gte: 0, lt: 1000 },
@@ -853,9 +854,9 @@ export default async function handler(req, res) {
     //     },
     //   },
     // ];
-    const facetAttributes = (
-      getFacetAttributesByFilterType(filter_type) || []
-    ).map(({ facet_attribute }) => facet_attribute);
+    const facetAttributes = (getActiveFacets(filter_type) || []).map(
+      ({ facet_attribute }) => facet_attribute,
+    );
     // const runtimeMappings = {
     //   size_group: {
     //     type: "keyword", // Changed to keyword for grouping/faceting
@@ -1133,53 +1134,7 @@ export default async function handler(req, res) {
     // `,
     //     },
     //   },
-    //   ref_ice_cube_type: {
-    //     type: "keyword",
-    //     script: {
-    //       source: `
-    //   def tagsList = params['_source']['tags'];
-    //   def titleText = params['_source']['title'];
-
-    //   def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
-
-    //   boolean isClear = false;
-    //   if (tagsList != null && tagsList.contains("Clear")) {
-    //       isClear = true;
-    //   } else if (normalizedTitle.contains("clear")) {
-    //       isClear = true;
-    //   }
-
-    //   if (isClear) {
-    //       emit("Clear");
-    //       return;
-    //   }
-
-    //   boolean isCube = false;
-    //   if (tagsList != null && tagsList.contains("Cube")) {
-    //       isCube = true;
-    //   } else if (normalizedTitle.contains("cube")) {
-    //       isCube = true;
-    //   }
-
-    //   if (isCube) {
-    //       emit("Cube");
-    //       return;
-    //   }
-
-    //   boolean isGourmet = false;
-    //   if (tagsList != null && tagsList.contains("Gourmet")) {
-    //       isGourmet = true;
-    //   } else if (normalizedTitle.contains("gourmet")) {
-    //       isGourmet = true;
-    //   }
-
-    //   if (isGourmet) {
-    //       emit("Gourmet");
-    //       return;
-    //   }
-    // `,
-    //     },
-    //   },
+    //
     //   ref_outdoor_certification: {
     //     type: "keyword",
     //     script: {
@@ -1300,9 +1255,10 @@ export default async function handler(req, res) {
     //     `,
     //     },
     //   },
-    // };
+    // };\
+    console.log("filter_type", filter_type);
 
-    const runtimeMappings = getRuntimeMappingsByFilterType(filter_type);
+    const runtimeMappings = getActiveRuntimeMappings(filter_type);
 
     const apiClient = API({
       connection: {
