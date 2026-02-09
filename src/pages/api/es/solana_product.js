@@ -111,13 +111,13 @@ export default async function handler(req, res) {
 
         const product_options_response = await fetch(
           API_URL,
-          secondFetchConfig
+          secondFetchConfig,
         );
 
         const product_options_json = await product_options_response.json();
 
         const relative_products = (product_options_json?.hits?.hits || []).map(
-          (i) => ({ ...i._source })
+          (i) => ({ ...i._source }),
         );
 
         // map fbt_products
@@ -136,27 +136,27 @@ export default async function handler(req, res) {
 
         if (has_new_variant) {
           new_products = relative_products.filter((item) =>
-            new_variant.includes(item?.handle)
+            new_variant.includes(item?.handle),
           );
         }
 
         if (has_fbw) {
           fbw_products = relative_products.filter((item) =>
-            fbw.includes(item?.handle)
+            fbw.includes(item?.handle),
           );
         }
 
         if (has_ob) {
           ob_products = relative_products.filter((item) =>
-            ob.includes(item?.handle)
+            ob.includes(item?.handle),
           );
         }
 
         product_options = relative_products.filter(
           (item) =>
             ![...(new_variant || []), ...(fbw || []), ...(ob || [])].includes(
-              item?.handle
-            )
+              item?.handle,
+            ),
         );
       }
 
@@ -258,15 +258,32 @@ export default async function handler(req, res) {
           key: "bbq.sink_bars_center_water_type",
           label: "Sink Bars Center Water Type",
         },
-        // ref specs
-        // {key:"bbq.ref_specs_heading_title", label:""},
-        { key: "bbq.ref_specs_type", label: "Ref Type" },
-        { key: "bbq.ref_specs_cutout_depth", label: "Ref Cutout Depth" },
-        { key: "bbq.ref_specs_cutout_height", label: "Ref Cutout Height" },
-        { key: "bbq.ref_specs_cutout_width", label: "Ref Cutout Width" },
-        { key: "bbq.ref_specs_door_type", label: "Ref Door Type" },
-        { key: "bbq.ref_specs_outdoor_rated", label: "Ref Outdoor Rated" },
-        { key: "bbq.ref_specs_total_capacity", label: "Ref Total Capacity" },
+        // ref specs - 20260109 DONE
+        { key: "bbq.ref_specs_class", label: "Refrigerator Class" },
+        { key: "bbq.ref_specs_cutout_depth", label: "Cutout Depth" },
+        { key: "bbq.ref_specs_cutout_height", label: "Cutout Height" },
+        { key: "bbq.ref_specs_cutout_width", label: "Cutout Width" },
+        { key: "bbq.ref_specs_door_type", label: "Door Type" },
+        { key: "bbq.ref_specs_drain_type", label: "Drain Type" },
+        { key: "bbq.ref_specs_hinge_type", label: "Hinge Type" },
+        { key: "bbq.ref_specs_ice_cube_type", label: "Ice Cube Type" },
+        { key: "bbq.ref_specs_ice_produced_daily", label: "Ice Produced Daily" },
+        { key: "bbq.ref_specs_ice_storage_capacity", label: "Ice Storage Capacity" },
+        { key: "bbq.ref_specs_is_glass_door", label: "Glass Door" },
+        { key: "bbq.ref_specs_max_keg_size", label: "Max Keg Size" },
+        { key: "bbq.ref_specs_mount_type", label: "Configuration" },
+        { key: "bbq.ref_specs_no_of_taps", label: "Number of Taps" },
+        {
+          key: "bbq.ref_specs_outdoor_certification",
+          label: "Outdoor Certification",
+        },
+        { key: "bbq.ref_specs_total_capacity", label: "Total Capacity" },
+        { key: "bbq.ref_specs_vent_type", label: "Venting" },
+        { key: "bbq.ref_specs_wine_bottle_capacity", label: "Wine Bottle Capacity" },
+        { key: "bbq.ref_specs_with_lock", label: "Lock" },
+        { key: "bbq.ref_specs_zones", label: "Zones" },
+        { key: "bbq.ref_specs_outdoor_rated", label: "Outdoor Rated" },
+        { key: "bbq.ref_specs_type", label: "Type" },
       ];
 
       specs = spec_keys.map((item) => ({

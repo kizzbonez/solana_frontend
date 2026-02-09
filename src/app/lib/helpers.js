@@ -465,6 +465,7 @@ export const capacityBuckets = {
   "1-3 Cu. Ft.": "Small (1 - 3 Cu. Ft.)",
   "4-6 Cu. Ft.": "Medium (4 - 6 Cu. Ft.)",
   "7-10 Cu. Ft.": "Large (7 - 10 Cu. Ft.)",
+  "11 Cu. Ft. +": "XL (11 Cu. Ft. and Up)",
 };
 
 export const refVentBuckets = {

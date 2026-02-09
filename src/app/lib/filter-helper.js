@@ -42,8 +42,8 @@ import {
   widthBuckets,
 } from "@/app/lib/helpers";
 import COLLECTIONS_BY_CATEGORY from "@/app/data/collections_by_category";
+import { refFilters, refFilterTypes } from "./filter-refrigerators";
 
-const yesNo = ["Yes", "No"]; // used for transform sort
 
 export const priceBuckets = {
   "Under $500": { gte: 0, lt: 500 },
@@ -115,6 +115,11 @@ export const filters = [
                 tags: ["New Arrivals"],
               },
             },
+            "Free Shipping": {
+              terms: {
+                tags: ["Free Shipping"],
+              },
+            },
           },
         },
       }),
@@ -127,6 +132,7 @@ export const filters = [
           "Package Deals",
           "Promotions",
           "New Arrivals",
+          "Free Shipping",
         ];
         return order.reduce((acc, key) => {
           const count = buckets[key]?.doc_count ?? 0;
@@ -182,6 +188,11 @@ export const filters = [
           "New Arrivals": {
             terms: {
               tags: ["New Arrivals"],
+            },
+          },
+          "Free Shipping": {
+            terms: {
+              tags: ["Free Shipping"],
             },
           },
         };
@@ -334,8 +345,6 @@ export const filters = [
     type: "RefinementList",
     transform: function (items) {
       return [...items].sort((a, b) => {
-        console.log("a", a);
-        console.log("b", b);
         const indexA = priceBucketKeys.indexOf(a.value);
         const indexB = priceBucketKeys.indexOf(b.value);
 
@@ -400,242 +409,6 @@ export const filters = [
     },
     collapse: false,
   },
-  // REFRIGERATOR RELATED FILTERS
-  {
-    label: "Capacity",
-    attribute: "capacity",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items
-        .map((item) => ({
-          ...item,
-          label: capacityBuckets[item.value],
-        }))
-        .sort((a, b) => {
-          // 2. Sort based on the index in our desiredOrder array
-          return (
-            capacityBucketKeys.indexOf(a.value) -
-            capacityBucketKeys.indexOf(b.value)
-          );
-        });
-    },
-    runtime_mapping: {
-      capacity_group: {
-        type: "keyword",
-        script: {
-          source: `
-                def validCapacity = ${JSON.stringify(
-                  capacityBucketKeys.map((k) => k.toLowerCase()),
-                )};
-                if (params['_source']['tags'] != null) {
-                  for (def tag : params['_source']['tags']) {
-                    if (tag == null) continue;
-                    
-                    if (validCapacity.contains(tag.toLowerCase())) {
-                      emit(tag);
-                      return; 
-                    }
-                  }
-                }
-              `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "capacity",
-      field: "capacity_group",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Glass Door",
-    attribute: "ref_glass_door",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items.sort((a, b) => {
-        return yesNo.indexOf(a.value) - yesNo.indexOf(b.value);
-      });
-    },
-    runtime_mapping: null,
-    facet_attribute: {
-      attribute: "ref_glass_door",
-      field: "accentuate_data.bbq.ref_specs_is_glass_door",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Door Type",
-    attribute: "ref_door_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: null,
-    facet_attribute: {
-      attribute: "ref_door_type",
-      field: "accentuate_data.bbq.ref_specs_door_type",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Venting",
-    attribute: "ref_vent",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_vent: {
-        type: "keyword",
-        script: {
-          source: `
-          def validVent = ${JSON.stringify(
-            refVentBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validVent.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_vent",
-      field: "ref_vent",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Cutout Width",
-    attribute: "ref_width",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items
-        .map((item) => ({
-          ...item,
-          label: refDimensionGroupBuckets[item.value],
-        }))
-        .sort((a, b) => {
-          // 2. Sort based on the index in our desiredOrder array
-          return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
-          );
-        });
-    },
-    runtime_mapping: {
-      ref_width: {
-        type: "keyword",
-        script: {
-          source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'] == null) {
-        return;
-      }
-
-      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'];
-      
-      double width = 0;
-      try {
-        // Remove "Inches" and whitespace to parse the number
-        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-        width = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
-
-      // Logic mapping to refDimensionGroupBuckets
-      if (width < 14) {
-        emit("Under 14");
-      } else if (width >= 14 && width <= 22) {
-        emit("14-22 Inches");
-      } else if (width > 22 && width <= 24) {
-        emit("22-24 Inches");
-      } else if (width > 24) {
-        emit("24 and up");
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_width",
-      field: "ref_width",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Cutout Height",
-    attribute: "ref_height",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items
-        .map((item) => ({
-          ...item,
-          label: refDimensionGroupBuckets[item.value],
-        }))
-        .sort((a, b) => {
-          // 2. Sort based on the index in our desiredOrder array
-          return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
-          );
-        });
-    },
-    runtime_mapping: {
-      ref_height: {
-        type: "keyword",
-        script: {
-          source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'] == null) {
-        return;
-      }
-
-      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'];
-      
-      double height = 0;
-      try {
-        // Remove "Inches" and whitespace to parse the number
-        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-        height = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
-
-      // Logic mapping to refDimensionGroupBuckets
-      if (height < 14) {
-        emit("Under 14");
-      } else if (height >= 14 && height <= 22) {
-        emit("14-22 Inches");
-      } else if (height > 22 && height <= 24) {
-        emit("22-24 Inches");
-      } else if (height > 24) {
-        emit("24 and up");
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_height",
-      field: "ref_height",
-      type: "string",
-    },
-    collapse: false,
-  },
   {
     label: "External Material",
     attribute: "material",
@@ -649,487 +422,13 @@ export const filters = [
     },
     collapse: false,
   },
-  {
-    label: "Configuration",
-    attribute: "ref_mounting_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_mounting_type: {
-        type: "keyword",
-        script: {
-          source: `
-      def tagsList = params['_source']['tags'];
-      def titleText = params['_source']['title'];
-
-      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
-
-      boolean isFreestanding = false;
-      if (tagsList != null && tagsList.contains("Freestanding")) {
-          isFreestanding = true;
-      } else if (normalizedTitle.contains("freestanding")) {
-          isFreestanding = true;
-      }
-
-      if (isFreestanding) {
-          emit("Freestanding");
-          return;
-      }
-
-      boolean isBuiltIn = false;
-      if (tagsList != null && tagsList.contains("Built In")) {
-          isBuiltIn = true;
-      } else if (normalizedTitle.contains("built-in") || normalizedTitle.contains("built in")) {
-          isBuiltIn = true;
-      }
-
-      if (isBuiltIn) {
-          emit("Built-In");
-          return;
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_mounting_type",
-      field: "ref_mounting_type",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Lock",
-    attribute: "ref_with_lock",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items.sort((a, b) => {
-        return yesNo.indexOf(a.value) - yesNo.indexOf(b.value);
-      });
-    },
-    runtime_mapping: null,
-    facet_attribute: {
-      attribute: "ref_with_lock",
-      field: "accentuate_data.bbq.ref_specs_with_lock",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Outdoor Certification",
-    attribute: "ref_outdoor_certification",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items.map((item) => ({
-        ...item,
-        label: refOutdoorCertBuckets[item.value],
-      }));
-    },
-    runtime_mapping: {
-      ref_outdoor_certification: {
-        type: "keyword",
-        script: {
-          source: `
-          def validOutdoorCert = ${JSON.stringify(
-            refOutdoorCertBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validOutdoorCert.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_outdoor_certification",
-      field: "ref_outdoor_certification",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Hinge Type",
-    attribute: "ref_hinge",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_hinge: {
-        type: "keyword",
-        script: {
-          source: `
-          def validHinge = ${JSON.stringify(
-            refHingeBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validHinge.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_hinge",
-      field: "ref_hinge",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Cutout Depth",
-    attribute: "ref_depth",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items
-        .map((item) => ({
-          ...item,
-          label: refDimensionGroupBuckets[item.value],
-        }))
-        .sort((a, b) => {
-          // 2. Sort based on the index in our desiredOrder array
-          return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
-          );
-        });
-    },
-    runtime_mapping: {
-      ref_depth: {
-        type: "keyword",
-        script: {
-          source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'] == null) {
-        return;
-      }
-
-      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'];
-      
-      double depth = 0;
-      try {
-        // Remove "Inches" and whitespace to parse the number
-        String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-        depth = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
-
-      // Logic mapping to refDimensionGroupBuckets
-      if (depth < 14) {
-        emit("Under 14");
-      } else if (depth >= 14 && depth <= 22) {
-        emit("14-22 Inches");
-      } else if (depth > 22 && depth <= 24) {
-        emit("22-24 Inches");
-      } else if (depth > 24) {
-        emit("24 and up");
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_depth",
-      field: "ref_depth",
-      type: "string",
-    },
-  },
-
-  {
-    label: "Ice Storage Capacity",
-    attribute: "ref_ice_storage_capacity",
-    searchable: false,
-    type: "RefinementList",
-    transform: function (items) {
-      return items.map((item) => {
-        return {
-          ...item,
-          label: `${item.value} lbs`,
-        };
-      });
-    },
-    runtime_mapping: null,
-    facet_attribute: {
-      attribute: "ref_ice_storage_capacity",
-      field: "accentuate_data.bbq.ref_specs_ice_storage_capacity",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Ice Cube Type",
-    attribute: "ref_ice_cube_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_ice_cube_type: {
-        type: "keyword",
-        script: {
-          source: `
-      def tagsList = params['_source']['tags'];
-      def titleText = params['_source']['title'];
-
-      def normalizedTitle = titleText != null ? titleText.toLowerCase() : "";
-
-      boolean isClear = false;
-      if (tagsList != null && tagsList.contains("Clear")) {
-          isClear = true;
-      } else if (normalizedTitle.contains("clear")) {
-          isClear = true;
-      }
-
-      if (isClear) {
-          emit("Clear");
-          return;
-      }
-
-      boolean isCube = false;
-      if (tagsList != null && tagsList.contains("Cube")) {
-          isCube = true;
-      } else if (normalizedTitle.contains("cube")) {
-          isCube = true;
-      }
-
-      if (isCube) {
-          emit("Cube");
-          return;
-      }
-
-      boolean isGourmet = false;
-      if (tagsList != null && tagsList.contains("Gourmet")) {
-          isGourmet = true;
-      } else if (normalizedTitle.contains("gourmet")) {
-          isGourmet = true;
-      }
-
-      if (isGourmet) {
-          emit("Gourmet");
-          return;
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_ice_cube_type",
-      field: "ref_ice_cube_type",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Refrigerator Class",
-    attribute: "ref_class",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_class: {
-        type: "keyword",
-        script: {
-          source: `
-          def validClass = ${JSON.stringify(
-            refClassBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validClass.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_class",
-      field: "ref_class",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Ice Produced Daily", // #
-    attribute: "ref_ice_daily_output",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_ice_daily_output: {
-        type: "keyword",
-        script: {
-          source: `
-          def validDIO = ${JSON.stringify(
-            refDailyIceBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validDIO.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_ice_daily_output",
-      field: "ref_ice_daily_output",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Wine Bottle Capacity",
-    attribute: "ref_wine_bottle_capacity",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_wine_bottle_capacity: {
-        type: "keyword",
-        script: {
-          source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'] == null) {
-        return;
-      }
-
-      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'];
-      
-      double bottles = 0;
-      try {
-        String cleanValue = rawValue.toLowerCase().trim();
-        bottles = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
-
-      if (bottles >= 14 && bottles <= 23) {
-        emit("14 - 23 Bottles");
-      } else if (bottles > 23 && bottles <= 40) {
-        emit("24 - 40 Bottles");
-      } else if (bottles > 40 && bottles <= 54) {
-        emit("41 - 54 Bottles");
-      } else if (bottles >=55) {
-        emit("55 Bottles And Up");
-      }
-    `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_wine_bottle_capacity",
-      field: "ref_wine_bottle_capacity",
-      type: "string",
-    },
-    collapse: false,
-  },
-
-  {
-    label: "Ref Configuration", // #
-    attribute: "ref_config",
-    searchable: false,
-    type: "RefinementList",
-    collapse: false,
-  },
-  {
-    label: "Drain Type", // #
-    attribute: "ref_drain_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_drain_type: {
-        type: "keyword",
-        script: {
-          source: `
-          def validDrainType = ${JSON.stringify(
-            refDrainTypeBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validDrainType.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_drain_type",
-      field: "ref_drain_type",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Number Of Zones", // #
-    attribute: "ref_no_of_zones",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_no_of_zones: {
-        type: "keyword",
-        script: {
-          source: `
-          def validNoOfZones = ${JSON.stringify(
-            refNoOfZonesBucketKeys.map((k) => k.toLowerCase()),
-          )};
-          if (params['_source']['tags'] != null) {
-            for (def tag : params['_source']['tags']) {
-              if (tag == null) continue;
-
-              if (validNoOfZones.contains(tag.toLowerCase())) {
-                emit(tag);
-                return;
-              }
-            }
-          }
-        `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_no_of_zones",
-      field: "ref_no_of_zones",
-      type: "string",
-    },
-    collapse: false,
-  },
-  {
-    label: "Storage Type",
-    attribute: "ref_storage_type",
-    searchable: false,
-    type: "RefinementList",
-    filter_type: ["refrigerators", "compact-refrigerators"],
-    collapse: false,
-  },
+  // REFRIGERATOR RELATED FILTERS
+  ...refFilters,
+  // ######
+  
+  
+  
+  
   {
     label: "Power Source",
     attribute: "features_fuel_type",
@@ -1379,19 +678,19 @@ export const filters = [
     type: "RefinementList",
     filter_type: ["storage"],
   },
-  {
-    label: "Material",
-    attribute: "material",
-    searchable: false,
-    type: "RefinementList",
-    filter_type: [
-      "grills",
-      "refrigerators",
-      "storage",
-      "compact-refrigerators",
-    ],
-    collapse: false,
-  },
+  // {
+  //   label: "Material",
+  //   attribute: "material",
+  //   searchable: false,
+  //   type: "RefinementList",
+  //   filter_type: [
+  //     "grills",
+  //     "refrigerators",
+  //     "storage",
+  //     "compact-refrigerators",
+  //   ],
+  //   collapse: false,
+  // },
   {
     label: "Thermometer",
     attribute: "thermometer",
@@ -1422,70 +721,7 @@ export const filters = [
  * the UI in the exact sequence defined below.
  */
 export const filter_types = {
-  "compact-refrigerators": [
-    "ways_to_shop",
-    "brands",
-    "capacity",
-    "ref_glass_door",
-    "ref_door_type",
-    "ref_vent",
-    "price_groups",
-    "price",
-    "ref_width",
-    "ref_height",
-    "material",
-    "ref_mounting_type",
-    "ref_with_lock",
-    "ref_outdoor_certification",
-    "ref_hinge",
-    "ref_depth",
-  ],
-  "outdoor-beverage-refrigerators": [
-    "ways_to_shop",
-    "brands",
-    "ref_glass_door",
-    "capacity",
-    "ref_class",
-    "ref_with_lock",
-    "price_groups",
-    "price",
-    "ref_width",
-    "ref_height",
-    "ref_depth",
-    "ref_hinge",
-    "ref_outdoor_certification",
-    "ref_vent",
-  ],
-  "outdoor-ice-makers": [
-    "ways_to_shop",
-    "brands",
-    "ref_ice_cube_type",
-    "ref_drain_type",
-    "ref_ice_storage_capacity",
-    "ref_ice_daily_output",
-    "ref_mounting_type",
-    "price_groups",
-    "price",
-    "ref_width",
-    "ref_height",
-    "ref_outdoor_certification",
-    "ref_hinge",
-    "ref_depth",
-  ],
-  "outdoor-wine-coolers": [
-    "ref_mounting_type",
-    "brands",
-    "ref_wine_bottle_capacity",
-    "ref_no_of_zones",
-    "ref_glass_door",
-    "ref_class",
-    "price_groups",
-    "price",
-    "ref_with_lock",
-    "ref_width",
-    "ref_depth",
-    "ref_height",
-  ],
+  ...refFilterTypes,
   default: [
     "ways_to_shop",
     "brands",
@@ -1501,6 +737,9 @@ export const getActiveFacets = (type) => {
   const finalFacets = typeFacets
     .map((attr) => filters.find((item) => item.attribute === attr))
     .filter(Boolean);
+  console.log("--------------------------------")
+  console.log(type.toUpperCase());
+  console.log("facets", finalFacets);
   return finalFacets;
 };
 
@@ -1513,21 +752,6 @@ export const getActiveRuntimeMappings = (type) => {
       // Merge the current object (e.g., { ref_width: {...} }) into the accumulator
       return { ...acc, ...current };
     }, {});
+    
   return runtimeMappings;
 };
-
-// NOTE: FOR THIS TO WORK PROPERLY MAKE SURE PROPERY AND VALUE ARE ADDED PROPERLY BASED ON THE OPTIONS SET BELOW AND IS CASE SENSITIVE
-// A. added accentuate properties:
-// 1. bbq.ref_specs_is_glass_door [Yes|No]
-// -> assigned this props to 2 products only. might need reindexing after product update
-// 2. bbq.ref_specs_with_lock [Yes|No]
-// 3. bbq.ref_specs_ice_storage_capacity [Number] in lbs ex. 22
-// 4. bbq.ref_specs_ice_produced_daily [Number] in lbs ex. 22
-// 5. bbq.ref_specs_ice_type [Clear|Cresent|Cube|Gourmet|Nugget/Sonic] in lbs
-// 6. bbq.ref_specs_door_type [Door|Door & Drawer|Drawer]
-// 7. bbq.ref_specs_wine_bottle_capacity [Number] in bottles ex. 18
-// 8. bbq.ref_specs_class [Luxury|Premium|Standard]
-
-// B. Added tags for filtering results
-// 1. "New Arrivals" => add "New Arrival" tag for a product you want to be filtered under "Ways to shop - New Arrivals".
-// 2. "Free Shipping" => add "Free Shipping" tag for a product you want to be filtered under "Ways to shop - Free Shipping".
