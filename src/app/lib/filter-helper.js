@@ -43,6 +43,7 @@ import {
 } from "@/app/lib/helpers";
 import COLLECTIONS_BY_CATEGORY from "@/app/data/collections_by_category";
 import { refFilters, refFilterTypes } from "./filter-refrigerators";
+import { fireplacesFilters, fireplacesFilterTypes } from "./filter-fireplaces";
 
 
 export const priceBuckets = {
@@ -424,6 +425,8 @@ export const filters = [
   },
   // REFRIGERATOR RELATED FILTERS
   ...refFilters,
+  ...fireplacesFilters,
+
   // ######
   
   
@@ -722,6 +725,7 @@ export const filters = [
  */
 export const filter_types = {
   ...refFilterTypes,
+  ...fireplacesFilterTypes,
   default: [
     "ways_to_shop",
     "brands",

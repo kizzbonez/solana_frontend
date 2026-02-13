@@ -453,6 +453,9 @@ const Settings = ({ menuItem, onChange, feature_images }) => {
   const filter_types = [
     "Grills",
     "Fireplaces",
+    "Gas-Fireplaces",
+    "Electric-Fireplaces",
+    "Shop-All-Fireplaces",
     "Firepits",
     "Patio-Heaters",
     "Refrigerators",
@@ -589,7 +592,7 @@ const Settings = ({ menuItem, onChange, feature_images }) => {
       <div className="text-sm italic text-neutral-600">
         Select a filter type
       </div>
-      <div className="flex gap-[10px] relative min-h-[26px]">
+      <div className="flex gap-[10px] relative min-h-[26px] flex-wrap">
         {filter_types.map((item, index) => (
           <button
             key={`filter-type-option-${item
