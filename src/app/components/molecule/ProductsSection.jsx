@@ -614,6 +614,9 @@ function ProductsSection({ category, search = "" }) {
           }
         }
 
+        console.log("filterString", result);
+        console.log("page collection", details?.collection_display?.name || "NA");
+
         // Only update if value changed (prevents unnecessary re-renders)
         setFilterString((prev) => (prev !== result ? result : prev));
       } else {

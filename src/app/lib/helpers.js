@@ -482,6 +482,8 @@ export const refOutdoorCertBuckets = {
   CSA: "Canadian Standards Association (CSA)",
   ETL: "Edison Testing Laboratories (ETL)",
   UL: "Underwriters Laboratories (UL)",
+  NSF: "NSF Certified",
+  "NSF Certified": "NSF Certified"
 };
 
 export const refClassBuckets = {
@@ -731,3 +733,33 @@ export const formatToInches = (items) => {
     label: `${item.value.match(/[\d.]+/)?.[0] || ""} Inches`,
   }));
 };
+
+
+export const decimalToFraction = (decimal) => {
+  console.log("decimal", decimal);
+  // Handle whole numbers immediately
+  if (decimal % 1 === 0) return decimal.toString();
+
+  const wholeNumber = Math.floor(decimal);
+  const fractionalPart = (decimal - wholeNumber).toFixed(10); // Fix precision issues
+  
+  // Determine the denominator based on decimal length
+  const precision = fractionalPart.toString().split('.')[1].length;
+  let numerator = Math.round((decimal - wholeNumber) * Math.pow(10, precision));
+  let denominator = Math.pow(10, precision);
+
+  // Greatest Common Divisor function
+  const gcd = (a, b) => (b === 0 ? a : gcd(b, a % b));
+  const commonDivisor = gcd(numerator, denominator);
+
+  // Simplify numerator and denominator
+  numerator /= commonDivisor;
+  denominator /= commonDivisor;
+
+  // Return formatted string
+  if (wholeNumber === 0) {
+    return `${numerator}/${denominator}`;
+  } else {
+    return `${wholeNumber} ${numerator}/${denominator}`;
+  }
+}

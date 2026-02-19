@@ -44,14 +44,17 @@ import {
 import COLLECTIONS_BY_CATEGORY from "@/app/data/collections_by_category";
 import { refFilters, refFilterTypes } from "./filter-refrigerators";
 import { fireplacesFilters, fireplacesFilterTypes } from "./filter-fireplaces";
+import { patioHeaterFilters,patioHeatersFilterTypes } from "./filter-patio-heaters";
 
 
 export const priceBuckets = {
   "Under $500": { gte: 0, lt: 500 },
   "$500 - $1,000": { gte: 500, lt: 1000 },
   "$1,000 - $1,500": { gte: 1000, lt: 1500 },
-  "$1,500 - $2,500": { gte: 1500, lt: 2500 },
-  "Over $2,500": { gte: 2500 },
+  "$1,500 - $2,000": { gte: 1500, lt: 2000 },
+  "$2,000 - $2,500": { gte: 2000, lt: 2500 },
+  "$2,500 - $5,000": { gte: 2500, lt: 5000 },
+  "5000 And Up": { gte: 5000 },
 };
 
 export const priceBucketKeys = Object.keys(priceBuckets);
@@ -121,6 +124,11 @@ export const filters = [
                 tags: ["Free Shipping"],
               },
             },
+            "In Stock & Quick Shipping": {
+              terms: {
+                tags: ["In Stock & Quick Shipping"],
+              },
+            },
           },
         },
       }),
@@ -134,6 +142,7 @@ export const filters = [
           "Promotions",
           "New Arrivals",
           "Free Shipping",
+          "In Stock & Quick Shipping"
         ];
         return order.reduce((acc, key) => {
           const count = buckets[key]?.doc_count ?? 0;
@@ -196,8 +205,12 @@ export const filters = [
               tags: ["Free Shipping"],
             },
           },
+          "In Stock & Quick Shipping": {
+            terms: {
+              tags: ["In Stock & Quick Shipping"],
+            },
+          },
         };
-
         return queries[value] || {};
       },
     },
@@ -341,7 +354,7 @@ export const filters = [
   },
   {
     label: "Price Groups",
-    attribute: "price_groups",
+    attribute: "price_groups", // 
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -426,6 +439,7 @@ export const filters = [
   // REFRIGERATOR RELATED FILTERS
   ...refFilters,
   ...fireplacesFilters,
+  ...patioHeaterFilters,
 
   // ######
   
@@ -726,6 +740,7 @@ export const filters = [
 export const filter_types = {
   ...refFilterTypes,
   ...fireplacesFilterTypes,
+  ...patioHeatersFilterTypes,
   default: [
     "ways_to_shop",
     "brands",

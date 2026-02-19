@@ -7,15 +7,54 @@ import {
   capacityBuckets,
   refDimensionGroupBuckets,
   refOutdoorCertBuckets,
+  decimalToFraction
 } from "@/app/lib/helpers";
 
 
 const yesNo = ["Yes", "No"]; // used for transform sort
+export const tmpBuckets = {
+  "Under $500": { gte: 0, lt: 500 },
+  "$500 - $1,000": { gte: 500, lt: 1000 },
+  "$1,000 - $1,500": { gte: 1000, lt: 1500 },
+  "$1,500 - $2,000": { gte: 1500, lt: 2000 },
+  "$2,000 - $2,500": { gte: 2000, lt: 2500 },
+  "$2,500 - $5,000": { gte: 2500, lt: 5000 },
+  "5000 And Up": { gte: 5000 },
+};
 
 export const refFilters = [
   {
+    label: "Commercial",
+    attribute: "ref_is_commercial",
+    searchable: false,
+    type: "RefinementList",
+    transform: null,
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_is_commercial",
+      field: "accentuate_data.bbq.ref_specs_is_commercial",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
+    label: "Color",
+    attribute: "ref_color",
+    searchable: false,
+    type: "RefinementList",
+    transform: null,
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_color",
+      field: "accentuate_data.bbq.ref_specs_color",
+      type: "string",
+    },
+    collapse: true,
+  },
+  {
     label: "Refrigerator Class",
     attribute: "ref_class",
+    accentuate: "bbq.ref_specs_class",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -33,58 +72,95 @@ export const refFilters = [
     type: "RefinementList",
     transform: function (items) {
       return items
-        .map((item) => ({
-          ...item,
-          label: refDimensionGroupBuckets[item.value],
-        }))
+        .map((item) => {
+          const match = item.value.match(/[0-9]*\.?[0-9]+/);
+          const decimal = match ? parseFloat(match[0]) : "";
+          const fraction = decimalToFraction(decimal);
+            return{
+              ...item,
+              label: `${fraction} Inches`,
+            }
+        })
+    },
+    runtime_mapping:null,
+    facet_attribute: {
+      attribute: "ref_depth",
+      field: "accentuate_data.bbq.ref_specs_cutout_depth",
+      type: "string",
+    },
+  },
+  {
+    label: "Cutout Depth",
+    attribute: "ref_depth_group_1",
+    searchable: false,
+    type: "RefinementList",
+    transform: function (items) {
+        const sortKeys = [
+          "Under 14 Inches",
+          "14 Inches - 22 Inches",
+          "22 Inches - 24 Inches",
+          "24 Inches And Up"
+        ]     
+      return items
         .sort((a, b) => {
           // 2. Sort based on the index in our desiredOrder array
           return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
+            sortKeys.indexOf(a.value) -
+            sortKeys.indexOf(b.value)
           );
         });
     },
     runtime_mapping: {
-      ref_depth: {
+      ref_depth_group_1: {
         type: "keyword",
         script: {
           source: `
-          if (params['_source']['accentuate_data'] == null || 
-              params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'] == null) {
-            return;
-          }
+          // 1. Check for null at the top level
+if (params['_source']['accentuate_data'] == null) return;
+
+def rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'];
+
+// 2. Check for null or empty string
+if (rawValue == null || rawValue.toString().trim().isEmpty()) return;
+
+double depth;
+try {
+    // 3. Manual cleaning (No Regex)
+    String str = rawValue.toString().toLowerCase()
+                 .replace('"', '')
+                 .replace('inches', '')
+                 .replace('in', '')
+                 .trim();
     
-          String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_depth'];
-          
-          double depth = 0;
-          try {
-            // Remove "Inches" and whitespace to parse the number
-            String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-            depth = Double.parseDouble(cleanValue);
-          } catch (Exception e) {
-            return; 
-          }
+    // 4. Final check: if after cleaning it's empty, stop
+    if (str.isEmpty()) return;
     
-          // Logic mapping to refDimensionGroupBuckets
-          if (depth < 14) {
-            emit("Under 14");
-          } else if (depth >= 14 && depth <= 22) {
-            emit("14-22 Inches");
-          } else if (depth > 22 && depth <= 24) {
-            emit("22-24 Inches");
-          } else if (depth > 24) {
-            emit("24 and up");
-          }
+    depth = Double.parseDouble(str);
+} catch (Exception e) {
+    // This catches cases like "N/A" or "TBD"
+    return; 
+}
+
+// 5. Logic mapping (Clean Waterfall)
+if (depth < 14) {
+    emit("Under 14 Inches");
+} else if (depth <= 22) {
+    emit("14 Inches - 22 Inches");
+} else if (depth <= 24) {
+    emit("22 Inches - 24 Inches");
+} else {
+    emit("24 Inches And Up");
+}
         `,
         },
       },
     },
     facet_attribute: {
-      attribute: "ref_depth",
-      field: "ref_depth",
+      attribute: "ref_depth_group_1",
+      field: "ref_depth_group_1",
       type: "string",
     },
+    collapse: false,
   },
   {
     label: "Cutout Height",
@@ -93,59 +169,202 @@ export const refFilters = [
     type: "RefinementList",
     transform: function (items) {
       return items
+        .map((item) => {
+          const match = item.value.match(/[0-9]*\.?[0-9]+/);
+          const decimal = match ? parseFloat(match[0]) : "";
+          const fraction = decimalToFraction(decimal);
+            return{
+              ...item,
+              label: `${fraction} Inches`,
+            }
+        })
+    },
+    runtime_mapping:null,
+    facet_attribute: {
+      attribute: "ref_height",
+      field: "accentuate_data.bbq.ref_specs_cutout_height",
+      type: "string",
+    },
+    collapse: true,
+  },
+  {
+    label: "Cutout Height",
+    attribute: "ref_height_group_1",
+    searchable: false,
+    type: "RefinementList",
+    transform: function (items) {
+      const sortedLabels = {
+        "Under 34": "Under 34", 
+        "34-36 Inches": "34 - 36 Inches",
+        "36 And Up": "36 And Up",
+      };
+      const sortLabelKeys = Object.keys(sortedLabels);
+      return items
         .map((item) => ({
           ...item,
-          label: refDimensionGroupBuckets[item.value],
+          label: sortedLabels[item.value],
         }))
         .sort((a, b) => {
           // 2. Sort based on the index in our desiredOrder array
           return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
+            sortLabelKeys.indexOf(a.value) -
+            sortLabelKeys.indexOf(b.value)
           );
         });
     },
     runtime_mapping: {
-      ref_height: {
+      ref_height_group_1: {
         type: "keyword",
         script: {
           source: `
-          if (params['_source']['accentuate_data'] == null || 
-              params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'] == null) {
-            return;
-          }
+          // 1. Check for null at the top level
+if (params['_source']['accentuate_data'] == null) return;
+
+def rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'];
+
+// 2. Check for null or empty string
+if (rawValue == null || rawValue.toString().trim().isEmpty()) return;
+
+double height;
+try {
+    // 3. Manual cleaning (No Regex)
+    String str = rawValue.toString().toLowerCase()
+                 .replace('"', '')
+                 .replace('inches', '')
+                 .replace('in', '')
+                 .trim();
     
-          String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'];
-          
-          double height = 0;
-          try {
-            // Remove "Inches" and whitespace to parse the number
-            String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-            height = Double.parseDouble(cleanValue);
-          } catch (Exception e) {
-            return; 
-          }
+    // 4. Final check: if after cleaning it's empty, stop
+    if (str.isEmpty()) return;
     
-          // Logic mapping to refDimensionGroupBuckets
-          if (height < 14) {
-            emit("Under 14");
-          } else if (height >= 14 && height <= 22) {
-            emit("14-22 Inches");
-          } else if (height > 22 && height <= 24) {
-            emit("22-24 Inches");
-          } else if (height > 24) {
-            emit("24 and up");
-          }
+    height = Double.parseDouble(str);
+} catch (Exception e) {
+    // This catches cases like "N/A" or "TBD"
+    return; 
+}
+
+// 5. Logic mapping (Clean Waterfall)
+if (height < 34) {
+    emit("Under 34");
+} else if (height <= 36) {
+    emit("34-36 Inches");
+}  else {
+    emit("36 And Up");
+}
         `,
         },
       },
     },
     facet_attribute: {
-      attribute: "ref_height",
-      field: "ref_height",
+      attribute: "ref_height_group_1",
+      field: "ref_height_group_1",
       type: "string",
     },
     collapse: false,
+  },
+  {
+    label: "Cutout Height",
+    attribute: "ref_height_group_2",
+    searchable: false,
+    type: "RefinementList",
+    // transform: function (items) {
+    //   const sortedLabels = {
+    //     "Under 34": "Under 34", 
+    //     "34-36 Inches": "34 - 36 Inches",
+    //     "36 And Up": "36 And Up",
+    //   };
+    //   const sortLabelKeys = Object.keys(sortedLabels);
+    //   return items
+    //     .map((item) => ({
+    //       ...item,
+    //       label: sortedLabels[item.value],
+    //     }))
+    //     .sort((a, b) => {
+    //       // 2. Sort based on the index in our desiredOrder array
+    //       return (
+    //         sortLabelKeys.indexOf(a.value) -
+    //         sortLabelKeys.indexOf(b.value)
+    //       );
+    //     });
+    // },
+    runtime_mapping: {
+      ref_height_group_2: {
+        type: "keyword",
+        script: {
+          source: `
+          // 1. Check for null at the top level
+if (params['_source']['accentuate_data'] == null) return;
+
+def rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_height'];
+
+// 2. Check for null or empty string
+if (rawValue == null || rawValue.toString().trim().isEmpty()) return;
+
+double height;
+try {
+    // 3. Manual cleaning (No Regex)
+    String str = rawValue.toString().toLowerCase()
+                 .replace('"', '')
+                 .replace('inches', '')
+                 .replace('in', '')
+                 .trim();
+    
+    // 4. Final check: if after cleaning it's empty, stop
+    if (str.isEmpty()) return;
+    
+    height = Double.parseDouble(str);
+} catch (Exception e) {
+    // This catches cases like "N/A" or "TBD"
+    return; 
+}
+
+// 5. Logic mapping (Clean Waterfall)
+if (height < 10) {
+    emit("Under 10");
+} else if (height <= 12) {
+    emit("10 Inches - 12 Inches");
+} else if (height <= 15) {
+    emit("12 Inches - 15 Inches");
+} else if (height <= 20) {
+    emit("15 Inches - 20 Inches");
+}  else {
+    emit("20 Inches And Up");
+}
+        `,
+        },
+      },
+    },
+    facet_attribute: {
+      attribute: "ref_height_group_2",
+      field: "ref_height_group_2",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
+    label: "Cutout Width",
+    attribute: "ref_width_tmp",
+    searchable: false,
+    type: "RefinementList",
+    transform: function (items) {
+      return items
+        .map((item) => {
+          const match = item.value.match(/[0-9]*\.?[0-9]+/);
+          const decimal = match ? parseFloat(match[0]) : "";
+          const fraction = decimalToFraction(decimal);
+          return {
+          ...item,
+          label: `${fraction}"`,
+        }
+        })
+    },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_width_tmp",
+      field: "accentuate_data.bbq.ref_specs_cutout_width",
+      type: "string",
+    },
+    collapse: true,
   },
   {
     label: "Cutout Width",
@@ -154,56 +373,93 @@ export const refFilters = [
     type: "RefinementList",
     transform: function (items) {
       return items
-        .map((item) => ({
+        .map((item) => {
+          const match = item.value.match(/[0-9]*\.?[0-9]+/);
+          const decimal = match ? parseFloat(match[0]) : "";
+          const fraction = decimalToFraction(decimal);
+          return {
           ...item,
-          label: refDimensionGroupBuckets[item.value],
-        }))
+          label: `${fraction} Inches`,
+        }
+        })
+    },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_width",
+      field: "accentuate_data.bbq.ref_specs_cutout_width",
+      type: "string",
+    },
+    collapse: true,
+  },
+  {
+    label: "Cutout Width",
+    attribute: "ref_width_group_1",
+    searchable: false,
+    type: "RefinementList",
+    transform: function (items) {
+        const sortKeys = [
+          "Under 14 Inches",
+          "14 Inches - 22 Inches",
+          "22 Inches - 24 Inches",
+          "24 Inches And Up"
+        ]     
+      return items
         .sort((a, b) => {
           // 2. Sort based on the index in our desiredOrder array
           return (
-            refDimensionGroupBucketKeys.indexOf(a.value) -
-            refDimensionGroupBucketKeys.indexOf(b.value)
+            sortKeys.indexOf(a.value) -
+            sortKeys.indexOf(b.value)
           );
         });
     },
     runtime_mapping: {
-      ref_width: {
+      ref_width_group_1: {
         type: "keyword",
         script: {
           source: `
-          if (params['_source']['accentuate_data'] == null || 
-              params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'] == null) {
-            return;
-          }
+          // 1. Check for null at the top level
+if (params['_source']['accentuate_data'] == null) return;
+
+def rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'];
+
+// 2. Check for null or empty string
+if (rawValue == null || rawValue.toString().trim().isEmpty()) return;
+
+double width;
+try {
+    // 3. Manual cleaning (No Regex)
+    String str = rawValue.toString().toLowerCase()
+                 .replace('"', '')
+                 .replace('inches', '')
+                 .replace('in', '')
+                 .trim();
     
-          String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_cutout_width'];
-          
-          double width = 0;
-          try {
-            // Remove "Inches" and whitespace to parse the number
-            String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-            width = Double.parseDouble(cleanValue);
-          } catch (Exception e) {
-            return; 
-          }
+    // 4. Final check: if after cleaning it's empty, stop
+    if (str.isEmpty()) return;
     
-          // Logic mapping to refDimensionGroupBuckets
-          if (width < 14) {
-            emit("Under 14");
-          } else if (width >= 14 && width <= 22) {
-            emit("14-22 Inches");
-          } else if (width > 22 && width <= 24) {
-            emit("22-24 Inches");
-          } else if (width > 24) {
-            emit("24 and up");
-          }
+    width = Double.parseDouble(str);
+} catch (Exception e) {
+    // This catches cases like "N/A" or "TBD"
+    return; 
+}
+
+// 5. Logic mapping (Clean Waterfall)
+if (width < 14) {
+    emit("Under 14 Inches");
+} else if (width <= 22) {
+    emit("14 Inches - 22 Inches");
+} else if (width <= 24) {
+    emit("22 Inches - 24 Inches");
+} else {
+    emit("24 Inches And Up");
+}
         `,
         },
       },
     },
     facet_attribute: {
-      attribute: "ref_width",
-      field: "ref_width",
+      attribute: "ref_width_group_1",
+      field: "ref_width_group_1",
       type: "string",
     },
     collapse: false,
@@ -265,8 +521,20 @@ export const refFilters = [
     attribute: "ref_ice_daily_output",
     searchable: false,
     type: "RefinementList",
+    facet_attribute: {
+      attribute: "ref_ice_daily_output",
+      field: "accentuate_data.bbq.ref_specs_ice_produced_daily",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
+    label: "Ice Produced Daily (FROM TAGS)", // #
+    attribute: "ref_ice_daily_output_old",
+    searchable: false,
+    type: "RefinementList",
     runtime_mapping: {
-      ref_ice_daily_output: {
+      ref_ice_daily_output_old: {
         type: "keyword",
         script: {
           source: `
@@ -288,24 +556,95 @@ export const refFilters = [
       },
     },
     facet_attribute: {
-      attribute: "ref_ice_daily_output",
-      field: "ref_ice_daily_output",
+      attribute: "ref_ice_daily_output_old",
+      field: "ref_ice_daily_output_old",
       type: "string",
     },
     collapse: false,
   },
   {
-    label: "Ice Storage Capacity",
+    label: "Ice Produced Daily", // #
+    attribute: "ref_ice_daily_output_group_1",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: {
+      ref_ice_daily_output_group_1: {
+        type: "keyword",
+        script: {
+          source: `
+          // 1. Check for null at the top level
+if (params['_source']['accentuate_data'] == null) return;
+
+def rawValue = params['_source']['accentuate_data']['bbq.ref_specs_ice_produced_daily'];
+
+// 2. Check for null or empty string
+if (rawValue == null || rawValue.toString().trim().isEmpty()) return;
+
+double produce;
+try {
+    // 3. Manual cleaning (No Regex)
+    String str = rawValue.toString().toLowerCase()
+                 .replace('lbs', '')
+                 .trim();
+    
+    // 4. Final check: if after cleaning it's empty, stop
+    if (str.isEmpty()) return;
+    
+    produce = Double.parseDouble(str);
+} catch (Exception e) {
+    // This catches cases like "N/A" or "TBD"
+    return; 
+}
+
+// 5. Logic mapping (Clean Waterfall)
+if (produce < 11) {
+    emit("Under 11 lbs");
+} else if (produce <= 20) {
+    emit("11 lbs - 20 lbs");
+} else if (produce <= 30) {
+    emit("21 lbs - 30 lbs");
+} else if (produce <= 40) {
+    emit("31 lbs - 40 lbs");
+} else if (produce <= 50) {
+    emit("41 lbs - 50 lbs");
+} else if (produce <= 60) {
+    emit("51 lbs - 60 lbs");
+} else if (produce <= 70) {
+    emit("61 lbs - 70 lbs");
+} else {
+    emit("70 lbs And Up");
+}
+        `,
+        },
+      },
+    },
+    facet_attribute: {
+      attribute: "ref_ice_daily_output_group_1",
+      field: "ref_ice_daily_output_group_1",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
+    label: "Ice Storage Capacity RAW",
+    attribute: "ref_ice_storage_capacity_raw",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "ref_ice_storage_capacity_raw",
+      field: "accentuate_data.bbq.ref_specs_ice_storage_capacity",
+      type: "string",
+    },
+    collapse: false,
+  },
+  {
+    label: "Ice Storage Capacity Normalize",
     attribute: "ref_ice_storage_capacity",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
-      return items.map((item) => {
-        return {
-          ...item,
-          label: `${item.value} lbs`,
-        };
-      });
+      return items.map(item=>({...item, label: item.value.replace("lbs","").replace("Lbs","").trim() + " lbs"}))
     },
     runtime_mapping: null,
     facet_attribute: {
@@ -416,62 +755,101 @@ export const refFilters = [
     collapse: false,
   },
   {
+    // this is a normal display of filter option
     label: "Capacity",
-    attribute: "capacity",
+    attribute: "ref_capacity",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
       return items
         .map((item) => ({
           ...item,
-          label: capacityBuckets[item.value],
+          label: `${item.value} Cu. Ft.`,
         }))
+    },
+    facet_attribute: {
+      attribute: "ref_capacity",
+      field: "accentuate_data.bbq.ref_specs_total_capacity",
+      type: "string",
+    },
+    collapse: true,
+  },
+  {
+    // this is a normal display of filter option
+    label: "Capacity",
+    attribute: "ref_capacity_group_1",
+    searchable: false,
+    type: "RefinementList",
+    transform: function (items) {
+      const sortKeys = [
+        "Small (1.0 - 3.5 Cu. Ft.)",
+        "Medium (3.6 - 5.0 Cu. Ft.)",
+        "Large (5.1 Cu. Ft. & Up)"
+      ];
+      return items
         .sort((a, b) => {
           // 2. Sort based on the index in our desiredOrder array
           return (
-            capacityBucketKeys.indexOf(a.value) -
-            capacityBucketKeys.indexOf(b.value)
+            sortKeys.indexOf(a.value) - sortKeys.indexOf(b.value)
           );
         });
     },
     runtime_mapping: {
-      ref_total_capacity: {
+      ref_capacity_group_1: {
         type: "keyword",
         script: {
           source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.bbq.ref_specs_total_capacity'] == null) {
-        return;
-      }
+            // 1. Safe Top-Level Check
+            if (params['_source'].accentuate_data == null) return;
+            def data = params['_source'].accentuate_data;
 
-      String rawValue = params['_source']['accentuate_data']['bbq.bbq.ref_specs_total_capacity'];
-      
-      double capacity = 0;
-      try {
-        // Remove "Inches" and whitespace to parse the number
-        String cleanValue = rawValue.toLowerCase().trim();
-        capacity = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
+            // 2. Access the field
+            def val = data.get('bbq.ref_specs_total_capacity');
+            if (val == null || val.toString().trim() == "") return;
 
-      // Logic mapping to refDimensionGroupBuckets
-      if (capacity >= 1 && capacity <= 3) {
-        emit("1-3 Cu. Ft.");
-      } else if (capacity >= 4 && capacity <= 6) {
-        emit("4-6 Cu. Ft.");
-      } else if (capacity >= 7 && capacity <= 10) {
-        emit("7-10 Cu. Ft.");
-      } else if (capacity > 10) {
-        emit("11 Cu. Ft. +");
-      }
+            double capacity = 0;
+            try {
+                // 3. Unified String Cleaning (Handles BOTH numeric and string 3.2)
+                String strVal = val.toString(); 
+                StringBuilder sb = new StringBuilder();
+                boolean seenDot = false;
+
+                for (int i = 0; i < strVal.length(); i++) {
+                    char c = strVal.charAt(i);
+                    if (Character.isDigit(c)) {
+                        sb.append(c);
+                    } else if (c == (char)'.' && !seenDot) {
+                        sb.append(c);
+                        seenDot = true;
+                    }
+                }
+
+                if (sb.length() > 0) {
+                    capacity = Double.parseDouble(sb.toString());
+                } else {
+                    return; 
+                }
+            } catch (Exception e) {
+                return; 
+            }
+
+            // 4. Waterfall Logic (No gaps for 3.2)
+            if (capacity < 1.0) {
+                return; 
+            } else if (capacity <= 3.5) {
+                emit("Small (1.0 - 3.5 Cu. Ft.)");
+            } else if (capacity <= 5.0) {
+                emit("Medium (3.6 - 5.0 Cu. Ft.)");
+            } else {
+                emit("Large (5.1 Cu. Ft. & Up)");
+            }
     `,
         },
       },
     },
     facet_attribute: {
-      attribute: "capacity",
-      field: "ref_total_capacity",
+      attribute: "ref_capacity_group_1",
+      field: "ref_capacity_group_1",
       type: "string",
     },
     collapse: false,
@@ -579,7 +957,7 @@ export const refFilters = [
     collapse: false,
   },
   {
-    label: "Type",
+    label: "Item Type",
     attribute: "ref_type",
     searchable: false,
     type: "RefinementList",
@@ -595,36 +973,60 @@ export const refFilters = [
 
 
 export const refFilterTypes = {
+  "refrigerators": [
+    "ways_to_shop",
+    "brands",
+    "ref_type",
+    // "ref_capacity", // for demo
+    "ref_capacity_group_1",
+    "ref_is_commercial",
+    "ref_width",
+    // "ref_width_tmp", // for demo
+    // "ref_width_group_1", // for demo
+    "price_groups",
+    "price",
+    // "ref_depth", // exta
+    "ref_height",
+    "ref_outdoor_certification",
+    "ref_color"
+  ],
   "compact-refrigerators": [
     "ways_to_shop",
     "brands",
-    "capacity",
+    "ref_capacity_group_1",
     "ref_glass_door",
     "ref_door_type",
     "ref_vent",
     "price_groups",
     "price",
-    "ref_width",
-    "ref_height",
+    // "ref_width", // for checking
+    "ref_width_group_1",
+    // "ref_height", // for checking
+    "ref_height_group_1",
     "material",
     "ref_mounting_type",
     "ref_with_lock",
     "ref_outdoor_certification",
     "ref_hinge",
-    "ref_depth",
+    // "ref_depth", // for checking
+    "ref_depth_group_1",
   ],
   "outdoor-beverage-refrigerators": [
     "ways_to_shop",
     "brands",
     "ref_glass_door",
-    "capacity",
+    "ref_capacity_group_1",
     "ref_class",
     "ref_with_lock",
     "price_groups",
     "price",
-    "ref_width",
-    "ref_height",
-    "ref_depth",
+    // "ref_width",
+    "ref_width_group_1",
+    // "ref_height",
+    // "ref_height_group_1", // for demo
+    "ref_height_group_2",
+    // "ref_depth",
+    "ref_depth_group_1",
     "ref_hinge",
     "ref_outdoor_certification",
     "ref_vent",
@@ -634,16 +1036,19 @@ export const refFilterTypes = {
     "brands",
     "ref_ice_cube_type",
     "ref_drain_type",
+    "ref_ice_storage_capacity_raw",
     "ref_ice_storage_capacity",
     "ref_mounting_type",
     "price_groups",
     "price",
-    "ref_ice_daily_output",
-    "ref_width",
-    "ref_height",
+    // "ref_ice_daily_output_old", // for demo
+    // "ref_ice_daily_output", // for demo
+    "ref_ice_daily_output_group_1",
+    // "ref_width",
+    // "ref_height",
     "ref_outdoor_certification",
     "ref_hinge",
-    "ref_depth",
+    // "ref_depth",
   ],
   "outdoor-wine-coolers": [
     "ref_mounting_type",
@@ -656,8 +1061,11 @@ export const refFilterTypes = {
     "price",
     "ref_with_lock",
     "ref_width",
+    // "ref_width_group_1",
     "ref_depth",
+    // "ref_depth_group_1",
     "ref_height",
+    // "ref_height_group_1",
   ],
   "outdoor-kegerators": [
     "ways_to_shop",
@@ -665,7 +1073,7 @@ export const refFilterTypes = {
     "ref_no_of_taps",
     "ref_max_keg_size",
     "ref_mounting_type",
-    "capacity",
+    "ref_capacity_group_1",
     "price_groups",
     "price",
     "ref_width",
@@ -679,7 +1087,7 @@ export const refFilterTypes = {
     "ways_to_shop",
     "brands",
     "ref_door_type",
-    "capacity",
+    "ref_capacity_group_1",
     "ref_hinge",
     "ref_mounting_type",
     "price_groups",
