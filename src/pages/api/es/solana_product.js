@@ -3,6 +3,7 @@ import {
   exclude_brands,
   exclude_collections,
 } from "../../../app/lib/helpers";
+import { accentuateSpecLabels } from "../../../app/lib/filter-helper";
 
 //  this hook is used for searching products
 export default async function handler(req, res) {
@@ -258,38 +259,21 @@ export default async function handler(req, res) {
           key: "bbq.sink_bars_center_water_type",
           label: "Sink Bars Center Water Type",
         },
-        // ref specs - 20260109 DONE
-        { key: "bbq.ref_specs_class", label: "Refrigerator Class" },
-        { key: "bbq.ref_specs_cutout_depth", label: "Cutout Depth" },
-        { key: "bbq.ref_specs_cutout_height", label: "Cutout Height" },
-        { key: "bbq.ref_specs_cutout_width", label: "Cutout Width" },
-        { key: "bbq.ref_specs_door_type", label: "Door Type" },
-        { key: "bbq.ref_specs_drain_type", label: "Drain Type" },
-        { key: "bbq.ref_specs_hinge_type", label: "Hinge Type" },
-        { key: "bbq.ref_specs_ice_cube_type", label: "Ice Cube Type" },
-        { key: "bbq.ref_specs_ice_produced_daily", label: "Ice Produced Daily" },
-        { key: "bbq.ref_specs_ice_storage_capacity", label: "Ice Storage Capacity" },
-        { key: "bbq.ref_specs_is_glass_door", label: "Glass Door" },
-        { key: "bbq.ref_specs_max_keg_size", label: "Max Keg Size" },
-        { key: "bbq.ref_specs_mount_type", label: "Configuration" },
-        { key: "bbq.ref_specs_no_of_taps", label: "Number of Taps" },
-        {
-          key: "bbq.ref_specs_outdoor_certification",
-          label: "Outdoor Certification",
-        },
-        { key: "bbq.ref_specs_total_capacity", label: "Total Capacity" },
-        { key: "bbq.ref_specs_vent_type", label: "Venting" },
-        { key: "bbq.ref_specs_wine_bottle_capacity", label: "Wine Bottle Capacity" },
-        { key: "bbq.ref_specs_with_lock", label: "Lock" },
-        { key: "bbq.ref_specs_zones", label: "Zones" },
-        { key: "bbq.ref_specs_outdoor_rated", label: "Outdoor Rated" },
-        { key: "bbq.ref_specs_type", label: "Type" },
+        // extract labels and spec keys from filters
+        ...accentuateSpecLabels
       ];
 
-      specs = spec_keys.map((item) => ({
-        ...item,
-        value: accentuate_data?.[item?.key] || "",
-      }));
+      specs = spec_keys.map((item) => {
+        let val = accentuate_data?.[item?.key] || "";
+        if(item?.transform){
+          val = item.transform(val);
+        }      
+        
+        return {
+          ...item,
+          value: val,
+        }
+      });
 
       // map manuals
       let manuals = null;

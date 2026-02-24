@@ -744,7 +744,7 @@ input[type="checkbox"].ais-RefinementList-checkbox:checked::after {
 
 label.ais-RefinementList-label {
   display: flex;
-  align-items: center;
+  position:relative;
   gap: 7px;
 }
 
@@ -765,6 +765,9 @@ label.ais-RefinementList-label .ais-RefinementList-count {
   align-items: center;
   justify-content: center;
   /* border: solid 1px #3a3a3a; */
+  position:absolute;
+  top:0;
+  right:0;
 }
 
 .ais-RefinementList-list {

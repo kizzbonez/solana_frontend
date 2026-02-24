@@ -736,9 +736,8 @@ export const formatToInches = (items) => {
 
 
 export const decimalToFraction = (decimal) => {
-  console.log("decimal", decimal);
   // Handle whole numbers immediately
-  if (decimal % 1 === 0) return decimal.toString();
+  if (decimal % 1 === 0) return Number(decimal).toString();
 
   const wholeNumber = Math.floor(decimal);
   const fractionalPart = (decimal - wholeNumber).toFixed(10); // Fix precision issues

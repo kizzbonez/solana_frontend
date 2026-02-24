@@ -756,9 +756,9 @@ export const getActiveFacets = (type) => {
   const finalFacets = typeFacets
     .map((attr) => filters.find((item) => item.attribute === attr))
     .filter(Boolean);
-  console.log("--------------------------------")
-  console.log(type.toUpperCase());
-  console.log("facets", finalFacets);
+  // console.log("--------------------------------")
+  // console.log(type.toUpperCase());
+  // console.log("facets", finalFacets);
   return finalFacets;
 };
 
@@ -774,3 +774,16 @@ export const getActiveRuntimeMappings = (type) => {
     
   return runtimeMappings;
 };
+
+export const accentuateSpecLabels = filters
+  .map((item)=>({label: item?.label, key: item?.accentuate_prop || "NA", type: item.cluster, transform: item.transformSpecs}))
+  .filter(item=> item?.key !== "NA")
+  .sort((a,b)=> a.label.localeCompare(b.label));
+
+console.log("accentuateSpecLabels (ALL): ",accentuateSpecLabels);
+console.log("accentuateSpecLabels (REFRIGERATORS): ",accentuateSpecLabels.filter(({type})=> type === "refrigerators"));
+console.log("accentuateSpecLabels (FIREPLACES): ",accentuateSpecLabels.filter(({type})=> type === "fireplaces"));
+console.log("accentuateSpecLabels (PATIO HEATERS): ",accentuateSpecLabels.filter(({type})=> type === "patio heaters"));
+console.log("accentuateSpecLabels (GRILLS): ",accentuateSpecLabels.filter(({type})=> type === "grills"));
+
+// console.log("TO PASTE IN PRODUCTSSECTION", filters.map(item=> `<RefinementList attribute="${item?.attribute}" className="hidden" />`).join(""))

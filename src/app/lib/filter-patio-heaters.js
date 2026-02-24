@@ -363,4 +363,4 @@ export const patioHeatersFilterTypes = {
   ],
 };
 
-console.log("patioHeaterFilters", patioHeaterFilters.map(item=> ({label: item.label, attribute: item.attribute, property: item.facet_attribute.field})))
+// console.log("patioHeaterFilters", patioHeaterFilters.map(item=> ({label: item.label, attribute: item.attribute, property: item.facet_attribute.field})))

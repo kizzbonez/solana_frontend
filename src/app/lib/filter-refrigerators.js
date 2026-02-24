@@ -26,6 +26,7 @@ export const refFilters = [
   {
     label: "Commercial",
     attribute: "ref_is_commercial",
+    accentuate_prop :"bbq.ref_specs_is_commercial",
     searchable: false,
     type: "RefinementList",
     transform: null,
@@ -36,10 +37,12 @@ export const refFilters = [
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Color",
     attribute: "ref_color",
+    accentuate_prop :"bbq.ref_specs_color",
     searchable: false,
     type: "RefinementList",
     transform: null,
@@ -50,11 +53,12 @@ export const refFilters = [
       type: "string",
     },
     collapse: true,
+    cluster:"refrigerators"
   },
   {
     label: "Refrigerator Class",
     attribute: "ref_class",
-    accentuate: "bbq.ref_specs_class",
+    accentuate_prop: "bbq.ref_specs_class",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -64,10 +68,12 @@ export const refFilters = [
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Depth",
     attribute: "ref_depth",
+    accentuate_prop: "bbq.ref_specs_cutout_depth",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -88,6 +94,7 @@ export const refFilters = [
       field: "accentuate_data.bbq.ref_specs_cutout_depth",
       type: "string",
     },
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Depth",
@@ -161,10 +168,12 @@ if (depth < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Height",
     attribute: "ref_height",
+    accentuate_prop: "bbq.ref_specs_cutout_height",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -186,6 +195,7 @@ if (depth < 14) {
       type: "string",
     },
     collapse: true,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Height",
@@ -261,6 +271,7 @@ if (height < 34) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Height",
@@ -340,6 +351,7 @@ if (height < 10) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Width",
@@ -365,10 +377,12 @@ if (height < 10) {
       type: "string",
     },
     collapse: true,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Width",
     attribute: "ref_width",
+    accentuate_prop: "bbq.ref_specs_cutout_width",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -390,6 +404,7 @@ if (height < 10) {
       type: "string",
     },
     collapse: true,
+    cluster:"refrigerators"
   },
   {
     label: "Cutout Width",
@@ -463,10 +478,12 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Door Type",
     attribute: "ref_door_type",
+    accentuate_prop: "bbq.ref_specs_door_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -476,10 +493,12 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Drain Type",
     attribute: "ref_drain_type",
+    accentuate_prop: "bbq.ref_specs_drain_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -489,10 +508,12 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Hinge Type",
     attribute: "ref_hinge",
+    accentuate_prop: "bbq.ref_specs_hinge_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -502,10 +523,12 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Ice Cube Type",
     attribute: "ref_ice_cube_type",
+    accentuate_prop: "bbq.ref_specs_ice_cube_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -515,10 +538,12 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Ice Produced Daily", // #
     attribute: "ref_ice_daily_output",
+    accentuate_prop: "bbq.ref_specs_ice_produced_daily",
     searchable: false,
     type: "RefinementList",
     facet_attribute: {
@@ -527,41 +552,42 @@ if (width < 14) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
-  {
-    label: "Ice Produced Daily (FROM TAGS)", // #
-    attribute: "ref_ice_daily_output_old",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping: {
-      ref_ice_daily_output_old: {
-        type: "keyword",
-        script: {
-          source: `
-              def validDIO = ${JSON.stringify(
-                refDailyIceBucketKeys.map((k) => k.toLowerCase()),
-              )};
-              if (params['_source']['tags'] != null) {
-                for (def tag : params['_source']['tags']) {
-                  if (tag == null) continue;
+  // {
+  //   label: "Ice Produced Daily (FROM TAGS)", // #
+  //   attribute: "ref_ice_daily_output_old",
+  //   searchable: false,
+  //   type: "RefinementList",
+  //   runtime_mapping: {
+  //     ref_ice_daily_output_old: {
+  //       type: "keyword",
+  //       script: {
+  //         source: `
+  //             def validDIO = ${JSON.stringify(
+  //               refDailyIceBucketKeys.map((k) => k.toLowerCase()),
+  //             )};
+  //             if (params['_source']['tags'] != null) {
+  //               for (def tag : params['_source']['tags']) {
+  //                 if (tag == null) continue;
     
-                  if (validDIO.contains(tag.toLowerCase())) {
-                    emit(tag);
-                    return;
-                  }
-                }
-              }
-            `,
-        },
-      },
-    },
-    facet_attribute: {
-      attribute: "ref_ice_daily_output_old",
-      field: "ref_ice_daily_output_old",
-      type: "string",
-    },
-    collapse: false,
-  },
+  //                 if (validDIO.contains(tag.toLowerCase())) {
+  //                   emit(tag);
+  //                   return;
+  //                 }
+  //               }
+  //             }
+  //           `,
+  //       },
+  //     },
+  //   },
+  //   facet_attribute: {
+  //     attribute: "ref_ice_daily_output_old",
+  //     field: "ref_ice_daily_output_old",
+  //     type: "string",
+  //   },
+  //   collapse: false,
+  // },
   {
     label: "Ice Produced Daily", // #
     attribute: "ref_ice_daily_output_group_1",
@@ -624,6 +650,7 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Ice Storage Capacity RAW",
@@ -637,6 +664,7 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Ice Storage Capacity Normalize",
@@ -653,10 +681,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Glass Door",
     attribute: "ref_glass_door",
+    accentuate_prop: "bbq.ref_specs_is_glass_door",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -671,10 +701,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Max Keg Size",
     attribute: "ref_max_keg_size",
+    accentuate_prop: "bbq.ref_specs_max_keg_size",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -684,10 +716,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Configuration",
     attribute: "ref_mounting_type",
+    accentuate_prop: "bbq.ref_specs_mount_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: {
@@ -721,10 +755,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Number of Taps",
     attribute: "ref_no_of_taps",
+    accentuate_prop: "bbq.ref_specs_no_of_taps",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -734,10 +770,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Outdoor Certification",
     attribute: "ref_outdoor_certification",
+    accentuate_prop: "bbq.ref_specs_outdoor_certification",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -753,11 +791,13 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     // this is a normal display of filter option
     label: "Capacity",
     attribute: "ref_capacity",
+    accentuate_prop: "bbq.ref_specs_total_capacity",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -773,6 +813,7 @@ if (produce < 11) {
       type: "string",
     },
     collapse: true,
+    cluster:"refrigerators"
   },
   {
     // this is a normal display of filter option
@@ -853,10 +894,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Venting",
     attribute: "ref_vent",
+    accentuate_prop: "bbq.ref_specs_vent_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -866,55 +909,61 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Wine Bottle Capacity",
     attribute: "ref_wine_bottle_capacity",
+    accentuate_prop: "bbq.ref_specs_wine_bottle_capacity",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping: {
-      ref_wine_bottle_capacity: {
-        type: "keyword",
-        script: {
-          source: `
-      if (params['_source']['accentuate_data'] == null || 
-          params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'] == null) {
-        return;
-      }
+    // runtime_mapping: {
+    //   ref_wine_bottle_capacity: {
+    //     type: "keyword",
+    //     script: {
+    //       source: `
+    //   if (params['_source']['accentuate_data'] == null || 
+    //       params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'] == null) {
+    //     return;
+    //   }
 
-      String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'];
+    //   String rawValue = params['_source']['accentuate_data']['bbq.ref_specs_wine_bottle_capacity'];
       
-      double bottles = 0;
-      try {
-        String cleanValue = rawValue.toLowerCase().trim();
-        bottles = Double.parseDouble(cleanValue);
-      } catch (Exception e) {
-        return; 
-      }
+    //   double bottles = 0;
+    //   try {
+    //     String cleanValue = rawValue.toLowerCase().trim();
+    //     bottles = Double.parseDouble(cleanValue);
+    //   } catch (Exception e) {
+    //     return; 
+    //   }
 
-      if (bottles >= 14 && bottles <= 23) {
-        emit("14 - 23 Bottles");
-      } else if (bottles > 23 && bottles <= 40) {
-        emit("24 - 40 Bottles");
-      } else if (bottles > 40 && bottles <= 54) {
-        emit("41 - 54 Bottles");
-      } else if (bottles >=55) {
-        emit("55 Bottles And Up");
-      }
-    `,
-        },
-      },
-    },
+    //   if (bottles >= 14 && bottles <= 23) {
+    //     emit("14 - 23 Bottles");
+    //   } else if (bottles > 23 && bottles <= 40) {
+    //     emit("24 - 40 Bottles");
+    //   } else if (bottles > 40 && bottles <= 54) {
+    //     emit("41 - 54 Bottles");
+    //   } else if (bottles >=55) {
+    //     emit("55 Bottles And Up");
+    //   }
+    // `,
+    //     },
+    //   },
+    // },
+    runtime_mapping:null,
     facet_attribute: {
       attribute: "ref_wine_bottle_capacity",
+      // field: "ref_wine_bottle_capacity",
       field: "ref_wine_bottle_capacity",
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Lock",
     attribute: "ref_with_lock",
+    accentuate_prop: "bbq.ref_specs_with_lock",
     searchable: false,
     type: "RefinementList",
     transform: function (items) {
@@ -929,10 +978,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Number Of Zones",
     attribute: "ref_no_of_zones",
+    accentuate_prop: "bbq.ref_specs_zones",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -942,10 +993,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Outdoor Rated",
     attribute: "ref_outdoor_rated",
+    accentuate_prop: "bbq.ref_specs_outdoor_rated",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -955,10 +1008,12 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
   {
     label: "Item Type",
     attribute: "ref_type",
+    accentuate_prop:"bbq.ref_specs_type",
     searchable: false,
     type: "RefinementList",
     runtime_mapping: null,
@@ -968,6 +1023,7 @@ if (produce < 11) {
       type: "string",
     },
     collapse: false,
+    cluster:"refrigerators"
   },
 ];
 
@@ -1100,4 +1156,5 @@ export const refFilterTypes = {
   ]
 };
 
-console.log("refFilters", refFilters.map(item=> ({label: item.label, attribute: item.attribute, property: item.facet_attribute.field})))
+// console.log("refFilters", refFilters.map(item=> ({label: item.label, attribute: item.attribute, property: item.facet_attribute.field})))
+
