@@ -1,44 +1,31 @@
-import {
-  // Bucket keys
-  capacityBucketKeys,
-  refDailyIceBucketKeys,
-  refDimensionGroupBucketKeys,
-  // Buckets
-  capacityBuckets,
-  refDimensionGroupBuckets,
-  refOutdoorCertBuckets,
-} from "@/app/lib/helpers";
-
-
 const yesNo = ["Yes", "No"]; // used for transform sort
+
+const formatSimpleSize = (value) => {
+  return value ? decimalToFraction(value) + " Inches": "";
+};
+
+function formatValueToNumber(items) {
+  return items.map((item) => ({
+    ...item,
+    label: Number(item.value),
+  }));
+}
+
 
 export const patioHeaterFilters = [
   {
-    label:"Installation Type",
-    attribute: "frplc_mount_type",
+    label: "Fuel Type",
+    attribute: "heater_fuel_type",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_mount_type",
-      field: "accentuate_data.bbq.frplc_spec_mount_type",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Fuel Type",
-    attribute: "frplc_fuel_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:{
-      fuel_type_split: {
+    runtime_mapping: {
+      heater_fuel_type: {
         type: "keyword",
         script: {
           source: `
             def data = params['_source']['accentuate_data'];
-            if (data != null && data['bbq.frplc_spec_fuel_type'] != null) {
-              def val = data['bbq.frplc_spec_fuel_type'];
+            if (data != null && data['bbq.heater_specs_fuel_type'] != null) {
+              def val = data['bbq.heater_specs_fuel_type'];
               if (val != null) {
                 if (val instanceof String && val.contains('/')) {
                   // Split the string and emit each piece as an individual token
@@ -56,307 +43,353 @@ export const patioHeaterFilters = [
         },
       },
     },
-    facet_attribute:{
-      attribute:"frplc_fuel_type",
-      field: "fuel_type_split",
-      type: "string"
+    facet_attribute: {
+      attribute: "heater_fuel_type",
+      field: "heater_fuel_type",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_fuel_type",
+    cluster: "patio heaters",
   },
   {
-    label:"Vent Type",
-    attribute: "frplc_vent_type",
+    label: "Style",
+    attribute: "heater_mount_type",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_vent_type",
-      field: "accentuate_data.bbq.frplc_spec_vent_type",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Fireplace Type",
-    attribute: "frplc_view_type",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_view_type",
-      field: "accentuate_data.bbq.frplc_spec_view_type",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Firebox Width",
-    attribute: "frplc_firebox_width",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_firebox_width",
-      field: "accentuate_data.bbq.frplc_spec_firebox_width",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Adjustable Thermostat",
-    attribute: "frplc_adj_thermostat",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_adj_thermostat",
-      field: "accentuate_data.bbq.frplc_spec_adj_thermostat",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Fireplace Style",
-    attribute: "frplc_style",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_style",
-      field: "accentuate_data.bbq.frplc_spec_style",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Finish",
-    attribute: "frplc_finish",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_finish",
-      field: "accentuate_data.bbq.frplc_spec_finish",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Viewing Area",
-    attribute: "frplc_view_area",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_view_area",
-      field: "accentuate_data.bbq.frplc_spec_view_area",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Ember Bed Depth",
-    attribute: "frplc_ember_bed_depth",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_ember_bed_depth",
-      field: "accentuate_data.bbq.frplc_spec_ember_bed_depth",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Framing Dimension",
-    attribute: "frplc_frame_dimension",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_frame_dimension",
-      field: "accentuate_data.bbq.frplc_spec_frame_dimension",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Surround Dimension",
-    attribute: "frplc_sur_dimension",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_sur_dimension",
-      field: "accentuate_data.bbq.frplc_spec_sur_dimension",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Surround Width Range",
-    attribute: "frplc_style",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_style",
-      field: "accentuate_data.bbq.frplc_spec_sur_wid_range",
-      type: "string"
-    },
-    collapse: false,
-  },
-  {
-    label:"Size Range",
-    attribute: "frplc_size_range",
-    searchable: false,
-    type: "RefinementList",
-    runtime_mapping:{
-      frplc_size_range: {
+    runtime_mapping: {
+      heater_mount_type: {
         type: "keyword",
         script: {
           source: `
-          if (params['_source']['accentuate_data'] == null || 
-              params['_source']['accentuate_data']['bbq.frplc_spec_size'] == null) {
-            return;
-          }
-    
-          String rawValue = params['_source']['accentuate_data']['bbq.frplc_spec_size'];
-          
-          double width = 0;
-          try {
-            // Remove "Inches" and whitespace to parse the number
-            String cleanValue = rawValue.toLowerCase().replace('"',"").replace("inches", "").trim();
-            width = Double.parseDouble(cleanValue);
-          } catch (Exception e) {
-            return; 
-          }
-    
-          // Logic mapping to refDimensionGroupBuckets
-          if (width < 30) {
-            emit("0 - 29 Inches");
-          } else if (width >= 30 && width <= 39) {
-            emit("30 - 39 Inches");
-          } else if (width >= 40 && width <= 49) {
-            emit("40 - 49 Inches");
-          } else if (width >= 50 && width <= 59) {
-            emit("50 - 59 Inches");
-          } else if (width >= 60 && width <= 69) {
-            emit("60 - 69 Inches");
-          } else if (width >= 70 && width <= 79) {
-            emit("70 - 79 Inches");
-          } else if (width > 80) {
-            emit("80 Inches And Up");
-          }
-        `,
+            def data = params['_source']['accentuate_data'];
+            if (data != null && data['bbq.heater_specs_mount_type'] != null) {
+              def val = data['bbq.heater_specs_mount_type'];
+              if (val != null) {
+                if (val instanceof String && val.contains('/')) {
+                  // Split the string and emit each piece as an individual token
+                  String[] parts = /\\//.split(val);
+                  for (String part : parts) {
+                    emit(part.trim());
+                  }
+                } else {
+                  // It's already a single value or an array, just emit it
+                  emit(val.toString());
+                }
+              }
+            }
+          `,
         },
       },
     },
-    facet_attribute:{
-      attribute:"frplc_size_range",
-      field: "frplc_size_range",
-      type: "string"
+    facet_attribute: {
+      attribute: "heater_mount_type",
+      field: "heater_mount_type",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_mount_type",
+    cluster: "patio heaters",
   },
   {
-    label:"Heating Area",
-    attribute: "frplc_style",
+    label: "Series",
+    attribute: "heater_series",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_style",
-      field: "accentuate_data.bbq.frplc_spec_heat_area",
-      type: "string"
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_series",
+      field: "accentuate_data.bbq.heater_specs_series",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_series",
+    cluster: "patio heaters",
   },
   {
-    label:"Item Type",
-    attribute: "frplc_type",
+    label: "Decor",
+    attribute: "heater_decor",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_type",
-      field: "accentuate_data.bbq.frplc_spec_type",
-      type: "string"
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_decor",
+      field: "accentuate_data.bbq.heater_specs_plate_style",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_plate_style",
+    cluster: "patio heaters",
   },
   {
-    label:"Color",
-    attribute: "frplc_color",
+    label: "Finish",
+    attribute: "heater_finish",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_color",
-      field: "accentuate_data.bbq.frplc_spec_color",
-      type: "string"
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_finish",
+      field: "accentuate_data.bbq.heater_specs_finish",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_finish",
+    cluster: "patio heaters",
   },
   {
-    label:"Material",
-    attribute: "frplc_material",
+    label: "Watts",
+    attribute: "heater_watts",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_material",
-      field: "accentuate_data.bbq.frplc_spec_material",
-      type: "string"
+    transform:formatValueToNumber,
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_watts",
+      field: "accentuate_data.bbq.heater_specs_watts",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_watts",
+    cluster: "patio heaters",
   },
   {
-    label:"Line Location",
-    attribute: "frplc_line_loc",
+    label: "Grade",
+    attribute: "heater_grade",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_line_loc",
-      field: "accentuate_data.bbq.frplc_spec_line_loc",
-      type: "string"
+    runtime_mapping: {
+      heater_grade: {
+        type: "keyword",
+        script: {
+          source: `
+            def data = params['_source']['accentuate_data'];
+            if (data != null && data['bbq.heater_specs_grade'] != null) {
+              def val = data['bbq.heater_specs_grade'];
+              if (val != null) {
+                if (val instanceof String && val.contains('/')) {
+                  // Split the string and emit each piece as an individual token
+                  String[] parts = /\\//.split(val);
+                  for (String part : parts) {
+                    emit(part.trim());
+                  }
+                } else {
+                  // It's already a single value or an array, just emit it
+                  emit(val.toString());
+                }
+              }
+            }
+          `,
+        },
+      },
+    },
+    facet_attribute: {
+      attribute: "heater_grade",
+      field: "heater_grade",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_grade",
+    cluster: "patio heaters",
   },
   {
-    label:"Recess Option",
-    attribute: "frplc_recess_option",
+    label: "Marine Grade",
+    attribute: "heater_marine_grade",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_recess_option",
-      field: "accentuate_data.bbq.frplc_spec_recess_option",
-      type: "string"
+    transform: function (items){
+      const sortKeys = ["Yes", "No"];
+      return items
+        .sort((a, b) => {
+          return (
+            sortKeys.indexOf(a.value) - sortKeys.indexOf(b.value)
+          );
+        });
+    },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_marine_grade",
+      field: "accentuate_data.bbq.heater_specs_marine_grade",
+      type: "string",
     },
     collapse: false,
+    accentuate_prop: "bbq.heater_specs_marine_grade",
+    cluster: "patio heaters",
   },
-  // bbq.frplc_spec_model
   {
-    label:"Collection",
-    attribute: "frplc_model",
+    label: "Features",
+    attribute: "heater_features",
     searchable: false,
     type: "RefinementList",
-    runtime_mapping:null,
-    facet_attribute:{
-      attribute:"frplc_model",
-      field: "accentuate_data.bbq.frplc_spec_model",
-      type: "string"
+    runtime_mapping: {
+      heater_features: {
+        type: "keyword",
+        script: {
+          source: `
+            def data = params['_source']['accentuate_data'];
+            if (data != null && data['bbq.heater_specs_features'] != null) {
+              def val = data['bbq.heater_specs_features'];
+              if (val != null) {
+                if (val instanceof String && val.contains('/')) {
+                  // Split the string and emit each piece as an individual token
+                  String[] parts = /\\//.split(val);
+                  for (String part : parts) {
+                    emit(part.trim());
+                  }
+                } else {
+                  // It's already a single value or an array, just emit it
+                  emit(val.toString());
+                }
+              }
+            }
+          `,
+        },
+      },
+    },
+    facet_attribute: {
+      attribute: "heater_features",
+      field: "heater_features",
+      type: "string",
     },
     collapse: false,
-  }
+    accentuate_prop: "bbq.heater_specs_features",
+    cluster: "patio heaters",
+  },
+  {
+    label: "BTU",
+    attribute: "heater_btu",
+    searchable: false,
+    type: "RefinementList",
+    transform:function (items){
+      return items.map(function(item){
+        return {
+          ...item,
+          label: Number(item.value),
+        }
+      })
+    },
+    // transform:function (items){
+    //   return items.map(function(item){
+    //     return {
+    //       ...item,
+    //       label: Math.round(item.value).toLocaleString('en-US')
+    //     }
+    //   })
+    // },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_btu",
+      field: "accentuate_data.bbq.heater_specs_btu",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_btu",
+    cluster: "patio heaters",
+  },
+  {
+    label: "Heat Area",
+    attribute: "heater_heat_area",
+    searchable: false,
+    type: "RefinementList",
+    transform:function (items){
+      return items.map(function(item){
+        return {
+          ...item,
+          label: Math.round(item.value).toLocaleString('en-US') + " Sq. Ft."
+        }
+      })
+    },
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_heat_area",
+      field: "accentuate_data.bbq.heater_specs_btu",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_btu",
+    cluster: "patio heaters",
+  },
+  {
+    label: "Voltage",
+    attribute: "heater_voltage",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_voltage",
+      field: "accentuate_data.bbq.heater_specs_volts",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_volts",
+    cluster: "patio heaters",
+  },
+  {
+    label: "Size",
+    attribute: "heater_size",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_size",
+      field: "accentuate_data.bbq.heater_specs_size",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_size",
+    cluster: "patio heaters",
+  },
+  {
+    label: "Type",
+    attribute: "heater_type",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_type",
+      field: "accentuate_data.bbq.heater_specs_type",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_type",
+    cluster: "patio heaters",
+  },
+  {
+    label: "Elements",
+    attribute: "heater_elements",
+    searchable: false,
+    type: "RefinementList",
+    runtime_mapping: null,
+    facet_attribute: {
+      attribute: "heater_elements",
+      field: "accentuate_data.bbq.heater_specs_elements",
+      type: "string",
+    },
+    collapse: false,
+    accentuate_prop: "bbq.heater_specs_elements",
+    cluster: "patio heaters",
+  },
+  
 ];
 
 
 export const patioHeatersFilterTypes = {
   "patio-heaters": [
     "ways_to_shop",
+    "heater_fuel_type",
+    "heater_mount_type",
+    "heater_series",
+    "heater_decor",
+    "heater_finish",
+    "heater_watts",
+    "heater_grade",
+    "heater_marine_grade",
+    "heater_features",
+    "heater_btu",
+    "heater_heat_area",
+    "heater_voltage",
+    "heater_size",
+    "heater_type",
+    "heater_elements",
     "brands",
     "price_groups",
     "price",

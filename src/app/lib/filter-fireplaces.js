@@ -3,7 +3,7 @@ import { decimalToFraction } from "@/app/lib/helpers";
 const yesNo = ["Yes", "No"]; // used for transform sort
 
 const formatSimpleSize = (value) => {
-  return decimalToFraction(value) + " Inches";
+  return value ? decimalToFraction(value) + " Inches": "";
 };
 
 function formatSimpleSizeFilter(items) {
@@ -533,7 +533,7 @@ export const fireplacesFilters = [
     searchable: false,
     type: "RefinementList",
     transformSpecs: function (value) {
-      return value + " Sq. Ft.";
+      return value ? value + " Sq. Ft.": "";
     },
     transform: formatHeatingAreaFilter,
     runtime_mapping: null,

@@ -458,6 +458,8 @@ const Settings = ({ menuItem, onChange, feature_images }) => {
     "Shop-All-Fireplaces",
     "Firepits",
     "Patio-Heaters",
+    "Gas-Patio-Heaters",
+    "Electric-Patio-Heaters",
     "Refrigerators",
     "Compact-Refrigerators",
     "Outdoor-Beverage-Refrigerators",
