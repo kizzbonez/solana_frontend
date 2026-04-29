@@ -3,7 +3,12 @@
 import React, { useState, useEffect, useMemo, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 // components
-import dropin from "braintree-web-drop-in";
+import dynamic from "next/dynamic";
+
+const StripePaymentSection = dynamic(
+  () => import("@/app/components/atom/StripePaymentSection"),
+  { ssr: false }
+);
 import Image from "next/image";
 import Link from "next/link";
 // import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
@@ -239,14 +244,14 @@ const MobileOrderSummary = ({ data }) => {
   );
 };
 
-const CompletePaymentButton = ({ items }) => {
+const CompletePaymentButton = ({ items, processing }) => {
   return (
     <button
       type="submit"
-      disabled={items?.length === 0}
-      className="bg-yellow-500 text-black text-xs font-semibold w-full py-3 rounded mt-3"
+      disabled={items?.length === 0 || processing}
+      className="bg-yellow-500 text-black text-xs font-semibold w-full py-3 rounded mt-3 disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      Complete Payment
+      {processing ? "Processing…" : "Complete Payment"}
     </button>
   );
 };
@@ -498,11 +503,14 @@ function CheckoutComponent() {
     cartItems,
     loadingCartItems,
   } = useCart();
-  // braintree
-  const dropinContainer = useRef(null);
-  const [instance, setInstance] = useState(null);
-  // checkout form
-  const [form, setForm] = useState(initialForm);
+  // stripe
+  const stripeFormRef = useRef(null);
+  const [stripeClientSecret, setStripeClientSecret] = useState(null);
+  const [stripePaymentIntentId, setStripePaymentIntentId] = useState(null);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  // checkout form — default to stripe
+  const [form, setForm] = useState({ ...initialForm, payment_method: "stripe" });
   // forage
   const [forage, setForage] = useState(null);
   // auth
@@ -779,10 +787,114 @@ function CheckoutComponent() {
     });
   };
 
+  // ── Shared: create the order in the backend after any successful payment ──
+  const finalizeOrder = async (method, transactionId) => {
+    const orders = { ...form };
+    orders.status = "paid";
+    orders.payment_method = method;
+    orders.payment_status = true;
+    orders.payment_details = transactionId;
+    orders.store_domain = STORE_DOMAIN;
+    orders.items = mapOrderItems(cartItems);
+
+    const order_response = await createOrder(orders);
+    if (order_response.success) {
+      clearCartItems();
+      saveInformation(form?.save_information);
+      setSuccessPayment(true);
+      router.push(`${BASE_URL}/payment_success`);
+    } else {
+      setSuccessPayment(false);
+      alert("Something went wrong creating your order. Please contact support.");
+    }
+  };
+
+  // ── Stripe: create / refresh the PaymentIntent when switching to Stripe ───
+  const initStripePaymentIntent = async (amount) => {
+    if (!amount || Number(amount) <= 0) return;
+    setStripeLoading(true);
+    try {
+      const endpoint = stripePaymentIntentId
+        ? "/api/stripe/payment-intent"
+        : "/api/stripe/payment-intent";
+
+      // If we already have a PaymentIntent, update its amount; otherwise create one.
+      const method = stripePaymentIntentId ? "PATCH" : "POST";
+      const body = stripePaymentIntentId
+        ? { paymentIntentId: stripePaymentIntentId, amount }
+        : { amount };
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.clientSecret) {
+        setStripeClientSecret(data.clientSecret);
+        setStripePaymentIntentId(data.paymentIntentId);
+      }
+    } catch (err) {
+      console.error("[Stripe] initPaymentIntent error:", err);
+    } finally {
+      setStripeLoading(false);
+    }
+  };
+
+  // ── Stripe payment branch ─────────────────────────────────────────────────
+  const handleStripePayment = async () => {
+    if (!stripeFormRef.current) {
+      alert("Payment form is not ready. Please wait.");
+      return;
+    }
+    if (!stripeClientSecret) {
+      alert("Payment session expired. Please refresh and try again.");
+      return;
+    }
+    setPaymentProcessing(true);
+    try {
+      const paymentIntentId = await stripeFormRef.current.pay(stripeClientSecret);
+      if (paymentIntentId) {
+        await finalizeOrder("stripe", paymentIntentId);
+      }
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+
+  // ── Braintree payment branch ──────────────────────────────────────────────
+  const handleBraintreePayment = async (recaptchaToken) => {
+    if (!instance) {
+      alert("Drop-in UI is not initialized");
+      return;
+    }
+    try {
+      const { nonce } = await instance.requestPaymentMethod();
+      if (!nonce) { alert("Error: No nonce received. Try again."); return; }
+
+      const total_amount = parseFloat(cartTotal?.total_price || 0).toFixed(2);
+      const response = await fetch("/api/braintree_checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nonce, amount: `${total_amount}`, recaptchaToken }),
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        await finalizeOrder("braintree", result?.transaction?.id);
+      } else {
+        setSuccessPayment(false);
+        alert(`Payment failed: ${result.error}`);
+      }
+    } catch (error) {
+      setSuccessPayment(false);
+    }
+  };
+
+  // ── Main submit ───────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate reCAPTCHA v3
     if (!executeRecaptcha) {
       alert("reCAPTCHA not available. Please try again.");
       return;
@@ -798,68 +910,15 @@ function CheckoutComponent() {
 
     if (!cartTotal?.allowPay) {
       alert(
-        "Please Make Sure You Fillout Neccessary shipping information for us to recalculate your shipping total."
+        "Please fill out the shipping information so we can calculate your shipping total."
       );
       return;
     }
 
-    if (!instance) {
-      alert("Drop-in UI is not initialized");
-      return;
-    }
-
-    try {
-      const { nonce } = await instance.requestPaymentMethod();
-      console.log("Generated Nonce:", nonce);
-
-      if (!nonce) {
-        alert("Error: No nonce received. Try again.");
-        return;
-      }
-
-      const total_amount = parseFloat(cartTotal?.total_price || 0).toFixed(2);
-
-      const response = await fetch("/api/braintree_checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nonce,
-          amount: `${total_amount}`,
-          recaptchaToken,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        const orders = form;
-        orders["status"] = "paid";
-        orders["payment_status"] = true;
-        orders["payment_details"] = result?.transaction?.id;
-        orders["store_domain"] = STORE_DOMAIN;
-        orders["items"] = mapOrderItems(cartItems);
-        // console.log("[OrderData]", orders);
-        const order_response = await createOrder(orders);
-        // console.log("ORDER RESPONSE", order_response);
-        if (order_response.success) {
-          instance.teardown();
-          setInstance(null);
-          clearCartItems();
-          saveInformation(form?.save_information);
-          setSuccessPayment(true);
-          router.push(`${BASE_URL}/payment_success`);
-        } else {
-          setSuccessPayment(false);
-          alert("Something went wrong! Please try again.");
-        }
-      } else {
-        setSuccessPayment(false);
-        alert(`Payment failed: ${result.error}`);
-      }
-    } catch (error) {
-      setSuccessPayment(false);
-      // console.error("Payment Error:", error);
-      // alert("Payment error. Try again.");
+    if (form.payment_method === "stripe") {
+      await handleStripePayment();
+    } else {
+      await handleBraintreePayment(recaptchaToken);
     }
   };
 
@@ -921,51 +980,12 @@ function CheckoutComponent() {
     loadCart();
   }, [loading, forage, isLoggedIn, user]);
 
+  // Create / refresh Stripe PaymentIntent whenever the total changes and a valid total is available.
   useEffect(() => {
-    async function initializeDropIn() {
-      if (loading) return;
-      if (!dropinContainer.current) return;
-
-      try {
-        const res = await fetch("/api/braintree_token");
-        const data = await res.json();
-        // setClientToken(data.clientToken);
-
-        if (!data.clientToken) {
-          alert("Error: No client token received");
-          return;
-        }
-
-        if (instance) {
-          await instance.teardown();
-          setInstance(null);
-        }
-
-        const dropinInstance = await dropin.create({
-          authorization: data.clientToken,
-          container: dropinContainer.current,
-          vaultManager: false, // Disable stored payment methods
-          card: {
-            cardholderName: { required: true },
-            overrides: {
-              fields: {
-                number: { placeholder: "4111 1111 1111 1111" },
-                cvv: { required: true, placeholder: "123" }, // ✅ Force CVV
-                expirationDate: { placeholder: "MM/YY" },
-              },
-            },
-          },
-        });
-
-        setInstance(dropinInstance);
-      } catch (error) {
-        console.log("[BRAINTREEINIT] ERROR", error);
-        // alert("Payment UI failed to load.");
-      }
-    }
-
-    initializeDropIn();
-  }, [loading]);
+    const total = parseFloat(cartTotal?.total_price || 0);
+    if (total <= 0) return;
+    initStripePaymentIntent(total);
+  }, [cartTotal?.total_price]);
 
   const ref_number = useMemo(() => {
     if (loading) return null;
@@ -1201,9 +1221,22 @@ function CheckoutComponent() {
                       </label>
                     </div>
                   </div>
-                  {/* braintree form */}
-                  <div className="border rounded bg-neutral-200 w-full min-h-[330px]">
-                    <div ref={dropinContainer}></div>
+                  {/* ── Stripe Payment Element ───────────────────────── */}
+                  <div className="mt-4">
+                    <label className="font-semibold text-sm block mb-2">Payment</label>
+                    <div className="border rounded p-3 bg-white w-full min-h-[200px]">
+                      {stripeLoading ? (
+                        <div className="flex items-center justify-center min-h-[180px] text-sm text-stone-400">
+                          Loading payment form…
+                        </div>
+                      ) : (
+                        <StripePaymentSection
+                          ref={stripeFormRef}
+                          clientSecret={stripeClientSecret}
+                          onError={(msg) => alert(msg)}
+                        />
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-start text-sm text-neutral-700 py-1 mt-2">
                     <input
@@ -1337,7 +1370,7 @@ function CheckoutComponent() {
                     </div>
                   ) : null}
                   <div className="hidden md:flex">
-                    <CompletePaymentButton items={cartItems} />
+                    <CompletePaymentButton items={cartItems} processing={paymentProcessing} />
                   </div>
                 </form>
               </div>
@@ -1415,14 +1448,6 @@ function CheckoutComponent() {
           </div>
         </div>
       </div>
-      <style jsx>{`
-        :global(.braintree-placeholder) {
-          display: none !important;
-        }
-        :global(.braintree-sheet__container.braintree-sheet--active) {
-          margin: 0px;
-        }
-      `}</style>
       {/* <LoginModal isOpen={openLogin} setOpen={setOpenLogin} /> */}
     </section>
   );

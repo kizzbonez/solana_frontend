@@ -15,28 +15,28 @@ const connectDomains = [
   "https://admin.solanabbqgrills.com",
   "https://loyal-sloth-59774.upstash.io",
   "https://api.iconify.design", // icons
-  "https://r2.leadsy.ai", // Required for the new script
+  "https://r2.leadsy.ai",
   "https://wvbknd.leadsy.ai",
-  "https://api.iconify.design",
   "https://tag.trovo-tag.com",
   "https://api.zippopotam.us",
-  "https://payments.sandbox.braintree-api.com",
-  "https://gateway-sand.sandbox.braintree-api.com",
-  "https://origin-analytics-sand.sandbox.braintree-api.com",
-  "https://assets.braintreegateway.com",
-  "https://www.paypal.com",
   "https://www.google.com", // reCAPTCHA
   "https://www.gstatic.com", // reCAPTCHA
   "https://es.solanabbqgrills.com", // ES
+  // Stripe
+  "https://api.stripe.com",
+  "https://js.stripe.com",
+  "https://hooks.stripe.com",
 ];
 
-const styleSrcDomains = ["https://assets.braintreegateway.com"];
+const styleSrcDomains: string[] = [];
 
 const frameSrcDomains = [
   "https://tag.trovo-tag.com",
-  "https://assets.braintreegateway.com",
   "https://www.google.com", // reCAPTCHA
   "https://www.gstatic.com", // reCAPTCHA frames
+  // Stripe iframes (card Element, 3DS, etc.)
+  "https://js.stripe.com",
+  "https://hooks.stripe.com",
 ];
 
 const config: NextConfig = {
@@ -78,7 +78,7 @@ const config: NextConfig = {
     const CSP = `
       default-src 'self';
       
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com https://js.stripe.com;
       
       style-src 'self' 'unsafe-inline' ${styleSrcDomains.join(" ")};
 
