@@ -7,14 +7,17 @@ export default async function handler(req, res) {
 
   const { product_id, page = 1 } = req.query;
 
-  // 2. Validate Required Parameters
-  if (!product_id) {
-    return res.status(400).json({ message: 'product_id is required' });
-  }
+  
 
   try {
+    // 2. Ready Parameters
+    const params = {page};
+    if(product_id){
+      params["product_id"] = product_id;
+    }
+
     // 3. Construct URL with SearchParams (handles encoding automatically)
-    const queryParams = new URLSearchParams({ product_id, page });
+    const queryParams = new URLSearchParams(params);
     const targetUrl = `${process.env.NEXT_SOLANA_BACKEND_URL}/api/reviews/list?${queryParams}`;
 
     const response = await fetch(targetUrl, {
