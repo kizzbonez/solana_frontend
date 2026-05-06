@@ -11,6 +11,7 @@ import { CategoriesProvider } from "@/app/context/category";
 import { CompareProductsProvider } from "@/app/context/compare_product";
 import { generateMetadata } from "@/app/metadata";
 import SessionWrapper from "@/app/components/wrapper/SessionWrapper";
+import ZohoSalesIQButton from "@/app/components/widget/ZohoSalesIQButton";
 import { fetchUniqueCategories } from "@/app/lib/fn_server";
 import { notFound } from "next/navigation";
 import Topbar from "@/app/components/new-design/layout/Topbar";
@@ -82,7 +83,7 @@ export default async function MarketLayout({ children }) {
         {/* eslint-disable-next-line react/no-danger */}
         <style dangerouslySetInnerHTML={{ __html: themeCSS }} suppressHydrationWarning />
         {/* eslint-disable-next-line react/no-danger */}
-        <script dangerouslySetInnerHTML={{ __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){}};` }} />
+        <script dangerouslySetInnerHTML={{ __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){$zoho.salesiq.floatbutton.visible("hide");}};` }} />
         <script id="zsiqscript" src={`https://salesiq.zohopublic.com/widget?wc=${process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE}`} defer />
       </head>
       <body className={`antialiased ${InterFont.variable} ${playfairDisplay.variable}`}>
@@ -100,6 +101,7 @@ export default async function MarketLayout({ children }) {
                           {children}
                         </main>
                         <Footer />
+                        <ZohoSalesIQButton />
                       </QuickViewProvider>
                     </SessionWrapper>
                   </SearchProvider>

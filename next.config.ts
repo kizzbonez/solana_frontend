@@ -42,6 +42,8 @@ const frameSrcDomains = [
   "https://assets.braintreegateway.com",
   "https://www.google.com", // reCAPTCHA
   "https://www.gstatic.com", // reCAPTCHA frames
+  "https://*.zoho.com", // Zoho SalesIQ widget iframe
+  "https://*.zohopublic.com", // Zoho SalesIQ widget iframe
 ];
 
 const config: NextConfig = {
@@ -91,7 +93,9 @@ const config: NextConfig = {
         .map((d) => `https://${d}`)
         .join(" ")} https://*.zoho.com https://*.zohopublic.com https://*.zohocdn.com;
 
-      connect-src 'self' ${connectDomains.join(" ")}; 
+      font-src 'self' data: https://*.zohocdn.com;
+
+      connect-src 'self' ${connectDomains.join(" ")};
 
       frame-src 'self' ${frameSrcDomains.join(" ")}; 
     `;
