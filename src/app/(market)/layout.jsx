@@ -11,7 +11,6 @@ import { CategoriesProvider } from "@/app/context/category";
 import { CompareProductsProvider } from "@/app/context/compare_product";
 import { generateMetadata } from "@/app/metadata";
 import SessionWrapper from "@/app/components/wrapper/SessionWrapper";
-import ZohoSalesIQ from "@/app/components/widget/ZohoSalesIQ";
 import { fetchUniqueCategories } from "@/app/lib/fn_server";
 import { notFound } from "next/navigation";
 import Topbar from "@/app/components/new-design/layout/Topbar";
@@ -82,6 +81,9 @@ export default async function MarketLayout({ children }) {
         <link rel="dns-prefetch" href="https://cdn.shopify.com" />
         {/* eslint-disable-next-line react/no-danger */}
         <style dangerouslySetInnerHTML={{ __html: themeCSS }} suppressHydrationWarning />
+        {/* eslint-disable-next-line react/no-danger */}
+        <script dangerouslySetInnerHTML={{ __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){}};` }} />
+        <script id="zsiqscript" src={`https://salesiq.zohopublic.com/widget?wc=${process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE}`} defer />
       </head>
       <body className={`antialiased ${InterFont.variable} ${playfairDisplay.variable}`}>
         <AuthProvider>
@@ -98,7 +100,6 @@ export default async function MarketLayout({ children }) {
                           {children}
                         </main>
                         <Footer />
-                        <ZohoSalesIQ />
                       </QuickViewProvider>
                     </SessionWrapper>
                   </SearchProvider>
