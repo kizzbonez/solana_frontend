@@ -4,219 +4,122 @@ import { useCart } from "@/app/context/cart";
 import Link from "next/link";
 import Image from "next/image";
 import { BASE_URL, formatPrice, createSlug } from "@/app/lib/helpers";
+
 export default function CartListItem({ item, onItemCountUpdate }) {
   const { removeCartItem } = useCart();
   const [thumbnail, setThumbnail] = useState(null);
 
   useEffect(() => {
     if (item?.images) {
-      setThumbnail((prev) => {
-        return item.images.find(({ position }) => position === 1)?.src;
-      });
+      setThumbnail(item.images.find(({ position }) => position === 1)?.src);
     }
   }, [item]);
 
-  const handleRemoveItem = (item) => {
-    const userConfirmed = window.confirm(
-      "Are you sure you want to item this item?"
-    );
-    if (userConfirmed) {
-      // Proceed with the delete operation
-      console.log("Item deleted");
+  const handleRemoveItem = () => {
+    if (window.confirm("Are you sure you want to remove this item?")) {
       removeCartItem(item);
-    } else {
-      console.log("Delete operation canceled");
     }
   };
 
-  const handleCount = (item, increment) => {
-    onItemCountUpdate({ product: item, increment: increment });
+  const handleCount = (increment) => {
+    onItemCountUpdate({ product: item, increment });
   };
 
-  function getDiscountPercentage(originalPrice, currentPrice) {
-    if (!originalPrice || originalPrice <= 0) return 0;
-    const discount = ((originalPrice - currentPrice) / originalPrice) * 100;
-    return Math.round(discount);
-  }
-
-  function getSavings(originalPrice, currentPrice) {
-    if (!originalPrice || originalPrice <= 0) return 0;
-    const savings = originalPrice - currentPrice;
-    return savings > 0 ? savings : 0;
-  }
+  const price = item?.variants?.[0]?.price || item?.variant_data?.price || 0;
+  const compareAtPrice = item?.variants?.[0]?.compare_at_price || item?.variant_data?.compare_at_price || 0;
+  const qty = item?.quantity || 1;
+  const hasDiscount = Number(compareAtPrice) > 0 && Number(compareAtPrice) > Number(price);
+  const discountPct = hasDiscount ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100) : 0;
+  const savings = hasDiscount ? (compareAtPrice - price) * qty : 0;
+  const productUrl = `${BASE_URL}/${createSlug(item?.brand || "")}/product/${item?.handle}` || "#";
+  const imgSrc = thumbnail || item?.product_image_url;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-6">
-      <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
-        <Link prefetch={false} href={`${BASE_URL}/${createSlug(item?.brand || "")}/product/${item?.handle}` || "#"} className="shrink-0 md:order-1 relative w-20 h-20 aspect-1">
-          {(thumbnail || item?.product_image_url) && (
+    <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 p-4">
+      <div className="flex gap-4">
+        <Link prefetch={false} href={productUrl} className="flex-shrink-0">
+          <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
+            {imgSrc && (
               <Image
-                src={thumbnail || item?.product_image_url}
-                title={`${item?.title || item?.product_title}`}
-                alt={`${createSlug(item?.title || item?.product_title || "")}-image`}
+                src={imgSrc}
+                alt={createSlug(item?.title || item?.product_title || "")}
                 fill
                 className="object-contain"
-                sizes="(max-width: 768px) 100vw, 300px"
+                sizes="(max-width: 640px) 96px, 112px"
               />
-          )}
-        </Link>
-
-        <label htmlFor="counter-input" className="sr-only">
-          Choose quantity:
-        </label>
-        <div className="flex items-center justify-between md:order-3 md:justify-end">
-          {/* quantity action buttons */}
-          <div className="flex flex-col items-center gap-[15px]">
-            <div className="flex items-center">
-              <button
-                onClick={() => handleCount(item, false)}
-                type="button"
-                id="decrement-button"
-                data-input-counter-decrement="counter-input"
-                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700"
-              >
-                <svg
-                  className="h-2.5 w-2.5 text-gray-900 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 18 2"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M1 1h16"
-                  />
-                </svg>
-              </button>
-              <input
-                readOnly
-                min={1}
-                type="text"
-                id="counter-input"
-                data-input-counter
-                className="w-10 shrink-0 border-0 bg-transparent text-center text-sm font-medium text-gray-900 focus:outline-none focus:ring-0 dark:text-white"
-                placeholder=""
-                value={item?.quantity}
-                required
-              />
-              <button
-                onClick={() => handleCount(item, true)}
-                type="button"
-                id="increment-button"
-                data-input-counter-increment="counter-input"
-                className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700"
-              >
-                <svg
-                  className="h-2.5 w-2.5 text-gray-900 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 18 18"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 1v16M1 9h16"
-                  />
-                </svg>
-              </button>
-            </div>
-            <button title="Remove Item" className="hover:text-theme-700 text-neutral-600" onClick={()=> handleRemoveItem(item)}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="M9 3v1H4v2h1v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6h1V4h-5V3zM7 6h10v13H7zm2 2v9h2V8zm4 0v9h2V8z"
-                />
-              </svg>
-            </button>
-          </div>
-          {/* price display */}
-          <div className="text-end md:order-4 md:w-32 flex flex-col gap-[15px]">
-            <div className="text-base font-bold text-gray-900 dark:text-white">
-              ${formatPrice((item?.variants?.[0]?.price) * (item?.quantity))}
-            </div>
-            {Number(item?.variants?.[0]?.compare_at_price) > 0 && (
-              <div className="w-full flex justify-end">
-                <div className="font-semibold text-green-700 dark:text-white text-xs border border-green-700 px-[2px]">
-                  SAVE $
-                  {formatPrice(
-                    getSavings(
-                      item?.variants?.[0]?.compare_at_price,
-                      item?.variants?.[0]?.price) * item?.quantity
-                  )}
-                </div>
-              </div>
             )}
           </div>
-        </div>
+        </Link>
 
-        <div className="w-full min-w-0 flex flex-col gap-[15px] md:order-2 md:max-w-md">
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
           <Link
-            prefetch={false} href={`${BASE_URL}/${createSlug(item?.brand||"")}/product/${item?.handle}` || "#"}
-            className="text-base font-medium text-gray-900 hover:underline dark:text-white"
+            prefetch={false}
+            href={productUrl}
+            className="text-sm font-semibold text-charcoal dark:text-white hover:text-fire dark:hover:text-orange-400 transition-colors line-clamp-2 leading-snug"
           >
             {item?.title || item?.product_title}
           </Link>
 
-          <div className="flex items-center gap-[20px]">
-            {Number(item?.variants?.[0]?.compare_at_price || item?.variant_data?.compare_at_price) > 0 && (
-              <div className="line-through font-medium">
-                ${formatPrice(item?.variants?.[0]?.compare_at_price || item?.variant_data?.compare_at_price)}
-              </div>
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-sm font-bold text-charcoal dark:text-white">
+              ${formatPrice(price)}
+            </span>
+            {hasDiscount && (
+              <>
+                <span className="text-xs text-stone-400 line-through">${formatPrice(compareAtPrice)}</span>
+                <span className="text-[10px] font-bold text-white bg-green-600 px-1.5 py-0.5 rounded-full">
+                  {discountPct}% off
+                </span>
+              </>
             )}
-            <div className="font-medium text-green-700">
-              ${formatPrice(item?.variants?.[0]?.price || item?.variant_data?.price)}
-            </div>
-            {Number(item?.variants?.[0]?.compare_at_price || item?.variant_data?.compare_at_price) > 0 &&
-              Number(item?.variants?.[0]?.price || item?.variant_data?.price) > 0 && (
-                <div className="font-medium text-red-700">
-                  <span className="italic">
-                    {getDiscountPercentage(
-                      (item?.variants?.[0]?.compare_at_price || item?.variant_data?.compare_at_price),
-                      (item?.variants?.[0]?.price || item?.variant_data?.price) 
-                    )}
-                    %
-                  </span>{" "}
-                  off
-                </div>
-              )}
           </div>
-          {/* <div className="flex items-center gap-4">
-            <button
-              onClick={() => handleRemoveItem(item)}
-              type="button"
-              className="inline-flex items-center text-sm font-medium text-red-600 hover:underline dark:text-red-500"
-            >
-              <svg
-                className="me-1.5 h-5 w-5"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
+
+          <div className="flex items-center justify-between mt-auto pt-1 flex-wrap gap-3">
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleCount(false)}
+                type="button"
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-charcoal dark:text-white transition-colors"
               >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18 17.94 6M18 18 6.06 6"
-                />
-              </svg>
-              Remove
-            </button>
-          </div> */}
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 18 2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M1 1h16" />
+                </svg>
+              </button>
+              <span className="w-8 text-center text-sm font-semibold text-charcoal dark:text-white select-none">
+                {qty}
+              </span>
+              <button
+                onClick={() => handleCount(true)}
+                type="button"
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-charcoal dark:text-white transition-colors"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 18 18">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 1v16M1 9h16" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {savings > 0 && (
+                <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                  Save ${formatPrice(savings)}
+                </span>
+              )}
+              <span className="text-sm font-bold text-charcoal dark:text-white">
+                ${formatPrice(price * qty)}
+              </span>
+              <button
+                type="button"
+                title="Remove item"
+                onClick={handleRemoveItem}
+                className="text-stone-300 hover:text-red-500 dark:text-stone-600 dark:hover:text-red-400 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

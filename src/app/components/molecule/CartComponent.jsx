@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import CartListItem from "@/app/components/atom/CartListItem";
 import CartOrderSummary from "@/app/components/atom/CartOrderSummary";
 import YouMayAlsoLike from "@/app/components/molecule/YouMayAlsoLike";
@@ -7,229 +7,77 @@ import { BASE_URL, mapOrderItems } from "@/app/lib/helpers";
 import Link from "next/link";
 import { useAuth } from "@/app/context/auth";
 import { useCart } from "@/app/context/cart";
-import { ICRoundPhone } from "@/app/components/icons/lib";
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 
-const TemporaryComponent = () => {
-  const { user, userCartGet, userCartCreate, userCartClose, userCartUpdate } =
-    useAuth();
-  const { cartItems, cartObject, guestCartToActive } = useCart();
+const PhoneIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+  </svg>
+);
 
-  const userProfileToCart = (user = {}) => {
-    return {
-      billing_address: user?.profile?.billing_address,
-      billing_city: user?.profile?.billing_city,
-      billing_country: user?.profile?.billing_country,
-      billing_email: user?.email,
-      billing_first_name: user?.first_name,
-      billing_last_name: user?.last_name,
-      billing_phone: user?.profile?.phone,
-      billing_province: user?.profile?.billing_state,
-      billing_zip_code: user?.profile?.billing_zip,
-      shipping_address: user?.profile?.shipping_address,
-      shipping_city: user?.profile?.shipping_city,
-      shipping_country: user?.profile?.shipping_country,
-      shipping_email: user?.email,
-      shipping_first_name: user?.first_name,
-      shipping_last_name: user?.last_name,
-      shipping_phone: user?.profile?.phone,
-      shipping_province: user?.profile?.shipping_state,
-      shipping_zip_code: user?.profile?.shipping_zip,
-    };
-  };
-
-  const fetchUserCart = async () => {
-    const response = await userCartGet();
-    // console.log("[GET][CART][REPSPONSE]", response);
-  };
-
-  const createUserCart = async () => {
-    // console.log("[CREATE][CART] LOCAL CART", cartObject);
-    if (!cartObject) {
-      // console.log("[CART OBJECT IS NULL]");
-      return;
-    }
-    const response = await userCartCreate({
-      items: cartObject?.items,
-    });
-    // console.log("[CREATE][CART][REPSPONSE]", response);
-  };
-
-  const closeUserCart = async () => {
-    const response = await userCartClose();
-    // console.log("[CREATE][CLOSE][REPSPONSE]", response);
-  };
-
-  const updateUserCart = async () => {
-    // console.log("[UPDATE][CART] LOCAL CART", cartObject);
-    // console.log("[UPDATE][CART] User", user);
-    if (!cartObject) {
-      // console.log("[CART OBJECT IS NULL]");
-      return;
-    }
-    const user_profile = userProfileToCart(user);
-    const injected_items = (cartObject?.items || []).map((item) => ({
-      ...item,
-    }));
-    const response = await userCartUpdate({
-      items: injected_items,
-      ...user_profile,
-    });
-    console.log("[UPDATE][CART][REPSPONSE]", response);
-  };
-
-  if (!user)
-    return (
-      <div className="mb-10">
-        <h2>TEMPORARY COMPONENT</h2>
-        <p className="text-neutral-500 text-sm">Guest Cart Triggers</p>
-        <div className="mt-5 flex gap-[20px]">
-          <button
-            onClick={guestCartToActive}
-            className="text-white text-sm font-bold bg-indigo-600 hover:bg-indigo-700 rounded-[2px] py-1 px-4"
-          >
-            GUEST CART TO STATUS ACTIVE
-          </button>
-        </div>
-      </div>
-    );
-
-  return (
-    <div className="mb-10">
-      <h2>TEMPORARY COMPONENT</h2>
-      <p className="text-neutral-500 text-sm">Cart Enpoint Triggers</p>
-      <div className="mt-5 flex gap-[20px]">
-        <button
-          onClick={fetchUserCart}
-          className="text-white text-sm font-bold bg-green-600 hover:bg-green-700 rounded-[2px] py-1 px-4"
-        >
-          GET
-        </button>
-        <button
-          onClick={createUserCart}
-          className="text-white text-sm font-bold bg-blue-600 hover:bg-blue-700 rounded-[2px] py-1 px-4"
-        >
-          CREATE
-        </button>
-        <button
-          onClick={updateUserCart}
-          className="text-white text-sm font-bold bg-orange-600 hover:bg-orange-700 rounded-[2px] py-1 px-4"
-        >
-          UPDATE
-        </button>
-        <button
-          onClick={closeUserCart}
-          className="text-white text-sm font-bold bg-red-600 hover:bg-red-700 rounded-[2px] py-1 px-4"
-        >
-          CLOSE
-        </button>
-      </div>
+const ShoppingAssistanceSection = () => (
+  <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl p-5">
+    <div className="flex items-center gap-3 mb-3">
+      <span className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 text-orange-500">
+        <PhoneIcon />
+      </span>
+      <h3 className="text-sm font-bold text-charcoal dark:text-white">Shopping Assistance</h3>
     </div>
-  );
-};
+    <p className="text-xs text-stone-500 dark:text-stone-400 mb-0.5">Questions? We're here to help.</p>
+    <p className="text-xs text-stone-400 dark:text-stone-500 mb-4">Mon–Fri &nbsp; 6 AM – 5 PM PST</p>
+    <Link
+      prefetch={false}
+      href={`tel:${STORE_CONTACT}`}
+      className="flex items-center justify-center gap-2 w-full py-2 bg-fire hover:bg-orange-600 text-white text-xs font-semibold rounded-xl transition-colors"
+    >
+      <PhoneIcon className="w-3.5 h-3.5" />
+      Call Now
+    </Link>
+  </div>
+);
 
-const ShoppingAssistanceSection = () => {
-  return (
-    <div className="sm-auto mt-3 flex-1 space-y-2 lg:mt-0 md:w-full">
-      <h2 className="text-base font-semibold text-gray-900 dark:text-white text-center">
-        Shopping Assistance
-      </h2>
-      <p className="text-xs text-neutral-700 text-center">
-        Questions? We are here to help.
-      </p>
-
-      <p className="text-xs text-neutral-700 text-center">
-        Monday through Friday 6 AM to 5 PM PST
-      </p>
-      <div className="flex items-center gap-[10px] justify-center">
-        <Link
-          prefetch={false}
-          href={`tel:${STORE_CONTACT}`}
-          className="flex items-center gap-[5px] text-theme-600 text-sm font-bold"
-        >
-          {" "}
-          <ICRoundPhone /> Call Now
-        </Link>
-        {/* <button className="flex items-center gap-[5px] text-theme-600 text-sm font-bold">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-          >
-            <path
-              fill="currentColor"
-              d="M2 22V4q0-.825.588-1.412T4 2h16q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18H6zm3.15-6H20V4H4v13.125zM4 16V4z"
-            />
-          </svg>
-          Chat Now
-        </button> */}
-      </div>
+const CartItemSkeleton = () => (
+  <div className="flex gap-4 p-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 animate-pulse">
+    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-stone-200 dark:bg-stone-700 flex-shrink-0" />
+    <div className="flex-1 flex flex-col gap-2 py-1">
+      <div className="h-2.5 w-20 bg-stone-200 dark:bg-stone-700 rounded-full" />
+      <div className="h-3.5 w-full bg-stone-200 dark:bg-stone-700 rounded-full" />
+      <div className="h-3.5 w-3/4 bg-stone-200 dark:bg-stone-700 rounded-full" />
+      <div className="h-4 w-24 bg-stone-200 dark:bg-stone-700 rounded-full mt-1" />
     </div>
-  );
-};
+  </div>
+);
 
-const NoCartItems = () => {
-  return (
-    <div className="h-[300px] border border-neutral-300 bg-stone-100 w-full flex items-center justify-center p-3">
-      <div className="flex flex-col gap-5">
-        <div className="text-theme-600 text-center flex justify-center">
-          <div className="w-[80px] h-[80px] bg-white border border-neutral-300 shadow flex items-center justify-center rounded-full">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="42"
-              height="42"
-              viewBox="0 0 32 32"
-            >
-              <circle cx="10" cy="28" r="2" fill="currentColor" />
-              <circle cx="24" cy="28" r="2" fill="currentColor" />
-              <path
-                fill="currentColor"
-                d="M4.98 2.804A1 1 0 0 0 4 2H0v2h3.18l3.84 19.196A1 1 0 0 0 8 24h18v-2H8.82l-.8-4H26a1 1 0 0 0 .976-.783L29.244 7h-2.047l-1.999 9H7.62Z"
-              />
-              <path fill="currentColor" d="M18 6V2h-2v4h-4v2h4v4h2V8h4V6z" />
-            </svg>
-          </div>
-        </div>
-        <div className="space-y-5">
-          <h2 className="text-stone-800 text-center">
-            Your shopping cart is empty!
-          </h2>
-          <p className="text-xs text-neutral-800 text-center">
-            You currently do not have any items in your shopping cart.
-          </p>
-        </div>
-        <div className="text-center">
-          <Link
-            prefetch={false}
-            href={`${BASE_URL}/fireplaces`}
-            className="border border-neutral-400 font-semibold text-theme-600 py-2 px-4 text-sm"
-          >
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
+const CartOnloadLoader = () => (
+  <div className="flex flex-col gap-2">
+    <CartItemSkeleton />
+    <CartItemSkeleton />
+    <CartItemSkeleton />
+  </div>
+);
 
-const CartOnloadLoader = () => {
-  return (
-    <div className="h-[300px] border border-neutral-300 bg-stone-100 w-full flex items-center justify-center p-3">
-      <div className="flex flex-col gap-5">
-        <div className="space-y-5">
-          <h2 className="text-stone-800 text-center">Loading Cart...</h2>
-          <p className="text-xs text-neutral-800 text-center">
-            Please wait a bit, We are loading your cart.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+const NoCartItems = () => (
+  <div className="flex flex-col items-center justify-center py-20 px-4 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 text-center">
+    <span className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center mb-5 text-orange-400">
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+      </svg>
+    </span>
+    <h2 className="text-base font-bold text-charcoal dark:text-white mb-1.5">Your cart is empty</h2>
+    <p className="text-sm text-stone-400 dark:text-stone-500 mb-6 max-w-xs">
+      You haven't added any items yet. Browse our collection and find something you'll love.
+    </p>
+    <Link
+      prefetch={false}
+      href={`${BASE_URL}/fireplaces`}
+      className="px-5 py-2.5 bg-fire hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors"
+    >
+      Continue Shopping
+    </Link>
+  </div>
+);
 
 export default function CartPageComponent() {
-  const [cartTotal, setCartTotal] = useState({});
   const {
     cartObject,
     cartItems,
@@ -237,13 +85,11 @@ export default function CartPageComponent() {
     increaseProductQuantity,
     decreaseProductQuantity,
     fetchOrderTotal,
-    // loadCart,
   } = useCart();
 
   const { loading, user, isLoggedIn } = useAuth();
 
-  const handleItemCountUpdate = (value) => {
-    const { increment, product } = value;
+  const handleItemCountUpdate = ({ increment, product }) => {
     if (increment) {
       increaseProductQuantity(product);
     } else {
@@ -252,136 +98,93 @@ export default function CartPageComponent() {
   };
 
   useEffect(() => {
-    const reloadCartTotal = async (data) => {
-      const response = await fetchOrderTotal({ ...data });
-    };
+    if (loading || cartItems.length === 0) return;
 
-    if (!loading && cartItems.length > 0) {
-      let data;
-      if (user) {
-        // console.log("[TRIGGER RECALCULATE TOTAL USING USER DATA]", user);
-        const shipping_details = {
-          shipping_address: user?.profile?.shipping_address ?? "",
-          shipping_country: user?.profile?.shipping_country ?? "",
-          shipping_city: user?.profile?.shipping_city ?? "",
-          shipping_province: user?.profile?.shipping_state ?? "",
-          shipping_zip_code: user?.profile?.shipping_zip ?? "",
-        };
-        const allFilled = Object.values(shipping_details).every(
-          (v) => v !== ""
-        );
-
-        data = {
-          items: cartItems.map((item) => ({
-            ...item,
-            product_id: item?.custom_fields?.product_id,
-          })),
-          ...(allFilled ? shipping_details : {}),
-        };
-      } else {
-        // console.log("[TRIGGER RECALCULATE TOTAL AS GUEST]");
-        data = {
-          items: mapOrderItems(cartItems),
-        };
-      }
-      reloadCartTotal(data);
+    let data;
+    if (user) {
+      const shipping_details = {
+        shipping_address: user?.profile?.shipping_address ?? "",
+        shipping_country: user?.profile?.shipping_country ?? "",
+        shipping_city: user?.profile?.shipping_city ?? "",
+        shipping_province: user?.profile?.shipping_state ?? "",
+        shipping_zip_code: user?.profile?.shipping_zip ?? "",
+      };
+      const allFilled = Object.values(shipping_details).every((v) => v !== "");
+      data = {
+        items: cartItems.map((item) => ({
+          ...item,
+          product_id: item?.custom_fields?.product_id,
+        })),
+        ...(allFilled ? shipping_details : {}),
+      };
+    } else {
+      data = { items: mapOrderItems(cartItems) };
     }
+
+    fetchOrderTotal(data);
   }, [loading, isLoggedIn, user, cartItems]);
 
   const ref_number = useMemo(() => {
     if (loading) return null;
-
-    if (isLoggedIn) {
-      return cartObject?.cart_id ? "CI-" + cartObject?.cart_id : null;
-    } else {
-      return cartObject?.reference_number;
-    }
+    return isLoggedIn
+      ? cartObject?.cart_id ? `CI-${cartObject.cart_id}` : null
+      : cartObject?.reference_number ?? null;
   }, [loading, isLoggedIn, cartObject]);
 
   return (
-    <section className="bg-white py-8 antialiased dark:bg-gray-900 md:py-[20px]">
-      <div className="mx-auto max-w-screen-xl px-4 2xl:px-0">
-        {/* <TemporaryComponent /> */}
+    <section className="bg-stone-50 dark:bg-stone-950 min-h-screen py-8">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         {loadingCartItems ? (
           <CartOnloadLoader />
+        ) : cartItems.length === 0 ? (
+          <NoCartItems />
         ) : (
           <>
-            {cartItems.length === 0 ? (
-              <NoCartItems />
-            ) : (
-              <>
-                <div className="mt-4 sm:mt-8 md:gap-4 md:flex lg:items-start xl:gap-6">
-                  <div className="mx-auto w-full flex-none md:max-w-lg lg:max-w-2xl xl:max-w-4xl">
-                    <div>
-                      <Link
-                        href={`${BASE_URL}/fireplaces`}
-                        prefetch={false}
-                        title=""
-                        className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 underline hover:no-underline dark:text-primary-500"
-                      >
-                        {/* flowbite:arrow-left-outline */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            fill="none"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 12h14M5 12l4-4m-4 4l4 4"
-                          />
-                        </svg>
-                        Back To Shopping
-                      </Link>
+            <div className="mb-6">
+              <Link
+                href={`${BASE_URL}/fireplaces`}
+                prefetch={false}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-fire dark:text-stone-400 dark:hover:text-orange-400 transition-colors mb-4"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Back to Shopping
+              </Link>
+              <div className="flex items-baseline justify-between flex-wrap gap-2">
+                <h1 className="text-2xl font-bold text-charcoal dark:text-white tracking-tight">
+                  Shopping Cart
+                </h1>
+                {ref_number && (
+                  <span className="text-xs text-stone-400 dark:text-stone-500 font-medium">
+                    Ref: <span className="text-fire font-semibold">{ref_number}</span>
+                  </span>
+                )}
+              </div>
+            </div>
 
-                      <h2 className="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl mt-8">
-                        Shopping Cart
-                      </h2>
-                      {ref_number && (
-                        <h5 className="font-bold text-neutral-600 text-sm">
-                          REF #:{" "}
-                          <span className="text-theme-600">{ref_number}</span>
-                        </h5>
-                      )}
-                    </div>
-                  </div>
-                  <ShoppingAssistanceSection />
+            <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col gap-2">
+                  {cartObject?.items?.map((item, idx) => (
+                    <CartListItem
+                      key={`cart-list-item-${idx}-${item?.id}`}
+                      item={item}
+                      onItemCountUpdate={handleItemCountUpdate}
+                    />
+                  ))}
                 </div>
-                <div className="mt-4 sm:mt-8 gap-2 lg:flex lg:items-start xl:gap-4">
-                  <div className="mx-auto w-full flex-none lg:max-w-2xl xl:max-w-4xl">
-                    <div className="space-y-2">
-                      {cartObject &&
-                      cartObject?.items &&
-                      cartObject.items.length > 0 ? (
-                        cartObject.items.map((item, idx) => (
-                          <CartListItem
-                            key={`cart-list-item-${idx}-${item?.id}`}
-                            item={item}
-                            onItemCountUpdate={handleItemCountUpdate}
-                          />
-                        ))
-                      ) : (
-                        <div className="min-h-[190px] font-bold text-stone-500 text-lg flex items-center justify-center">
-                          <div>
-                            {loadingCartItems
-                              ? "Loading..."
-                              : "Nothing to display"}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <CartOrderSummary />
-                </div>
-              </>
-            )}
+              </div>
+
+              <div className="w-full lg:w-[340px] flex-shrink-0 flex flex-col gap-4">
+                <CartOrderSummary />
+                <ShoppingAssistanceSection />
+              </div>
+            </div>
           </>
         )}
-        <div className="mt-6">
+
+        <div className="mt-8">
           <YouMayAlsoLike displayItems={4} />
         </div>
       </div>

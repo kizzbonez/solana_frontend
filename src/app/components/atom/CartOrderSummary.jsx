@@ -3,251 +3,148 @@ import { useState, useEffect } from "react";
 import { useCart } from "@/app/context/cart";
 import { formatPrice, BASE_URL } from "@/app/lib/helpers";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import CheckoutButtons from "@/app/components/atom/CheckoutButtons";
 import AuthButtons from "@/app/components/molecule/AuthButtons";
 import { useAuth } from "@/app/context/auth";
 
-// import CallWrapper from "@/app/components/atom/CallWrapper";
-const YourSavingsSection = ({ savings, shipping_cost }) => {
-  return (
-    <div className=" bg-green-700 border font-light text-center text-white border-x-8 border-green-900 text-sm py-1">
-      You are saving
-      <span className="font-bold text-normal not-italic">
-        {" $" + formatPrice(savings) + " "}
-      </span>{" "}
-      {shipping_cost === 0 ? (
-        <span>
-          plus <span className="font-bold text-normal not-italic">FREE</span>{" "}
-          Shipping
-        </span>
-      ) : (
-        ""
+const SavingsBanner = ({ savings, shipping_cost }) => (
+  <div className="flex items-center gap-2.5 px-4 py-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-xl">
+    <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <p className="text-xs font-medium text-green-700 dark:text-green-400">
+      You're saving{" "}
+      <span className="font-bold">${formatPrice(savings)}</span>
+      {shipping_cost === 0 && (
+        <> + <span className="font-bold">FREE</span> shipping</>
       )}
-    </div>
-  );
-};
-
-const YourSavingsSection2 = ({ savings, shipping_cost }) => {
-  return (
-    <div className="space-y-1 rounded-lg border border-neutral-300 bg-blue-50 p-2 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-3">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-        Your Savings!
-      </h2>
-      <p className="text-sm text-neutral-700">
-        You are saving
-        <span className="font-bold text-normal not-italic text-green-700">
-          {" $" + formatPrice(savings) + " "}
-        </span>{" "}
-        {shipping_cost === 0 ? (
-          <span>
-            plus <span className="font-bold text-normal not-italic text-green-700">FREE</span>{" "}
-            Shipping and Concierge Service
-          </span>
-        ) : (
-          ""
-        )}
-      </p>
-    </div>
-  );
-};
+    </p>
+  </div>
+);
 
 function CartOrderSummary({ checkoutButton = true }) {
   const { loading, user } = useAuth();
-  const router = useRouter();
   const { cartObject, cartItems } = useCart();
   const [originalPrice, setOriginalPrice] = useState(0);
   const [salePrice, setSalePrice] = useState(0);
   const [savings, setSavings] = useState(0);
-  const [deliveryOption, setDeliveryOption] = useState(0);
-  const [tax, setTax] = useState(0);
 
-  const handleCheckout = async (e) => {
+  const handleCheckout = (e) => {
     e.preventDefault();
-
     if (cartItems.length === 0) {
       alert("You don't have items in your cart yet.");
       return;
     }
-
     window.location.href = `${BASE_URL}/checkout`;
   };
 
   const getPriceSum = (items) => {
     if (!Array.isArray(items)) return 0;
-    return items.reduce((total, item) => {
-      const itemTotal = (item?.variants?.[0].price || 0) * (item.quantity || 0);
-      return total + itemTotal;
-    }, 0);
+    return items.reduce(
+      (total, item) => total + (item?.variants?.[0]?.price || 0) * (item.quantity || 0),
+      0
+    );
   };
 
   const getOriginalPriceSum = (items) => {
     if (!Array.isArray(items)) return 0;
-    return items.reduce((total, item) => {
-      const itemTotal = (item?.variants?.[0].compare_at_price || item?.variants?.[0].price || 0) * (item.quantity || 0);
-      return total + itemTotal;
-    }, 0);
+    return items.reduce(
+      (total, item) =>
+        total +
+        (item?.variants?.[0]?.compare_at_price || item?.variants?.[0]?.price || 0) *
+          (item.quantity || 0),
+      0
+    );
   };
 
   useEffect(() => {
-    if (cartItems.length > 0) {
-      const _originalPrice = getOriginalPriceSum(cartItems);
-      const _salePrice = getPriceSum(cartItems);
-      const _savings = _originalPrice - _salePrice;
-      const _deliveryOption = 0;
-      const _tax = 0;
-      setOriginalPrice(_originalPrice);
-      setSalePrice(_salePrice);
-      setSavings(_savings);
-      setDeliveryOption(_deliveryOption);
-      setTax(_tax);
-    } else {
-      setOriginalPrice(0);
-      setSalePrice(0);
-      setSavings(0);
-      setDeliveryOption(0);
-      setTax(0);
-    }
+    const _originalPrice = getOriginalPriceSum(cartItems);
+    const _salePrice = getPriceSum(cartItems);
+    setOriginalPrice(_originalPrice);
+    setSalePrice(_salePrice);
+    setSavings(_originalPrice - _salePrice);
   }, [cartItems]);
 
+  const shippingDisplay = cartObject?.total_shipping
+    ? `$${formatPrice(cartObject.total_shipping)}`
+    : cartItems.length > 0
+    ? "FREE"
+    : "$0.00";
+
+  const shippingIsFree = cartObject && !cartObject?.total_shipping && cartItems.length > 0;
+
   return (
-    <div className="mx-auto mt-2 flex-1 space-y-2 lg:mt-0 lg:w-full ">
+    <div className="flex flex-col gap-3">
       {cartObject && savings > 0 && (
-        <>
-          {/* <YourSavingsSection
-            savings={savings}
-            shipping_cost={cartObject?.total_shipping}
-          /> */}
-
-          <YourSavingsSection2
-            savings={savings}
-            shipping_cost={cartObject?.total_shipping}
-          />
-        </>
+        <SavingsBanner savings={savings} shipping_cost={cartObject?.total_shipping} />
       )}
-      <div className="space-y-4 rounded-lg border border-neutral-300 bg-blue-50 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-3">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Order summary
-        </h2>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <dl className="flex items-center justify-between gap-4">
-              <dt className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                Original price
-              </dt>
-              <dd className="text-sm font-semibold text-gray-900 dark:text-white">
-                ${cartObject ? formatPrice(originalPrice) : formatPrice(0)}
-              </dd>
-            </dl>
 
-            <dl className="flex items-center justify-between gap-4">
-              <dt className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                Savings
-              </dt>
-              <dd
-                className={`text-sm font-semibold ${
-                  savings > 0 ? "text-green-700" : ""
-                }`}
-              >
-                ${cartObject && savings ? formatPrice(savings) : formatPrice(0)}
-              </dd>
-            </dl>
+      <div className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-2xl p-5">
+        <h2 className="text-sm font-bold text-charcoal dark:text-white mb-4">Order Summary</h2>
 
-            <dl className="flex items-center justify-between gap-4">
-              <dt className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                Shipping
-              </dt>
-              <dd
-                className={`text-sm font-medium dark:text-white  ${
-                  cartObject
-                    ? cartObject?.total_shipping &&
-                      cartObject?.total_shipping > 0
-                      ? "text-green-700"
-                      : ""
-                    : ""
-                }`}
-              >
-                {cartObject
-                  ? cartObject?.total_shipping
-                    ? `${"$" + formatPrice(cartObject?.total_shipping)}`
-                    : cartItems.length > 0
-                    ? "FREE"
-                    : `${"$" + formatPrice(0)}`
-                  : `${"$" + formatPrice(0)}`}
-              </dd>
-            </dl>
-
-            <dl className="flex items-center justify-between gap-4">
-              <dt className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                Tax
-              </dt>
-              <dd className="text-xs italic text-gray-400 dark:text-white">
-                Sales Tax Calculated at Checkout
-              </dd>
-            </dl>
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-stone-500 dark:text-stone-400">Original price</span>
+            <span className="text-xs font-semibold text-charcoal dark:text-white">
+              ${formatPrice(originalPrice)}
+            </span>
           </div>
 
-          <dl className="flex items-center justify-between gap-4 border-t border-gray-200 pt-2 dark:border-gray-700">
-            <dt className="text-sm font-bold text-gray-900 dark:text-white">
-              Total
-            </dt>
-            <dd className="text-sm font-bold text-gray-900 dark:text-white">
-              $
-              {cartObject?.total_price
-                ? formatPrice(cartObject?.total_price)
-                : formatPrice(0)}
-            </dd>
-          </dl>
-        </div>
-        <button
-          onClick={handleCheckout}
-          // disabled={true}
-          className={`flex bg-theme-600 hover:bg-theme-500 focus:outline-neutral-400 focus:outline-[3px] w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 ${
-            checkoutButton ? "" : "hidden"
-          }`}
-        >
-          Proceed to Checkout
-        </button>
-        {/* <CheckoutButtons /> */}
-        <div className="flex items-center justify-center gap-2">
-          <span
-            className={`text-sm font-normal text-gray-500 dark:text-gray-400 ${
-              checkoutButton ? "" : "hidden"
-            }`}
-          >
-            {" "}
-            or{" "}
-          </span>
-          <Link
-            href={`${BASE_URL}/fireplaces`}
-            prefetch={false}
-            title=""
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 underline hover:no-underline dark:text-primary-500"
-          >
-            Continue Shopping
-            {/* flowbite:arrow-right-outline */}
-            <svg
-              className="h-5 w-5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
+          {savings > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-stone-500 dark:text-stone-400">Savings</span>
+              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                −${formatPrice(savings)}
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-stone-500 dark:text-stone-400">Shipping</span>
+            <span
+              className={`text-xs font-semibold ${
+                shippingIsFree ? "text-green-600 dark:text-green-400" : "text-charcoal dark:text-white"
+              }`}
             >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 12H5m14 0-4 4m4-4-4-4"
-              />
-            </svg>
-          </Link>
+              {shippingDisplay}
+            </span>
+          </div>
+
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-stone-500 dark:text-stone-400">Tax</span>
+            <span className="text-xs text-stone-400 dark:text-stone-500 italic">
+              Calculated at checkout
+            </span>
+          </div>
         </div>
+
+        <div className="flex justify-between items-center pt-3 border-t border-stone-100 dark:border-stone-800 mb-5">
+          <span className="text-sm font-bold text-charcoal dark:text-white">Total</span>
+          <span className="text-sm font-bold text-charcoal dark:text-white">
+            ${formatPrice(cartObject?.total_price || 0)}
+          </span>
+        </div>
+
+        {checkoutButton && (
+          <>
+            <button
+              onClick={handleCheckout}
+              className="w-full py-2.5 bg-fire hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors mb-3"
+            >
+              Proceed to Checkout
+            </button>
+            <Link
+              href={`${BASE_URL}/fireplaces`}
+              prefetch={false}
+              className="flex items-center justify-center text-xs font-medium text-stone-400 hover:text-fire dark:text-stone-500 dark:hover:text-orange-400 transition-colors"
+            >
+              or continue shopping
+            </Link>
+          </>
+        )}
       </div>
+
       {loading ? (
-        <div className="w-full flex items-center justify-center px-1">
-          <div className="w-full bg-neutral-300 rounded-[4px] h-[16px]"></div>
-        </div>
+        <div className="h-10 bg-stone-200 dark:bg-stone-700 rounded-xl animate-pulse" />
       ) : (
         !user && (
           <div className="w-full flex items-center justify-center">
@@ -255,33 +152,6 @@ function CartOrderSummary({ checkoutButton = true }) {
           </div>
         )
       )}
-      {/* Voucher or giftcard seciton */}
-      {/* <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-3">
-        <form className="space-y-4">
-          <div>
-            <label
-              htmlFor="voucher"
-              className="mb-2 block text-sm font-medium text-gray-900 dark:text-white"
-            >
-              {" "}
-              Do you have a voucher or gift card?{" "}
-            </label>
-            <input
-              type="text"
-              id="voucher"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
-              placeholder=""
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-          >
-            Apply Code
-          </button>
-        </form>
-      </div> */}
     </div>
   );
 }
