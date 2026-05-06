@@ -9,11 +9,13 @@ import {
 import {
   PhoneIcon,
   CartIcon,
+  UserIcon,
 } from "@/app/components/new-design/ui/Icons";
 import CartButton from "@/app/components/new-design/ui/CartButton";
 import SearchBox from "@/app/components/new-design/ui/SearchBox";
 
 import { useSolanaCategories } from "@/app/context/category";
+import MyAccountButton from "@/app/components/new-design/ui/MyAccountButton";
 
 export default function Navbar() {
   const { solana_categories: solana_menu_object } = useSolanaCategories();
@@ -104,6 +106,8 @@ export default function Navbar() {
               </span>
               {PHONE}
             </Link>
+            {/* Account */}
+            <MyAccountButton />
             {/* Cart */}
             <CartButton />
             {/* Hamburger — mobile only */}
