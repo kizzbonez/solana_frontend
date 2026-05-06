@@ -15,6 +15,7 @@ const connectDomains = [
   "https://admin.solanabbqgrills.com",
   "https://*.zoho.com", // Zoho SalesIQ
   "https://*.zohopublic.com", // Zoho SalesIQ (EU/IN/AU)
+  "https://*.zohocdn.com", // Zoho SalesIQ CDN
   "wss://*.zoho.com", // Zoho SalesIQ WebSocket
   "wss://*.zohopublic.com", // Zoho SalesIQ WebSocket
   "https://loyal-sloth-59774.upstash.io",
@@ -82,13 +83,13 @@ const config: NextConfig = {
     const CSP = `
       default-src 'self';
       
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com https://*.zoho.com https://*.zohopublic.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com https://*.zoho.com https://*.zohopublic.com https://*.zohocdn.com;
       
       style-src 'self' 'unsafe-inline' ${styleSrcDomains.join(" ")};
 
       img-src 'self' data: blob: ${imageDomains
         .map((d) => `https://${d}`)
-        .join(" ")} https://*.zoho.com https://*.zohopublic.com;
+        .join(" ")} https://*.zoho.com https://*.zohopublic.com https://*.zohocdn.com;
 
       connect-src 'self' ${connectDomains.join(" ")}; 
 
