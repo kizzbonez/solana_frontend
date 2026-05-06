@@ -23,6 +23,7 @@ import {
   SearchBox,
   useStats,
   usePagination,
+  useCurrentRefinements,
 } from "react-instantsearch";
 import Client from "@searchkit/instantsearch-client";
 import Link from "next/link";
@@ -91,6 +92,59 @@ const Panel = ({ header, children }) => {
     </div>
   );
 };
+
+const FilterContent = ({ filters }) => (
+  <>
+    <CurrentRefinements />
+    <DynamicWidgets facets={["*"]}>
+      {filters
+        .filter((item) => !["price", "price_groups"].includes(item?.attribute))
+        .map((item) => (
+          <div
+            key={`filter-item-${item?.attribute}`}
+            className={`facet-wrapper facet_${item?.attribute}`}
+          >
+            <FilterGroup header={item?.label}>
+              {item?.attribute && (
+                <>
+                  {item?.attribute !== "ratings" ? (
+                    <RefinementList
+                      attribute={item?.attribute}
+                      searchable={item?.searchable}
+                      {...(item?.transform ? { transformItems: item.transform } : {})}
+                      showMore={item?.collapse ?? true}
+                    />
+                  ) : (
+                    <RefinementList
+                      attribute={item?.attribute}
+                      searchable={item?.searchable}
+                      classNames={{ labelText: "stars" }}
+                      showMore={item?.collapse || false}
+                    />
+                  )}
+                </>
+              )}
+            </FilterGroup>
+          </div>
+        ))}
+      <div>
+        <FilterGroup header={"Price"}>
+          <RefinementList
+            attribute={"price_groups"}
+            searchable={false}
+            showMore={false}
+            transformItems={sortPriceItems}
+          />
+        </FilterGroup>
+      </div>
+      <div>
+        <Panel>
+          <RangeInput attribute="price" />
+        </Panel>
+      </div>
+    </DynamicWidgets>
+  </>
+);
 
 const FilterGroup = ({ header, children }) => {
   const [expanded, setExpanded] = useState(true);
@@ -237,36 +291,43 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
   const { status, results } = useInstantSearch();
   const [loadHint, setLoadHint] = useState("");
   const [firstLoad, setFirstLoad] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const hasLoadedResults = useRef(false);
   const productSectionRef = useRef(null);
   const pathname = usePathname();
   const isSearchPage = pathname === "/search";
+  const { items: activeRefinements } = useCurrentRefinements();
+  const activeCount = activeRefinements.reduce(
+    (sum, item) => sum + item.refinements.length,
+    0,
+  );
 
   useEffect(() => {
-    // 1. Calculate the new loadHint based on the current status
     let nextHint = loadHint;
 
     if (results?.nbHits > 0) {
-      console.log("display items");
       setLoadHint("idle");
       onDataLoaded(true);
     } else {
-      console.log("loading only");
       setLoadHint("loading-idle");
       onDataLoaded(false);
     }
   }, [status, results?.nbHits, loadHint, onDataLoaded]);
 
-  // Track when we've actually received results
   useEffect(() => {
     if (results && results.nbHits !== undefined) {
       hasLoadedResults.current = true;
     }
   }, [results]);
 
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    document.body.style.overflow = mobileFiltersOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileFiltersOpen]);
+
   const filters = getActiveFacets(page_details?.filter_type);
 
-  // Only show "No Results" after a full search cycle (loading → idle) has completed
   const shouldShowNoResults =
     loadHint === "loading-idle" && results?.nbHits === 0 && status === "idle";
 
@@ -282,74 +343,68 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
 
   return (
     <div className="container">
+      {/* ── Mobile filter drawer ── */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          {/* Panel */}
+          <div className="relative z-10 w-[300px] max-w-[85vw] bg-white h-full flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-gray-900">Filters</span>
+                {activeCount > 0 && (
+                  <span className="bg-orange-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+                    {activeCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                aria-label="Close filters"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {/* Scrollable filter content */}
+            <div className="flex-1 overflow-y-auto">
+              <FilterContent filters={filters} />
+            </div>
+            {/* Footer CTA */}
+            <div className="px-4 py-3 border-t bg-white sticky bottom-0">
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="w-full py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                Show Results
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="search-panel flex pb-[50px] gap-[20px]">
-        <div className="search-panel__filters  pfd-filter-section relative">
+        {/* Desktop filter sidebar */}
+        <div className="search-panel__filters pfd-filter-section relative">
           <div className="border rounded-xl bg-white">
             <div className="text-sm font-semibold p-4">Filters</div>
-            <CurrentRefinements />
-            <DynamicWidgets facets={["*"]}>
-              {filters
-                .filter(
-                  (item) =>
-                    !["price", "price_groups"].includes(item?.attribute),
-                )
-                .map((item) => (
-                  <div
-                    key={`filter-item-${item?.attribute}`}
-                    className={`facet-wrapper facet_${item?.attribute}`}
-                  >
-                    <FilterGroup header={item?.label}>
-                      {item?.attribute && (
-                        <>
-                          {item?.attribute !== "ratings" ? (
-                            <RefinementList
-                              attribute={item?.attribute}
-                              searchable={item?.searchable}
-                              {...(item?.transform
-                                ? { transformItems: item.transform }
-                                : {})}
-                              showMore={item?.collapse ?? true}
-                            />
-                          ) : (
-                            <RefinementList
-                              attribute={item?.attribute}
-                              searchable={item?.searchable}
-                              classNames={{ labelText: "stars" }}
-                              showMore={item?.collapse || false}
-                            />
-                          )}
-                        </>
-                      )}
-                    </FilterGroup>
-                  </div>
-                ))}
-
-              <div>
-                <FilterGroup header={"Price"}>
-                  <RefinementList
-                    attribute={"price_groups"}
-                    searchable={false}
-                    showMore={false}
-                    transformItems={sortPriceItems}
-                  />
-                </FilterGroup>
-              </div>
-              <div>
-                <Panel>
-                  <RangeInput attribute="price" />
-                </Panel>
-              </div>
-            </DynamicWidgets>
+            <FilterContent filters={filters} />
           </div>
           <div className="relative w-full aspect-w-3 aspect-h-4 mt-2">
             <Link
               href={`tel:${page_details?.contact_number || STORE_CONTACT}`}
               prefetch={false}
-              className=""
             >
               <Image
                 src="/images/banner/sub-banner-image.webp"
-                alt={`Sub Banner Image`}
+                alt="Sub Banner Image"
                 className="object-contain"
                 layout="fill"
                 objectFit="contain"
@@ -359,29 +414,40 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
             </Link>
           </div>
         </div>
+
+        {/* Products section */}
         <div
           ref={productSectionRef}
           className="search-panel__results pfd-product-section"
         >
           <div className="flex flex-col gap-1.5 md:flex-row md:items-center justify-between mb-5">
+            {/* Mobile filter toggle — hidden on md+ */}
+            <button
+              className="md:hidden flex items-center gap-2 self-start px-3.5 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-orange-400 hover:text-orange-500 transition-colors"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" d="M3 6h18M7 12h10M11 18h2" />
+              </svg>
+              Filters
+              {activeCount > 0 && (
+                <span className="bg-orange-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">
+                  {activeCount}
+                </span>
+              )}
+            </button>
+
             {!!isSearchPage && <DisplayedItems />}
             <SortBy
               items={[
                 { label: "Most Popular", value: `${es_index}_popular` },
                 { label: "Newest", value: `${es_index}_newest` },
-                {
-                  label: "Price: Low to High",
-                  value: `${es_index}_price_asc`,
-                },
-                {
-                  label: "Price: High to Low",
-                  value: `${es_index}_price_desc`,
-                },
+                { label: "Price: Low to High", value: `${es_index}_price_asc` },
+                { label: "Price: High to Low", value: `${es_index}_price_desc` },
               ]}
             />
           </div>
           <QueryRulesBanner />
-
           <ScrollOnPaginate targetRef={productSectionRef} />
           <Hits
             hitComponent={(props) => (
