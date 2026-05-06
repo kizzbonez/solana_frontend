@@ -11,7 +11,6 @@ function BaseNavItemPage({ page_details }) {
 
   const children = page_details.children ?? [];
 
-  console.log("BASENAVITEMPAGE PAGEDETAILS", page_details);
   return (
     <>
       <div className="w-full max-w-[1240] mx-auto px-4 sm:px-6 py-6">
