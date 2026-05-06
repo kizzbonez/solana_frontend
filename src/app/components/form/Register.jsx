@@ -280,13 +280,9 @@ function RegisterForm() {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full font-bold py-2 px-4 text-white rounded transition-all ${
-            loading
-              ? "bg-theme-300 cursor-not-allowed"
-              : "bg-theme-600 hover:bg-theme-700"
-          }`}
+          className="w-full py-2.5 bg-fire hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {loading ? "Registering..." : "Create Account"}
+          {loading ? "Registering…" : "Create Account"}
         </button>
 
         {message && (
