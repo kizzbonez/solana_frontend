@@ -127,7 +127,6 @@ function SingleProductPage({
   faqs,
   ymalProducts,
 }) {
-  console.log("reviews", reviews);
   const firstVariant = product?.variants?.[0];
   const price = parseFloat(firstVariant?.price) || 0;
   const was = parseFloat(firstVariant?.compare_at_price) || 0;
@@ -176,7 +175,12 @@ function SingleProductPage({
               activeProductId={product?.product_id}
             />
           )}
-        <ReviewsSection rating={product?.ratings || 0} reviewCount={product?.reviews ?? 0} reviews={reviews?.results || []} product_id={product?.product_id} />
+        <ReviewsSection
+        rating={product?.ratings || 0}
+        reviewCount={product?.reviews ?? 0}
+        reviews={reviews?.results || []}
+        summary={reviews?.summary || null}
+        product_id={product?.product_id} />
         <FAQSection faqs={faqs} />
         <SupportCTA />
         {Array.isArray(product?.fbt_carousel) &&

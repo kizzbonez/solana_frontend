@@ -1,25 +1,43 @@
 import StarRating from "@/app/components/new-design/sections/sp/StarRating";
 import Reviews from "@/app/components/new-design/sections/sp/Reviews";
 
-function computeBars(reviews) {
-  if (!reviews?.length)
-    return [5, 4, 3, 2, 1].map((star) => ({ star, pct: 0 }));
-  const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  reviews.forEach((r) => {
-    const s = Math.round(r.rating);
-    if (s >= 1 && s <= 5) counts[s]++;
+function formatSummary(summary) {
+  if (!summary || !summary.total_reviews) return [];
+
+  const { total_reviews, ...stars } = summary;
+
+  const rows = [5, 4, 3, 2, 1].map((rating) => {
+    const count = stars[`rating_${rating}_count`] || 0;
+    const pct =
+      total_reviews > 0
+        ? parseFloat(((count / total_reviews) * 100).toFixed(1))
+        : 0;
+    return { star: rating, count, pct };
   });
-  return [5, 4, 3, 2, 1].map((star) => ({
-    star,
-    pct: Math.round((counts[star] / reviews.length) * 100),
-  }));
+
+  // Correct rounding drift so percentages always sum to exactly 100
+  const drift = parseFloat(
+    (100 - rows.reduce((sum, r) => sum + r.pct, 0)).toFixed(1),
+  );
+  if (drift !== 0) {
+    const maxIdx = rows.reduce(
+      (best, r, i) => (r.count > rows[best].count ? i : best),
+      0,
+    );
+    rows[maxIdx].pct = parseFloat((rows[maxIdx].pct + drift).toFixed(1));
+  }
+
+  return rows;
 }
 
-
-
-const ReviewsSection = ({ rating, reviewCount, reviews = [], product_id }) => {
-  const bars = computeBars(reviews);
-  console.log("bars", bars);
+const ReviewsSection = ({
+  rating,
+  reviewCount,
+  reviews = [],
+  summary,
+  product_id,
+}) => {
+  const bars = formatSummary(summary);
   const hasReviews = reviews.length > 0;
 
   return (
@@ -81,7 +99,11 @@ const ReviewsSection = ({ rating, reviewCount, reviews = [], product_id }) => {
           </div>
 
           {hasReviews ? (
-            <Reviews reviews={reviews} reviewCount={reviewCount} product_id={product_id}/>
+            <Reviews
+              reviews={reviews}
+              reviewCount={reviewCount}
+              product_id={product_id}
+            />
           ) : (
             <div className="text-center py-4">
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
