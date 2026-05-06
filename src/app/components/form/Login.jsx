@@ -1,13 +1,18 @@
 "use client";
 
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/auth";
-import { useCart } from "@/app/context/cart";
 import Link from "next/link";
 import { BASE_URL } from "@/app/lib/helpers";
 
-function LoginForm({successLogin = null}) {
+const inputClass =
+  "w-full px-3.5 py-2.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm text-charcoal dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:border-fire focus:ring-2 focus:ring-fire/20 transition-colors";
+
+const labelClass =
+  "block text-xs font-semibold text-stone-600 dark:text-stone-400 mb-1.5";
+
+function LoginForm({ successLogin = null }) {
   const { login } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -16,10 +21,7 @@ function LoginForm({successLogin = null}) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -34,97 +36,93 @@ function LoginForm({successLogin = null}) {
     });
 
     const data = await res.json();
+    setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error || data?.detail || "Login failed.");
-      setLoading(false);
+      setError(data?.error || data?.detail || "Login failed. Please try again.");
       return;
     }
 
-    const isLogin = await login(data);
+    await login(data);
 
-    setLoading(false);
-
-    if(!isLogin){
-      console.log("Login Error")
-    }
-
-    if(successLogin){
+    if (successLogin) {
       successLogin(true);
-    }else{
-      router.push(`${BASE_URL}/my-account`)
+    } else {
+      router.push(`${BASE_URL}/my-account`);
     }
   };
 
   return (
-    <div className="max-w-[400px]">
-      <h2 className="font-extrabold mb-5">Fire Up Your Account</h2>
-      <p className="mb-5 text-sm font-medium text-neutral-600">
+    <div>
+      <h2 className="text-xl font-bold text-charcoal dark:text-white tracking-tight mb-1">
+        Fire Up Your Account
+      </h2>
+      <p className="text-sm text-stone-500 dark:text-stone-400 mb-7">
         Stay fired up with quick checkout, order history, and more.
       </p>
-      <form onSubmit={handleSubmit} className="space-y-4">
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+
         <div>
-          <label htmlFor="username" className="text-xs font-bold">
-            <span className="text-red-600">*</span> Username
+          <label htmlFor="username" className={labelClass}>
+            Username <span className="text-fire">*</span>
           </label>
           <input
-            placeholder="Username"
+            id="username"
             name="username"
-            value={form?.username || ""}
+            placeholder="Enter your username"
+            value={form.username}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoComplete="username"
+            className={inputClass}
           />
         </div>
+
         <div>
-          <label htmlFor="password" className="text-xs font-bold">
-            <span className="text-red-600">*</span> Password
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label htmlFor="password" className="text-xs font-semibold text-stone-600 dark:text-stone-400">
+              Password <span className="text-fire">*</span>
+            </label>
+            <Link
+              prefetch={false}
+              href={`${BASE_URL}/forgot-password`}
+              className="text-xs font-semibold text-fire hover:text-orange-600 transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <input
+            id="password"
             type="password"
             name="password"
-            placeholder="Password"
-            value={form?.password || ""}
+            placeholder="Enter your password"
+            value={form.password}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoComplete="current-password"
+            className={inputClass}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            disabled={loading}
-            className={`py-2 font-bold px-4 text-white rounded transition-all shadow-md ${
-              loading
-                ? "bg-theme-300 cursor-not-allowed"
-                : "bg-theme-600 hover:bg-theme-700"
-            }`}
-          >
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
-          <Link
-            prefetch={false}
-            href={`${BASE_URL}/forgot-password`}
-            className="text-theme-600 hover:underline block text-sm font-bold"
-          >
-            Forgot your password?
-          </Link>
-        </div>
-        <div className="mt-10">
-          {error && (
-            <p className={`text-sm mb-4 font-medium text-red-600`}>{error}</p>
-          )}
-        </div>
-      </form>
 
-      {/* <div className="text-sm text-center mt-4 space-y-2">
-        <p>
-          Don’t have an account?{" "}
-          <button type="button" className="text-theme-600 hover:underline" onClick={()=>toggleRegister(true)}>
-            Register here
-          </button>
-        </p>
-      </div> */}
+        {error && (
+          <div className="flex items-start gap-2.5 px-3.5 py-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50">
+            <svg className="w-4 h-4 text-red-500 shrink-0 mt-px" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-2.5 bg-fire hover:bg-orange-600 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Signing in…" : "Sign In"}
+        </button>
+
+      </form>
     </div>
   );
 }

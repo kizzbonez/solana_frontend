@@ -1,42 +1,71 @@
 "use client";
 
-import { useState } from "react"; 
+import { useState } from "react";
 import LoginForm from "@/app/components/form/Login";
 import RegisterForm from "@/app/components/form/Register";
 
 export default function LoginPage() {
-  const [toggleLogin, setToggleLogin] = useState(true);
+  const [tab, setTab] = useState("login");
+  const isLogin = tab === "login";
 
   return (
-    <div className="container mx-auto px-4">
-      <div className="flex gap-[20px]">
-        <div className={`w-full py-[50px] justify-center ${toggleLogin ? "flex md:flex": "hidden md:flex"}`}>
-          <div className="max-w-[400]">
-            <LoginForm />
-            <div className="md:hidden text-sm text-center mt-4 space-y-2">
-              <p className="text-neutral-600">
-                Don’t have an account?{" "}
-                <button type="button" className="text-theme-600 hover:underline" onClick={()=>setToggleLogin(false)}>
-                  Register here
-                </button>
-              </p>
+    <div className="min-h-[calc(100vh-64px)] bg-stone-50 dark:bg-stone-950 py-10 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto">
+
+        {/* Page header */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-charcoal dark:text-white tracking-tight">
+            Your Account
+          </h1>
+          <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
+            Sign in or create an account to get started
+          </p>
+        </div>
+
+        {/* Mobile tab switcher */}
+        <div className="flex md:hidden p-1 rounded-xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 mb-6">
+          <button
+            onClick={() => setTab("login")}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+              isLogin
+                ? "bg-white dark:bg-stone-900 text-charcoal dark:text-white shadow-sm"
+                : "text-stone-500 dark:text-stone-400"
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => setTab("register")}
+            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
+              !isLogin
+                ? "bg-white dark:bg-stone-900 text-charcoal dark:text-white shadow-sm"
+                : "text-stone-500 dark:text-stone-400"
+            }`}
+          >
+            Register
+          </button>
+        </div>
+
+        {/* Two-panel card */}
+        <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-sm overflow-hidden">
+          <div className="flex">
+
+            {/* Login panel */}
+            <div className={`flex-1 p-8 lg:p-10 ${isLogin ? "block" : "hidden"} md:block`}>
+              <LoginForm />
             </div>
+
+            {/* Divider — desktop only */}
+            <div className="hidden md:block w-px bg-stone-100 dark:bg-stone-800 my-8" />
+
+            {/* Register panel */}
+            <div className={`flex-1 p-8 lg:p-10 ${!isLogin ? "block" : "hidden"} md:block`}>
+              <RegisterForm />
+            </div>
+
           </div>
         </div>
-        <div className="border-l border-stone-500 hidden md:block"></div>
-        <div className={`w-full py-[50px] md:flex justify-center ${toggleLogin ? "hidden md:flex": "flex md:flex"}`}>
-          <div className="max-w-[400px]">
-            <RegisterForm />
-            <div className="md:hidden text-sm text-center mt-10 space-y-2">
-              <p className="text-neutral-600">
-                Already have an account?{" "}
-                <button type="button" className="text-theme-600 hover:underline" onClick={()=>setToggleLogin(true)}>
-                  Login.
-                </button>
-              </p>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
