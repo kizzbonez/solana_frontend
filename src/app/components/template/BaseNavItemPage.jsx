@@ -130,12 +130,14 @@ function BaseNavItemPage({ page_details }) {
             ))}
           </div>
         )}
+      </div>
 
-        <hr className="border-gray-200 mt-12" />
+      <div className="w-full max-w-[1240] mx-auto">
+        <hr className="border-neutral-200 my-[30px]" />
       </div>
 
       {page_details?.name !== "Brands" && (
-        <div className="my-[30px]">
+        <div className="mb-[30px]">
           <ProductsSection category={page_details?.url} />
         </div>
       )}
