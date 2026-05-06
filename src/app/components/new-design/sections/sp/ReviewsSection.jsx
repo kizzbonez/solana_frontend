@@ -17,8 +17,9 @@ function computeBars(reviews) {
 
 
 
-const ReviewsSection = ({ rating, reviewCount, reviews = [] }) => {
+const ReviewsSection = ({ rating, reviewCount, reviews = [], product_id }) => {
   const bars = computeBars(reviews);
+  console.log("bars", bars);
   const hasReviews = reviews.length > 0;
 
   return (
@@ -80,7 +81,7 @@ const ReviewsSection = ({ rating, reviewCount, reviews = [] }) => {
           </div>
 
           {hasReviews ? (
-            <Reviews reviews={reviews} reviewCount={reviewCount}/>
+            <Reviews reviews={reviews} reviewCount={reviewCount} product_id={product_id}/>
           ) : (
             <div className="text-center py-4">
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">

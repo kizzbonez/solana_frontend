@@ -176,7 +176,7 @@ function SingleProductPage({
               activeProductId={product?.product_id}
             />
           )}
-        <ReviewsSection rating={product?.ratings || 0} reviewCount={product?.reviews ?? 0} reviews={reviews?.results || []} />
+        <ReviewsSection rating={product?.ratings || 0} reviewCount={product?.reviews ?? 0} reviews={reviews?.results || []} product_id={product?.product_id} />
         <FAQSection faqs={faqs} />
         <SupportCTA />
         {Array.isArray(product?.fbt_carousel) &&
