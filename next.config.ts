@@ -35,7 +35,7 @@ const connectDomains = [
   "https://es.solanabbqgrills.com", // ES
 ];
 
-const styleSrcDomains = ["https://assets.braintreegateway.com"];
+const styleSrcDomains = ["https://assets.braintreegateway.com", "https://*.zohocdn.com"];
 
 const frameSrcDomains = [
   "https://tag.trovo-tag.com",
