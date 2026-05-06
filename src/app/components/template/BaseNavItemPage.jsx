@@ -1,4 +1,3 @@
-import React from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,113 +6,122 @@ import CollectionCarouselWrap from "@/app/components/atom/CollectionCarouselWrap
 import CategoryCollectionCarouselWrap from "@/app/components/atom/CategoryCollectionCarouselWrap";
 import ProductsSection from "@/app/components/molecule/ProductsSection";
 
-async function BaseNavItemPage({ page_details }) {
-  if (!page_details) {
-    return notFound();
-  }
+function BaseNavItemPage({ page_details }) {
+  if (!page_details) return notFound();
 
-  // console.log("[TEST] page_details:", page_details);
+  const children = page_details.children ?? [];
 
+  console.log("BASENAVITEMPAGE PAGEDETAILS", page_details);
   return (
-    <div className="max-w-7xl mx-auto p-3">
-      <div className="my-3">
-        <Link prefetch={false} href={BASE_URL} className="hover:underline">
-          Home
-        </Link>
-      </div>
-      <h1>{page_details?.name}</h1>
-      <div className="flex mt-[30px]">
-        {/* side bar with category list */}
-        <div className="w-[250px] pr-3 flex-col gap-[20px] hidden md:flex">
-          {page_details &&
-            page_details?.children &&
-            Array.isArray(page_details?.children) &&
-            page_details.children.length > 0 &&
-            page_details.children.map((item, index) => (
-              <div
-                key={`sidebar-category-link-${item?.slug}`}
-                className="flex flex-col gap-[5px]"
-              >
-                <Link
-                  prefetch={false}
-                  href={`${BASE_URL}/${item?.url}`}
-                  className="text-sm font-semibold hover:underline hover:text-theme-800"
+    <>
+      <div className="w-full max-w-[1240] mx-auto px-4 sm:px-6 py-6">
+        {/* Breadcrumb */}
+        <nav aria-label="breadcrumb" className="flex items-center gap-1.5 mb-6">
+          <Link
+            prefetch={false}
+            href={BASE_URL}
+            className="text-xs text-gray-400 hover:text-theme-600 transition-colors"
+          >
+            Home
+          </Link>
+          <span className="text-xs text-gray-300">/</span>
+          <span className="text-xs text-gray-600 font-medium">
+            {page_details.name}
+          </span>
+        </nav>
+
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mb-8">
+          {page_details.name}
+        </h1>
+
+        <div className="flex gap-8">
+          {/* Sidebar */}
+          <aside className="w-[210px] shrink-0 hidden md:block">
+            <div className="sticky top-[140px] flex flex-col gap-5">
+              {children.map((item) => (
+                <div
+                  key={`sidebar-category-link-${item?.slug}`}
+                  className="flex flex-col gap-1.5"
                 >
-                  {item?.name}
-                </Link>
-                {item &&
-                  item?.children &&
-                  Array.isArray(item?.children) &&
-                  item?.children?.length > 0 &&
-                  item?.children.map((sub, index2) => (
+                  <Link
+                    prefetch={false}
+                    href={`${BASE_URL}/${item?.url}`}
+                    className="text-sm font-semibold text-gray-800 hover:text-theme-600 transition-colors"
+                  >
+                    {item?.name}
+                  </Link>
+                  {item?.children?.map((sub, i) => (
                     <Link
-                      key={`sidebar-sub-category-link-${index}-${index2}-${item?.slug}`}
+                      key={`sidebar-sub-${item?.slug}-${i}`}
                       prefetch={false}
                       href={`${BASE_URL}/${sub?.url}`}
-                      className="hover:underline hover:text-theme-800 text-xs"
+                      className="text-xs text-gray-400 hover:text-theme-600 transition-colors pl-3 border-l border-gray-200"
                     >
                       {sub?.name}
                     </Link>
                   ))}
-              </div>
-            ))}
-        </div>
-        {/* content with category image and list */}
-        <div className="w-full md:w-[calc(100%-250px)]">
-          <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 w-full px-2">
-            {page_details &&
-              page_details?.children &&
-              Array.isArray(page_details?.children) &&
-              page_details.children.length > 0 &&
-              page_details.children.map((item, index) => (
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0">
+            {/* Category cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+              {children.map((item) => (
                 <Link
                   key={`category-link-${item?.slug}`}
                   prefetch={false}
                   href={`${BASE_URL}/${item?.url}`}
-                  className="w-full flex flex-col items-center gap-[15px]"
+                  className="group flex flex-col rounded-2xl overflow-hidden border border-gray-200 bg-white hover:border-slate-400 hover:shadow-md transition-all duration-200"
                 >
                   <div
-                    className={`w-full p-5 ${
-                      item?.feature_image ? "bg-white" : "bg-neutral-200"
-                    }`}
+                    className={`w-full p-4 ${item?.feature_image ? "bg-white" : "bg-gray-100"}`}
                   >
-                    <div className="aspect-1 relative ">
+                    <div className="aspect-1 relative w-full overflow-hidden">
                       {item?.feature_image && (
                         <Image
-                          src={item?.feature_image}
-                          alt={`feat-nav-image-${index}`}
+                          src={item.feature_image}
+                          alt={`category-${item?.slug}`}
                           fill
-                          className="object-contain"
-                          sizes="(max-width: 768px) 100vw, 300px"
+                          className="object-contain group-hover:scale-[1.03] transition-transform duration-300"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       )}
                     </div>
                   </div>
-                  <h4 className="text-center font-semibold text-sm">
-                    {item?.name}
-                  </h4>
+                  <div className="px-3 py-2.5 border-t border-gray-100">
+                    <p className="text-xs font-semibold text-gray-800 text-center group-hover:text-theme-600 transition-colors leading-snug">
+                      {item?.name}
+                    </p>
+                  </div>
                 </Link>
               ))}
-          </div>
-          <div className="flex flex-col gap-10 my-10">
-            {page_details?.cat_collections &&
-              Array.isArray(page_details?.cat_collections) &&
-              page_details.cat_collections.map((collection) => (
-                <div
-                  key={`cat-colleciton-display-${collection?.id}`}
-                  className="flex flex-col gap-5"
-                >
-                  <h3 className="text-center">{collection?.label}</h3>
-                  <CategoryCollectionCarouselWrap data={collection?.links} />
-                </div>
-              ))}
+            </div>
+
+            {/* Category collection carousels */}
+            {page_details.cat_collections?.length > 0 && (
+              <div className="flex flex-col gap-10 mt-12">
+                {page_details.cat_collections.map((collection) => (
+                  <div
+                    key={`cat-collection-display-${collection?.id}`}
+                    className="flex flex-col gap-4"
+                  >
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {collection?.label}
+                    </h3>
+                    <CategoryCollectionCarouselWrap data={collection?.links} />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-      {page_details?.collections &&
-        Array.isArray(page_details.collections) &&
-        page_details.collections.length > 0 && (
-          <div className="my-20">
+
+        {/* Collection carousels */}
+        {page_details.collections?.length > 0 && (
+          <div className="mt-16 flex flex-col gap-8">
             {page_details.collections.map((collection) => (
               <CollectionCarouselWrap
                 key={`collection-carousel-${collection?.mb_uid}`}
@@ -122,11 +130,16 @@ async function BaseNavItemPage({ page_details }) {
             ))}
           </div>
         )}
-      <hr className="border-gray-300" />
-      <div className="my-[30px]">
-        <ProductsSection category={page_details?.url} />
+
+        <hr className="border-gray-200 mt-12" />
       </div>
-    </div>
+
+      {page_details?.name !== "Brands" && (
+        <div className="my-[30px]">
+          <ProductsSection category={page_details?.url} />
+        </div>
+      )}
+    </>
   );
 }
 
