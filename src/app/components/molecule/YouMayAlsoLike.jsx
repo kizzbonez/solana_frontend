@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import ProductCard from "@/app/components/atom/ProductCard";
 import ProductCardLoader from "@/app/components/atom/ProductCardLoader";
-import { exclude_brands, exclude_collections } from "@/app/lib/helpers";
+import {
+  exclude_brands,
+  exclude_collections,
+  formatProduct,
+} from "@/app/lib/helpers";
+import ProductGrid from "@/app/components/new-design/sections/sp/ProductGrid";
 
 export default function YouMayAlsoLike({ displayItems }) {
   const [products, setProducts] = useState([]);
@@ -67,7 +72,9 @@ export default function YouMayAlsoLike({ displayItems }) {
         const data = await res.json();
 
         // console.log("[YMAL DATA]", data);
-        const formatted_data = data?.hits?.hits?.map(({ _source }) => _source);
+        const formatted_data = data?.hits?.hits?.map(({ _source }) =>
+          formatProduct(_source, "card"),
+        );
         // console.log("[YMAL formatted_data]", formatted_data);
         setProducts(formatted_data);
       } catch (err) {
@@ -80,40 +87,10 @@ export default function YouMayAlsoLike({ displayItems }) {
 
   return (
     <div className="xl:mt-8">
-      <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">
-        You May Also Like
-      </h3>
-      <div className={`mt-6 gap-4 sm:mt-8 flex flex-wrap`}>
-        {products && Array.isArray(products) && products.length > 0
-          ? products.map((item, idx) => (
-              <div
-                key={`product-card-wrapper-${idx}`}
-                className={`space-y-6 overflow-hidden ${
-                  displayItems === 4 &&
-                  "w-[calc(50%-10px)] md:w-[calc(33%-10px)] lg:w-[calc(25%-12px)]"
-                } ${
-                  (displayItems === undefined || displayItems === 3) &&
-                  "w-[calc(50%-10px)] lg:w-[calc(33%-10px)]"
-                }`}
-              >
-                <ProductCard key={`product-card-${item}`} hit={item} />
-              </div>
-            ))
-          : makeArray(displayItems ?? 3).map((item, idx) => (
-              <div
-                key={`product-card-${idx}`}
-                className={`space-y-6 overflow-hidden ${
-                  displayItems === 4 &&
-                  "w-[calc(50%-10px)] md:w-[calc(33%-10px)] lg:w-[calc(25%-12px)]"
-                } ${
-                  (displayItems === undefined || displayItems === 3) &&
-                  "w-[calc(50%-10px)] lg:w-[calc(33%-10px)]"
-                }`}
-              >
-                <ProductCardLoader />
-              </div>
-            ))}
-      </div>
+      <ProductGrid
+        title="You May Also Like"
+        items={products}
+      />
     </div>
   );
 }

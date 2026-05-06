@@ -183,7 +183,7 @@ function SingleProductPage({
           product.fbt_carousel?.length > 0 && (
             <ProductGrid
               title="Frequently Bought Together"
-              items={product.fbt_carousel.map((i) => formatProduct(i))}
+              items={product.fbt_carousel.map((i) => formatProduct(i, "card"))}
             />
           )}
         {ymalProducts && (
