@@ -13,6 +13,10 @@ const imageDomains = [
 // 2. Define all external hosts your application fetches/connects to (client-side)
 const connectDomains = [
   "https://admin.solanabbqgrills.com",
+  "https://*.zoho.com", // Zoho SalesIQ
+  "https://*.zohopublic.com", // Zoho SalesIQ (EU/IN/AU)
+  "wss://*.zoho.com", // Zoho SalesIQ WebSocket
+  "wss://*.zohopublic.com", // Zoho SalesIQ WebSocket
   "https://loyal-sloth-59774.upstash.io",
   "https://api.iconify.design", // icons
   "https://r2.leadsy.ai", // Required for the new script
@@ -78,13 +82,13 @@ const config: NextConfig = {
     const CSP = `
       default-src 'self';
       
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://r2.leadsy.ai https://tag.trovo-tag.com https://www.google.com https://www.gstatic.com https://static.cloudflareinsights.com https://salesiq.zoho.com https://salesiq.zohopublic.com;
       
       style-src 'self' 'unsafe-inline' ${styleSrcDomains.join(" ")};
 
       img-src 'self' data: blob: ${imageDomains
         .map((d) => `https://${d}`)
-        .join(" ")};
+        .join(" ")} https://*.zoho.com https://*.zohopublic.com;
 
       connect-src 'self' ${connectDomains.join(" ")}; 
 
