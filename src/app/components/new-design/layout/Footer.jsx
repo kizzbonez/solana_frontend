@@ -73,10 +73,11 @@ export default function Footer({ logo }) {
                 </>
               )}
               {logo && (
-                <div className="relative w-[200px] aspect-2 rounded-md">
+                <div className="relative w-[130px] aspect-1 rounded-md">
                   {
                     <Image
-                      src={logo}
+                      // src={logo}
+                      src="/solana-new-logo-orig-white.png"
                       alt={`${STORE_NAME} logo`}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
