@@ -7,7 +7,7 @@ export default async function handler(req, res) {
 
     if (!favicon) {
         // return default favicon instead
-      return res.status(200).json("/logo-s1.webp");
+      return res.status(200).json("/solana-new-logo-only.webp");
     }
 
     // Check if stored as Base64 or URL

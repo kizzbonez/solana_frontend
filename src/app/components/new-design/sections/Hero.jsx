@@ -29,9 +29,56 @@ const CARDS = [
   },
 ];
 
+// CTA OPTIONS — delete the two you don't want, then remove this comment block
+// Option A: "Call Now & Start Saving →"
+// Option B: "Call. Tell Us Your Budget. Save. →"
+// Option C: "Tell Us What You Need →"
+
+function TopbarRow({ cta, label }) {
+  return (
+    <div className="bg-charcoal dark:bg-black py-2.5 text-[11px] border-b border-white/5 last:border-0">
+      <div className="max-w-[1240px] mx-auto px-6">
+        <div className="hidden md:flex items-center justify-between">
+          {/* Label (delete once you pick one) */}
+          <span className="text-white/20 font-mono text-[10px] w-16 shrink-0">
+            {label}
+          </span>
+
+          <h2 className="font-normal tracking-wide text-xs">
+            <span className="text-white font-semibold uppercase tracking-[.1em] italic">
+              ✦ Name Your Price
+            </span>
+            <span className="text-neutral-400 mx-3">—</span>
+            <span className="text-white/50">Lowest Prices Guaranteed</span>
+          </h2>
+
+          <Link
+            href={`tel:${STORE_CONTACT}`}
+            className="text-fire hover:text-fire-light transition-colors duration-150 tracking-wide hover:underline"
+          >
+            {cta}
+          </Link>
+        </div>
+
+        <h2 className="md:hidden text-center font-normal">
+          <span className="text-white font-semibold uppercase tracking-[.1em] text-[10px]">
+            ✦ Name Your Price
+          </span>
+          <span className="text-white/20 mx-2.5">—</span>
+          <span className="text-white/50">Lowest Prices Guaranteed</span>
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+
 export default function Hero({ background }) {
   return (
     <section className="relative min-h-[85vh] md:min-h-[92vh] flex items-center overflow-hidden">
+      <div className="absolute top-0 left-0 bg-white z-10 w-full">
+        <TopbarRow label="A:" cta="Call Now & Start Saving →" />
+      </div>
       {/* Fallback gradient — visible while image loads or if it fails */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#1a0600] via-[#3d1208] to-[#0d0300]" />
       {background}
@@ -40,7 +87,6 @@ export default function Hero({ background }) {
 
       <div className="relative z-10 max-w-[1240px] mx-auto px-6 sm:px-6 w-full">
         <div className="grid gap-14 items-center py-16 md:py-20 grid-cols-1 md:grid-cols-2">
-
           {/* ── Copy — centered on mobile, left-aligned on desktop ── */}
           <div className="text-center md:text-left">
             <p className="text-[11px] tracking-[.15em] uppercase font-semibold text-fire-light mb-3">
