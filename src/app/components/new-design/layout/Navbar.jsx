@@ -1,11 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import {BASE_URL} from "@/app/lib/helpers";
+import { BASE_URL } from "@/app/lib/helpers";
 import Link from "next/link";
-import {
-  PHONE,
-  PHONE_HREF,
-} from "@/app/data/new-homepage";
+import Image from "next/image";
+import { PHONE, PHONE_HREF } from "@/app/data/new-homepage";
 import {
   PhoneIcon,
   CartIcon,
@@ -16,8 +14,9 @@ import SearchBox from "@/app/components/new-design/ui/SearchBox";
 
 import { useSolanaCategories } from "@/app/context/category";
 import MyAccountButton from "@/app/components/new-design/ui/MyAccountButton";
+import { STORE_NAME } from "@/app/lib/store_constants";
 
-export default function Navbar() {
+export default function Navbar({ logo }) {
   const { solana_categories: solana_menu_object } = useSolanaCategories();
   const [scrolled, setScrolled] = useState(false);
   const [showDrop, setShowDrop] = useState(false);
@@ -75,20 +74,41 @@ export default function Navbar() {
       border-b border-stone-100 dark:border-stone-800
       transition-shadow duration-300
       ${scrolled ? "shadow-md" : ""}
-      ${galleryOnFullscreen ? "": "z-20"}
+      ${galleryOnFullscreen ? "" : "z-20"}
     `}
     >
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         {/* ── Row 1: Logo + Search + Actions ── */}
         <div className="flex items-center h-16 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-none w-8 sm:w-auto">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fire to-red-700 flex items-center justify-center text-lg">
-              🔥
-            </div>
-            <span className="font-serif font-bold text-xl text-charcoal dark:text-white hidden sm:block">
-              Solana Fireplaces
-            </span>
+          <Link
+            href="/"
+            className="flex items-center gap-2 flex-none w-8 sm:w-auto"
+          >
+            {!logo && (
+              <>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fire to-red-700 flex items-center justify-center text-lg">
+                  🔥
+                </div>
+                <span className="font-serif font-bold text-xl text-charcoal dark:text-white hidden sm:block">
+                  Solana Fireplaces
+                </span>
+              </>
+            )}
+            {logo && (
+              <div className="relative w-[120px] aspect-2">
+                {
+                  <Image
+                    src={logo}
+                    alt={`${STORE_NAME} logo`}
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-contain transition-transform duration-300 group-hover:scale-105"
+                    priority={false} // Set to true if this is "above the fold"
+                  />
+                }
+              </div>
+            )}
           </Link>
 
           {/* Search */}

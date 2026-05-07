@@ -42,7 +42,7 @@ async function getInitData() {
   try {
     const mgetKeys = [
       keys.dev_shopify_menu.value,
-      "admin_solana_market_logo",
+      keys.logo.value,
       keys.theme.value,
     ];
     return await redis.mget(mgetKeys);
@@ -65,7 +65,9 @@ export default async function MarketLayout({ children }) {
   const [menu, redisLogo, color] = initData;
 
   const activeTheme = THEME_COLORS[color] ?? THEME_COLORS.orange;
-  const themeCSS = `:root{${Object.entries(activeTheme).map(([k, v]) => `--theme-primary-${k}:${v}`).join(';')}}`;
+  const themeCSS = `:root{${Object.entries(activeTheme)
+    .map(([k, v]) => `--theme-primary-${k}:${v}`)
+    .join(";")}}`;
 
   const formattedMenuItems =
     menu?.map((i) => ({
@@ -76,19 +78,46 @@ export default async function MarketLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://cdn.shopify.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com" />
+        <link
+          rel="preconnect"
+          href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preconnect"
+          href="https://cdn.shopify.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
+        />
         <link rel="dns-prefetch" href="https://cdn.shopify.com" />
         {/* eslint-disable-next-line react/no-danger */}
-        <style dangerouslySetInnerHTML={{ __html: themeCSS }} suppressHydrationWarning />
+        <style
+          dangerouslySetInnerHTML={{ __html: themeCSS }}
+          suppressHydrationWarning
+        />
         {/* eslint-disable-next-line react/no-danger */}
-        <script dangerouslySetInnerHTML={{ __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){$zoho.salesiq.floatbutton.visible("hide");}};` }} />
-        <script id="zsiqscript" src={`https://salesiq.zohopublic.com/widget?wc=${process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE}`} defer />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){$zoho.salesiq.floatbutton.visible("hide");}};`,
+          }}
+        />
+        <script
+          id="zsiqscript"
+          src={`https://salesiq.zohopublic.com/widget?wc=${process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE}`}
+          defer
+        />
       </head>
-      <body className={`antialiased ${InterFont.variable} ${playfairDisplay.variable}`}>
+      <body
+        className={`antialiased ${InterFont.variable} ${playfairDisplay.variable}`}
+      >
         <AuthProvider>
-          <CategoriesProvider menu_items={formattedMenuItems} categories={categories}>
+          <CategoriesProvider
+            menu_items={formattedMenuItems}
+            categories={categories}
+          >
             <CartProvider>
               <CompareProductsProvider>
                 <Suspense fallback={null}>
@@ -96,11 +125,11 @@ export default async function MarketLayout({ children }) {
                     <SessionWrapper>
                       <QuickViewProvider>
                         <Topbar />
-                        <Navbar />
+                        <Navbar logo={redisLogo} />
                         <main className="flex flex-col min-h-svh">
                           {children}
                         </main>
-                        <Footer />
+                        <Footer logo={redisLogo} />
                         <ZohoSalesIQButton />
                       </QuickViewProvider>
                     </SessionWrapper>
