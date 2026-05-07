@@ -58,14 +58,6 @@ export default function MyAccountButton({ className }) {
                     {item?.label}
                   </Link>
                 ))}
-                <div className="mt-1 pt-1 border-t border-stone-100 dark:border-stone-800">
-                  <button
-                    onClick={() => { logout(); setIsOpen(false); }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-stone-400 dark:text-stone-500 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-red-500 transition-colors"
-                  >
-                    Sign out
-                  </button>
-                </div>
               </div>
             )}
 
