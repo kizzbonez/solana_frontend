@@ -1,19 +1,13 @@
 "use client";
-//react
-import React, { useState, useEffect, useMemo, useRef, use } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-// components
 import dropin from "braintree-web-drop-in";
 import Image from "next/image";
 import Link from "next/link";
-// import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-// import LoginForm from "@/app/components/form/Login";
 import AuthButtons from "@/app/components/molecule/AuthButtons";
-// context
 import { useAuth } from "@/app/context/auth";
 import { useCart } from "@/app/context/cart";
 import { useGoogleReCaptcha } from "@/app/context/recaptcha";
-// helpers
 import {
   BASE_URL,
   mapOrderItems,
@@ -26,7 +20,7 @@ import {
   STORE_DOMAIN,
   STORE_CONTACT,
 } from "@/app/lib/store_constants";
-// variables
+
 const initialForm = {
   status: null,
   payment_method: "braintree",
@@ -53,284 +47,161 @@ const initialForm = {
   is_valid_shipping_zip: false,
   notes: "",
   items: [],
-  // font end form fields
   newsletter: false,
   save_information: false,
   shipping_to_billing: true,
 };
 
-// components
-const ItemsList = ({ items }) => {
-  return (
-    <ul className="flex flex-col gap-[20px]">
-      {/* items */}
-      {items &&
-        Array.isArray(items) &&
-        items.length > 0 &&
-        items.map((item, index) => (
-          <li
-            key={`mob-os-item-${index}`}
-            className="flex gap-[10px] items-center"
-          >
-            {/* image */}
-            <div className="w-16 h-16 bg-white rounded relative border-[2px] border-gray-200 shadow">
-              {/* badge */}
-              <div className="absolute z-10 text-xs top-[-10px] right-[-10px] w-[24px] h-[24px] flex items-center justify-center bg-stone-950 rounded-md text-white border border-white">
-                {item?.quantity || 0}
-              </div>
-              {item?.images &&
-                Array.isArray(item.images) &&
-                item.images.length > 0 &&
-                item.images.find((img) => img?.position === 1) &&
-                item.images.find((img) => img?.position === 1)?.src && (
-                  <Image
-                    src={item.images.find((img) => img?.position === 1).src}
-                    title={`${item.title}`}
-                    alt={`${createSlug(item.title)}-image`}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 768px) 100vw, 300px"
-                  />
-                )}
-            </div>
-            {/* label */}
-            <div className="w-[calc(100%-164px)]">
-              <div className="line-clamp-2 text-xs" title={item?.title}>
-                {item?.title}
-              </div>
-            </div>
-            {/* price */}
-            <div className="w-[100px] text-right text-xs">
-              ${formatPrice(item?.quantity * item?.variants?.[0]?.price || 0)}
-            </div>
-          </li>
-        ))}
-    </ul>
-  );
-};
+const inputCls =
+  "text-sm w-full px-3 py-2.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-charcoal dark:text-white placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-orange-300 dark:focus:ring-orange-700 disabled:bg-stone-50 dark:disabled:bg-stone-900 disabled:text-stone-400 dark:disabled:text-stone-500 transition-colors";
+
+const cardCls =
+  "bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 p-5";
+
+// ─── AutoInput ────────────────────────────────────────────────────────────────
+
+const AutoInput = ({ name, placeholder, value, onChange, required }) => (
+  <div className="relative">
+    <input
+      type="text"
+      name={name}
+      placeholder={placeholder}
+      disabled
+      value={value || ""}
+      onChange={onChange}
+      required={required}
+      className={inputCls}
+    />
+    <span
+      className="absolute top-1/2 -translate-y-1/2 right-3 text-stone-400 pointer-events-none"
+      title="Auto-filled on valid ZIP entry"
+    >
+      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+      </svg>
+    </span>
+  </div>
+);
+
+// ─── ItemsList ────────────────────────────────────────────────────────────────
+
+const ItemsList = ({ items }) => (
+  <ul className="flex flex-col gap-4">
+    {items?.map((item, i) => {
+      const img = item?.images?.find((img) => img?.position === 1);
+      return (
+        <li key={i} className="flex gap-3 items-center">
+          <div className="relative w-14 h-14 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 flex-shrink-0 overflow-visible">
+            <span className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full bg-stone-800 dark:bg-stone-600 text-white text-[10px] font-bold flex items-center justify-center">
+              {item?.quantity || 0}
+            </span>
+            {img?.src && (
+              <Image
+                src={img.src}
+                alt={createSlug(item?.title || "")}
+                fill
+                className="object-contain p-1 rounded-xl"
+                sizes="56px"
+              />
+            )}
+          </div>
+          <p className="flex-1 min-w-0 text-xs font-medium text-charcoal dark:text-white line-clamp-2">
+            {item?.title}
+          </p>
+          <p className="text-xs font-semibold text-charcoal dark:text-white flex-shrink-0">
+            ${formatPrice(item?.quantity * item?.variants?.[0]?.price || 0)}
+          </p>
+        </li>
+      );
+    })}
+  </ul>
+);
+
+// ─── ComputationSection ───────────────────────────────────────────────────────
 
 const ComputationSection = ({ data, items }) => {
+  const empty = !items?.length;
   return (
-    <>
-      <div className="text-xs flex items-center justify-between">
-        <div>
-          Subtotal · {items?.length === 0 ? 0 : data?.items_count || 0} items
-        </div>
-        <div>
-          ${formatPrice(items?.length === 0 ? 0 : data?.sub_total || 0)}
-        </div>
+    <div className="flex flex-col gap-2.5 pt-4 mt-4 border-t border-stone-200 dark:border-stone-700">
+      <div className="flex justify-between text-xs text-stone-500 dark:text-stone-400">
+        <span>Subtotal · {empty ? 0 : data?.items_count || 0} items</span>
+        <span>${formatPrice(empty ? 0 : data?.sub_total || 0)}</span>
       </div>
-      <div className="text-xs flex items-center justify-between mt-3">
-        <div
-          className="flex gap-[5px] items-center"
-          title="Enter valid shipping postal code for the shipping total"
+      <div className="flex justify-between text-xs text-stone-500 dark:text-stone-400">
+        <span
+          className="flex items-center gap-1"
+          title="Calculated on valid shipping ZIP"
         >
-          Shipping{" "}
-          <svg
-            className="text-neutral-600"
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-          >
-            <g fill="none">
-              <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-              <path
-                fill="currentColor"
-                d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16m0 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m0-9.5a3.625 3.625 0 0 1 1.348 6.99a.8.8 0 0 0-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 0 1-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 1 0-2.229-1.509a1 1 0 1 1-2 0A3.625 3.625 0 0 1 12 6.5"
-              />
-            </g>
+          Shipping
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2a8 8 0 110 16A8 8 0 0112 4zm0 12a1 1 0 100 2 1 1 0 000-2zm0-9.5a3.625 3.625 0 011.348 6.99.8.8 0 00-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 01-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 10-2.229-1.509 1 1 0 11-2 0A3.625 3.625 0 0112 6.5z" />
           </svg>
-        </div>
-        {items?.length === 0 ? (
-          <div className="text-neutral-500">Enter Shipping Postal Code</div>
-        ) : data?.allowPay ? (
-          data?.total_shipping === 0 ? (
-            <div className="text-green-600 font-bold">FREE</div>
-          ) : (
-            <div className="text-neutral-900">
-              {formatPrice(data?.total_shipping)}
-            </div>
-          )
+        </span>
+        {empty || !data?.allowPay ? (
+          <span className="italic text-stone-400 dark:text-stone-500">Enter postal code</span>
+        ) : data?.total_shipping === 0 ? (
+          <span className="text-green-600 dark:text-green-400 font-semibold">FREE</span>
         ) : (
-          <div className="text-neutral-500">Enter Shipping Postal Code</div>
+          <span>${formatPrice(data?.total_shipping)}</span>
         )}
       </div>
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex gap-[5px] items-center font-bold">Total</div>
-        <div className="font-bold">
-          ${formatPrice(items?.length === 0 ? 0 : data?.total_price || 0)}
-        </div>
+      <div className="flex justify-between text-sm font-bold text-charcoal dark:text-white pt-2 border-t border-stone-200 dark:border-stone-700 mt-0.5">
+        <span>Total</span>
+        <span>${formatPrice(empty ? 0 : data?.total_price || 0)}</span>
       </div>
-      <p className="text-xs text-neutral-500">
-        Including ${formatPrice(items?.length === 0 ? 0 : data?.total_tax || 0)}{" "}
-        in taxes
+      <p className="text-[10px] text-stone-400 dark:text-stone-500 -mt-1">
+        Including ${formatPrice(empty ? 0 : data?.total_tax || 0)} in taxes
       </p>
-    </>
-  );
-};
-
-const MobileOrderSummary = ({ data }) => {
-  const [expandOrderSummary, setExpandOrderSummary] = useState(false);
-  const { loading } = useAuth();
-
-  if (!data) return;
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setExpandOrderSummary((prev) => !prev)}
-        className="h-[64px] md:hidden bg-neutral-200 border-b border-neutral-300 flex items-center w-full"
-      >
-        <div className="flex justify-between items-center container mx-auto px-[20px]">
-          <div className="flex gap-[20px] items-center">
-            <span className="font-light">Order Summary</span>
-            <span>
-              {expandOrderSummary ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    fillRule="evenodd"
-                    d="M16.53 14.03a.75.75 0 0 1-1.06 0L12 10.56l-3.47 3.47a.75.75 0 0 1-1.06-1.06l4-4a.75.75 0 0 1 1.06 0l4 4a.75.75 0 0 1 0 1.06"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    fill="currentColor"
-                    fillRule="evenodd"
-                    d="M16.53 8.97a.75.75 0 0 1 0 1.06l-4 4a.75.75 0 0 1-1.06 0l-4-4a.75.75 0 1 1 1.06-1.06L12 12.44l3.47-3.47a.75.75 0 0 1 1.06 0"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
-            </span>
-          </div>
-          <div>${formatPrice(data?.total_price || 0)}</div>
-        </div>
-      </button>
-      <div
-        className={`md:hidden container mx-auto px-[20px]  transition-all delay-300 overflow-hidden ${
-          expandOrderSummary ? "h-auto" : "h-[0px]"
-        }`}
-      >
-        {!loading && (
-          <>
-            <div className="py-[30px]">
-              <ItemsList items={data?.items} />
-            </div>
-            <ComputationSection data={data} items={data?.items} />
-          </>
-        )}
-      </div>
-    </>
-  );
-};
-
-const CompletePaymentButton = ({ items }) => {
-  return (
-    <button
-      type="submit"
-      disabled={items?.length === 0}
-      className="bg-yellow-500 text-black text-xs font-semibold w-full py-3 rounded mt-3"
-    >
-      Complete Payment
-    </button>
-  );
-};
-
-// const LoginModal = ({ isOpen, setOpen }) => {
-//   const handleSuccessLogin = (data) => {
-//     setOpen(false);
-//   };
-//   return (
-//     <Dialog open={isOpen} onClose={setOpen} className="relative z-10">
-//       <DialogBackdrop
-//         transition
-//         className="fixed inset-0 bg-gray-500/75 transition-opacity data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in"
-//       />
-
-//       <div className="fixed inset-0 z-10 w-screen overflow-y-auto overflow-x-hidden">
-//         <div className="w-screen h-full relative">
-//           <div className="absolute top-10 left-0 right-0 flex items-end justify-center md:p-4 text-center sm:items-center sm:p-[10px]">
-//             <DialogPanel
-//               transition
-//               className="w-full relative transform overflow-hidden bg-white text-left shadow-xl transition-all data-[closed]:translate-y-4 data-[closed]:opacity-0 data-[enter]:duration-300 data-[leave]:duration-200 data-[enter]:ease-out data-[leave]:ease-in sm:my-8 sm:w-full sm:max-w-[500px] data-[closed]:sm:translate-y-0 data-[closed]:sm:scale-95 overflow-y-auto rounded-lg"
-//             >
-//               <div className=" flex items-center justify-center p-5">
-//                 <LoginForm successLogin={handleSuccessLogin} />
-//               </div>
-//             </DialogPanel>
-//           </div>
-//         </div>
-//       </div>
-//     </Dialog>
-//   );
-// };
-
-const OrderQuerySection = ({ reference_number }) => {
-  return (
-    <div className="my-10 border border-neutral-300 shadow p-5 rounded">
-      <h2 className="text-center">Need help with your order?</h2>
-      <div className="flex flex-col gap-[8px] text-sm font-medium text-neutral-600 items-center justify-center my-2">
-        <div className="text-center">
-          <span className="font-bold">Call </span>{" "}
-          <span className="text-theme-600 font-bold">
-            <Link prefetch={false} href={`tel:${STORE_CONTACT}`}>
-              {STORE_CONTACT}
-            </Link>
-          </span>
-        </div>
-        <div className="text-center">
-          <span className="font-bold">Email </span>{" "}
-          <span className="text-theme-600 font-bold">
-            <a href={`mailto:${STORE_EMAIL}`}>{STORE_EMAIL}</a>
-          </span>
-        </div>
-        {/* <div className="text-center">
-          <span className="font-bold">SALES</span> &#9679; Mon-Fri: 5:00am -
-          5:00pm PST &#9679; Sat and Sun: 
-        </div>
-        <div className="text-center">
-          <span className="font-bold">SUPPORT</span> &#9679; Mon-Fri: 5:00am -
-          5:00pm PST &#9679; Sat and Sun: Closed
-        </div> */}
-        <div className="flex flex-col justify-center items-center mt-1 bg-neutral-100 border border-neutral-200 px-10 py-1 rounded-sm">
-          <div className="font-bold text-lg">Sales & Support</div>
-          <div className="text-neutral-700 font-semibold mt-1">Mon-Fri</div>
-          <div className="text-neutral-500">5:00am - 5:00pm PST</div>
-          <div className="text-neutral-700 font-semibold">Sat and Sun</div>
-          <div className="text-neutral-500">Closed</div>
-        </div>
-      </div>
-      {reference_number ? (
-        <h2 className="text-center">
-          REF #: <span className="text-theme-600">{reference_number}</span>
-        </h2>
-      ) : (
-        <div className="h-[24px] w-full bg-neutral-200"></div>
-      )}
     </div>
   );
 };
 
-const LogoutDropDown = () => {
-  const [open, setOpen] = useState(false);
-  const { user, logout } = useAuth();
+// ─── OrderQuerySection ────────────────────────────────────────────────────────
+
+const OrderQuerySection = ({ reference_number }) => (
+  <div className={cardCls}>
+    <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider mb-3">
+      Need help?
+    </p>
+    <div className="flex flex-col gap-2 text-xs text-stone-500 dark:text-stone-400">
+      <Link
+        prefetch={false}
+        href={`tel:${STORE_CONTACT}`}
+        className="flex items-center gap-2 hover:text-fire transition-colors"
+      >
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+        </svg>
+        {STORE_CONTACT}
+      </Link>
+      <a
+        href={`mailto:${STORE_EMAIL}`}
+        className="flex items-center gap-2 hover:text-fire transition-colors"
+      >
+        <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+        </svg>
+        {STORE_EMAIL}
+      </a>
+      <div className="pt-2 mt-1 border-t border-stone-100 dark:border-stone-800">
+        <p className="text-[10px] font-semibold text-stone-600 dark:text-stone-300">
+          Sales & Support · Mon–Fri 5:00am–5:00pm PST
+        </p>
+      </div>
+    </div>
+    {reference_number && (
+      <p className="text-[10px] text-stone-400 dark:text-stone-500 mt-3">
+        Ref: <span className="text-fire font-semibold">{reference_number}</span>
+      </p>
+    )}
+  </div>
+);
+
+// ─── LogoutButton ─────────────────────────────────────────────────────────────
+
+const LogoutButton = () => {
+  const { logout } = useAuth();
   const { cartObject, createAbandonedCart, abandonedCartUser } = useCart();
-  const dropdownRef = useRef(null);
 
   const handleLogout = async () => {
     try {
@@ -340,199 +211,69 @@ const LogoutDropDown = () => {
       console.warn("[handleLogout] error", err);
     }
   };
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpen(false);
-      }
-    };
-
-    if (open) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    // Cleanup
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [open]);
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        className="text-neutral-500 flex items-center justify-center relative"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-        >
-          <path
-            fill="currentColor"
-            d="M12 16a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2a2 2 0 0 1 2-2m0-6a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2a2 2 0 0 1 2-2m0-6a2 2 0 0 1 2 2a2 2 0 0 1-2 2a2 2 0 0 1-2-2a2 2 0 0 1 2-2"
-          />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-[100%] right-0 bg-white shadow rounded-[10px] border min-w-[80px] min-h-[30px]">
-          <button
-            type="button"
-            className="text-xs text-neutral-700 w-full text-center hover:text-neutral-900"
-            onClick={handleLogout}
-          >
-            Sign out
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const QuestionIcon = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="text-xs text-stone-400 hover:text-fire dark:hover:text-orange-400 transition-colors font-medium"
     >
-      <g fill="none">
-        <path d="m12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035q-.016-.005-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427q-.004-.016-.017-.018m.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093q.019.005.029-.008l.004-.014l-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014l-.034.614q.001.018.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01z" />
-        <path
-          fill="currentColor"
-          d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m0 2a8 8 0 1 0 0 16a8 8 0 0 0 0-16m0 12a1 1 0 1 1 0 2a1 1 0 0 1 0-2m0-9.5a3.625 3.625 0 0 1 1.348 6.99a.8.8 0 0 0-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 0 1-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 1 0-2.229-1.509a1 1 0 1 1-2 0A3.625 3.625 0 0 1 12 6.5"
-        />
-      </g>
-    </svg>
+      Sign out
+    </button>
   );
 };
 
-const FormLoader = () => {
-  return (
-    <div className="w-full md:max-w-[500px] flex flex-col gap-2 md:py-5 px-5">
-      <div className="w-full flex justify-center border-b border-neutral-300">
-        <div className="w-full mb-5 flex flex-col gap-[20px]">
-          <div className="flex w-full justify-center">
-            <div className="h-[40px] w-full max-w-[300px] bg-neutral-300 rounded"></div>
-          </div>
-          <div className="flex w-full justify-center">
-            <div className="h-[16px] w-full max-w-[200px] bg-neutral-200"></div>
-          </div>
-        </div>
-      </div>
-      <div className="w-full h-[78px]">
-        <div className="flex justify-between">
-          <div className="h-[24px]"></div>
-          <div className="flex gap-[5px]">
-            <div className="h-[16px] w-[40px] bg-neutral-300 rounded"></div>
-            <div className="h-[16px] w-[40px] bg-neutral-300 rounded"></div>
-          </div>
-        </div>
-        <div className="h-[37.8px] w-full bg-neutral-200 rounded mt-2"></div>
-      </div>
-      <div className="pb-2 mt-[49px]">
-        <label className="font-semibold">Shipping Address</label>
-        <div className="flex flex-col gap-[10px] mt-2">
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-        </div>
-      </div>
+// ─── FormLoader ───────────────────────────────────────────────────────────────
 
-      <div className="border rounded bg-neutral-200 w-full min-h-[330px] mt-[35px]"></div>
-
-      <div className="pb-2 mt-[55px] ">
-        <label className="font-semibold">Billing Address</label>
-        <div className="flex flex-col gap-[10px] mt-2">
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="flex gap-[10px]">
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-            <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
-          </div>
-          <div className="w-full h-[37.8px] bg-neutral-200 rounded"></div>
+const FormLoader = () => (
+  <div className="flex flex-col gap-4 animate-pulse">
+    <div className={`${cardCls} h-16`} />
+    <div className={cardCls}>
+      <div className="h-3 w-28 bg-stone-200 dark:bg-stone-700 rounded mb-4" />
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-3">
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
         </div>
-      </div>
-
-      <div className="hidden md:flex">
-        <div className="w-full h-[40px] bg-neutral-300 rounded mt-3"></div>
+        <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+        <div className="flex gap-3">
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+        </div>
+        <div className="flex gap-3">
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+          <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
+        </div>
+        <div className="h-10 w-full bg-stone-100 dark:bg-stone-800 rounded-xl" />
       </div>
     </div>
-  );
-};
+    <div className={`${cardCls} h-[330px]`} />
+    <div className="h-12 w-full bg-stone-200 dark:bg-stone-700 rounded-xl" />
+  </div>
+);
 
-//  main component
+// ─── CheckoutComponent ────────────────────────────────────────────────────────
+
 function CheckoutComponent() {
   const [cartTotal, setCartTotal] = useState({});
-  const [expandOrderSummary, setExpandOrderSummary] = useState(false);
-  const {
-    clearCartItems,
-    fetchOrderTotal,
-    loadCart,
-    cartObject,
-    cartItems,
-    loadingCartItems,
-  } = useCart();
-  // braintree
+  const { clearCartItems, fetchOrderTotal, loadCart, cartObject, cartItems } = useCart();
   const dropinContainer = useRef(null);
   const [instance, setInstance] = useState(null);
-  // checkout form
   const [form, setForm] = useState(initialForm);
-  // forage
   const [forage, setForage] = useState(null);
-  // auth
-  const { isLoggedIn, user, loading, updateProfile, userOrderCreate } =
-    useAuth();
-  // recaptcha
+  const { isLoggedIn, user, loading, updateProfile, userOrderCreate } = useAuth();
   const { executeRecaptcha } = useGoogleReCaptcha();
-  // login modal
-  const [openLogin, setOpenLogin] = useState(false);
-
-  const [successPayment, setSuccessPayment] = useState(false);
-
   const router = useRouter();
 
   const getOrderTotal = async (newForm) => {
     const items = mapOrderItems(newForm?.items);
     if (items.length > 0) {
       const response = await fetchOrderTotal({ ...newForm, items });
-
       const hasCompleteShipping = Boolean(
         newForm?.shipping_zip_code && newForm?.is_valid_shipping_zip
       );
-
       if (response?.success) {
-        const updatedCartTotal = {
-          ...response.data,
-          allowPay: hasCompleteShipping,
-        };
-
-        setCartTotal(updatedCartTotal);
+        setCartTotal({ ...response.data, allowPay: hasCompleteShipping });
       }
     }
   };
@@ -540,47 +281,29 @@ function CheckoutComponent() {
   async function createOrder(orderData) {
     try {
       const response = await userOrderCreate(orderData);
-
       const contentType = response.headers.get("content-type");
       const result = contentType?.includes("application/json")
         ? await response.json()
         : { success: false, message: "Invalid JSON response from server" };
 
       if (!response?.ok || result.success === false) {
-        return {
-          success: false,
-          message: result.message || "Failed to create order",
-        };
+        return { success: false, message: result.message || "Failed to create order" };
       }
-
-      return {
-        success: true,
-        data: result.data || result.order || result,
-      };
+      return { success: true, data: result.data || result.order || result };
     } catch (error) {
       console.error("Order creation failed:", error.message || error);
-      return {
-        success: false,
-        message: error.message || "Unexpected error while creating order",
-      };
+      return { success: false, message: error.message || "Unexpected error while creating order" };
     }
   }
 
-  const debouncedGetOrderTotal = useMemo(
-    () => debounce(getOrderTotal, 300),
-    []
-  );
+  const debouncedGetOrderTotal = useMemo(() => debounce(getOrderTotal, 300), []);
 
   const zipQuery = async (zip) => {
     try {
       const response = await fetch(`https://api.zippopotam.us/us/${zip}`);
-      if (!response?.ok) {
-        return { error: "Invalid Zip Code" };
-      }
-
+      if (!response?.ok) return { error: "Invalid Zip Code" };
       const data = await response.json();
       const place = data.places[0];
-
       return {
         error: false,
         data: {
@@ -606,24 +329,15 @@ function CheckoutComponent() {
   );
 
   const saveInformation = (condition) => {
-    if (loading) return;
-    if (!condition) return;
+    if (loading || !condition) return;
     const {
-      items,
-      newsletter,
-      save_information,
-      shipping_to_billing,
-      notes,
-      payment_details,
-      payment_status,
-      payment_method,
-      status,
+      items, newsletter, save_information, shipping_to_billing,
+      notes, payment_details, payment_status, payment_method, status,
       ...toSave
     } = form;
-    console.log("[toSAVE]", toSave);
 
     if (isLoggedIn) {
-      const data = {
+      updateProfile({
         ...user,
         profile: {
           phone: toSave?.shipping_phone,
@@ -638,55 +352,43 @@ function CheckoutComponent() {
           shipping_state: toSave?.shipping_province,
           shipping_zip: toSave?.shipping_zip_code,
         },
-      };
-
-      updateProfile(data);
+      });
     } else {
       forage.setItem("checkout_info", toSave);
     }
   };
 
-  const shippingAsBilling = (condition, newForm) => {
-    // shipping and billing info only
-    return {
-      ...newForm,
-      billing_first_name: condition ? newForm?.shipping_first_name : "",
-      billing_last_name: condition ? newForm?.shipping_last_name : "",
-      billing_phone: condition ? newForm?.shipping_phone : "",
-      billing_address: condition ? newForm?.shipping_address : "",
-      billing_city: condition ? newForm?.shipping_city : "",
-      billing_province: condition ? newForm?.shipping_province : "",
-      billing_zip_code: condition ? newForm?.shipping_zip_code : "",
-      billing_country: condition ? newForm?.shipping_country : "",
-    };
-  };
+  const shippingAsBilling = (condition, newForm) => ({
+    ...newForm,
+    billing_first_name: condition ? newForm?.shipping_first_name : "",
+    billing_last_name: condition ? newForm?.shipping_last_name : "",
+    billing_phone: condition ? newForm?.shipping_phone : "",
+    billing_address: condition ? newForm?.shipping_address : "",
+    billing_city: condition ? newForm?.shipping_city : "",
+    billing_province: condition ? newForm?.shipping_province : "",
+    billing_zip_code: condition ? newForm?.shipping_zip_code : "",
+    billing_country: condition ? newForm?.shipping_country : "",
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     setForm((prev) => {
-      let updatedForm = {
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      };
+      let updatedForm = { ...prev, [name]: type === "checkbox" ? checked : value };
 
-      // sync billing fields if shipping_to_billing is checked
       if (
         updatedForm.shipping_to_billing &&
         name.startsWith("shipping_") &&
         !["shipping_to_billing", "shipping_email"].includes(name)
       ) {
         const [, ...fieldParts] = name.split("_");
-        const billingField = `billing_${fieldParts.join("_")}`;
-        updatedForm[billingField] = value;
+        updatedForm[`billing_${fieldParts.join("_")}`] = value;
       }
 
-      // keep billing_email synced
       if (name === "shipping_email") {
         updatedForm.billing_email = updatedForm.shipping_email;
       }
 
-      // handle shipping_to_billing toggle
       if (name === "shipping_to_billing") {
         updatedForm = shippingAsBilling(checked, updatedForm);
       }
@@ -694,11 +396,8 @@ function CheckoutComponent() {
       return updatedForm;
     });
 
-    // handle ZIP async lookup separately
     if (name === "shipping_zip_code" || name === "billing_zip_code") {
-      debouncedZipQuery(value, (result) => {
-        updateOnZipChange(name, result);
-      });
+      debouncedZipQuery(value, (result) => updateOnZipChange(name, result));
     }
   };
 
@@ -709,13 +408,11 @@ function CheckoutComponent() {
       const updatedForm = { ...prev };
 
       if (name === "shipping_zip_code") {
-        // shipping ZIP update + optionally update billing if synced
         updatedForm.shipping_country = error ? "" : data?.country;
         updatedForm.shipping_city = error ? "" : data?.city;
         updatedForm.shipping_province = error ? "" : data?.province;
         updatedForm.is_valid_shipping_zip = !Boolean(error);
 
-        // update billing fields if shipping_to_billing is true
         if (prev.shipping_to_billing) {
           updatedForm.billing_country = error ? "" : data?.country;
           updatedForm.billing_city = error ? "" : data?.city;
@@ -723,21 +420,16 @@ function CheckoutComponent() {
           updatedForm.is_valid_billing_zip = !Boolean(error);
         }
 
-        // trigger order total only for shipping
         debouncedGetOrderTotal(updatedForm);
       } else if (name === "billing_zip_code") {
-        // billing ZIP update only, no order total
         updatedForm.billing_country = error ? "" : data?.country;
         updatedForm.billing_city = error ? "" : data?.city;
         updatedForm.billing_province = error ? "" : data?.province;
         updatedForm.is_valid_billing_zip = !Boolean(error);
       }
+
       return updatedForm;
     });
-  };
-
-  const handleLogin = () => {
-    setOpenLogin(true);
   };
 
   const fillUserToForm = (user) => {
@@ -769,12 +461,9 @@ function CheckoutComponent() {
         save_information: false,
         shipping_to_billing: true,
       };
-      debouncedZipQuery(updated.shipping_zip_code, (result) => {
-        updateOnZipChange("shipping_zip_code", result);
-      });
-      // debouncedZipQuery(updated.billing_zip_code, (result) => {
-      //   updateOnZipChange("billing_zip_code", result);
-      // });
+      debouncedZipQuery(updated.shipping_zip_code, (result) =>
+        updateOnZipChange("shipping_zip_code", result)
+      );
       return updated;
     });
   };
@@ -782,7 +471,6 @@ function CheckoutComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate reCAPTCHA v3
     if (!executeRecaptcha) {
       alert("reCAPTCHA not available. Please try again.");
       return;
@@ -791,27 +479,23 @@ function CheckoutComponent() {
     let recaptchaToken;
     try {
       recaptchaToken = await executeRecaptcha("checkout");
-    } catch (error) {
+    } catch {
       alert("reCAPTCHA verification failed. Please try again.");
       return;
     }
 
     if (!cartTotal?.allowPay) {
-      alert(
-        "Please Make Sure You Fillout Neccessary shipping information for us to recalculate your shipping total."
-      );
+      alert("Please fill in your shipping postal code so we can calculate your shipping total.");
       return;
     }
 
     if (!instance) {
-      alert("Drop-in UI is not initialized");
+      alert("Payment UI is not initialized.");
       return;
     }
 
     try {
       const { nonce } = await instance.requestPaymentMethod();
-      console.log("Generated Nonce:", nonce);
-
       if (!nonce) {
         alert("Error: No nonce received. Try again.");
         return;
@@ -822,69 +506,56 @@ function CheckoutComponent() {
       const response = await fetch("/api/braintree_checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nonce,
-          amount: `${total_amount}`,
-          recaptchaToken,
-        }),
+        body: JSON.stringify({ nonce, amount: `${total_amount}`, recaptchaToken }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        const orders = form;
-        orders["status"] = "paid";
-        orders["payment_status"] = true;
-        orders["payment_details"] = result?.transaction?.id;
-        orders["store_domain"] = STORE_DOMAIN;
-        orders["items"] = mapOrderItems(cartItems);
-        // console.log("[OrderData]", orders);
+        const orders = {
+          ...form,
+          status: "paid",
+          payment_status: true,
+          payment_details: result?.transaction?.id,
+          store_domain: STORE_DOMAIN,
+          items: mapOrderItems(cartItems),
+        };
+
         const order_response = await createOrder(orders);
-        // console.log("ORDER RESPONSE", order_response);
+
         if (order_response.success) {
           instance.teardown();
           setInstance(null);
           clearCartItems();
           saveInformation(form?.save_information);
-          setSuccessPayment(true);
           router.push(`${BASE_URL}/payment_success`);
         } else {
-          setSuccessPayment(false);
           alert("Something went wrong! Please try again.");
         }
       } else {
-        setSuccessPayment(false);
         alert(`Payment failed: ${result.error}`);
       }
     } catch (error) {
-      setSuccessPayment(false);
-      // console.error("Payment Error:", error);
-      // alert("Payment error. Try again.");
+      console.error("Payment error:", error);
     }
   };
 
   useEffect(() => {
-    console.log("[FORMATTEDCART]", cartItems);
     if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-      let newForm = { ...form, items: cartItems };
-      setForm((prev) => ({ ...newForm }));
+      const newForm = { ...form, items: cartItems };
+      setForm(newForm);
       getOrderTotal(newForm);
     }
   }, [cartItems]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     let mounted = true;
-
-    import("@/app/lib/localForage").then(async (module) => {
+    import("@/app/lib/localForage").then((module) => {
       if (!mounted) return;
       setForage(module);
     });
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -900,12 +571,9 @@ function CheckoutComponent() {
           save_information: false,
           shipping_to_billing: true,
         };
-        debouncedZipQuery(updated.shipping_zip_code, (result) => {
-          updateOnZipChange("shipping_zip_code", result);
-        });
-        // debouncedZipQuery(updated.billing_zip_code, (result) => {
-        //   updateOnZipChange("billing_zip_code", result);
-        // });
+        debouncedZipQuery(updated.shipping_zip_code, (result) =>
+          updateOnZipChange("shipping_zip_code", result)
+        );
         return updated;
       });
     };
@@ -923,13 +591,11 @@ function CheckoutComponent() {
 
   useEffect(() => {
     async function initializeDropIn() {
-      if (loading) return;
-      if (!dropinContainer.current) return;
+      if (loading || !dropinContainer.current) return;
 
       try {
         const res = await fetch("/api/braintree_token");
         const data = await res.json();
-        // setClientToken(data.clientToken);
 
         if (!data.clientToken) {
           alert("Error: No client token received");
@@ -944,13 +610,13 @@ function CheckoutComponent() {
         const dropinInstance = await dropin.create({
           authorization: data.clientToken,
           container: dropinContainer.current,
-          vaultManager: false, // Disable stored payment methods
+          vaultManager: false,
           card: {
             cardholderName: { required: true },
             overrides: {
               fields: {
                 number: { placeholder: "4111 1111 1111 1111" },
-                cvv: { required: true, placeholder: "123" }, // ✅ Force CVV
+                cvv: { required: true, placeholder: "123" },
                 expirationDate: { placeholder: "MM/YY" },
               },
             },
@@ -960,7 +626,6 @@ function CheckoutComponent() {
         setInstance(dropinInstance);
       } catch (error) {
         console.log("[BRAINTREEINIT] ERROR", error);
-        // alert("Payment UI failed to load.");
       }
     }
 
@@ -969,462 +634,198 @@ function CheckoutComponent() {
 
   const ref_number = useMemo(() => {
     if (loading) return null;
-
-    if (isLoggedIn) {
-      return cartObject?.cart_id ? "CI-" + cartObject?.cart_id : null;
-    } else {
-      return cartObject?.reference_number;
-    }
+    return isLoggedIn
+      ? cartObject?.cart_id ? "CI-" + cartObject?.cart_id : null
+      : cartObject?.reference_number;
   }, [loading, isLoggedIn, cartObject]);
 
   return (
-    <section className="bg-white">
-      <MobileOrderSummary data={{ ...cartTotal, items: cartItems }} />
-      {/* desktop */}
-      <div className="container mx-auto">
-        <div className="flex gap-0 md:gap-[20px] flex-col md:flex-row py-5 md:py-0">
-          {/* form section */}
-          <div className="w-full flex md:justify-end">
+    <div className="min-h-screen bg-stone-50 dark:bg-stone-950">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8">
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
+
+          {/* ── Left: Form ── */}
+          <div>
             {loading ? (
               <FormLoader />
             ) : (
-              <div className="w-full md:max-w-[500px] flex flex-col gap-2 md:py-5 px-5">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+                {/* Auth buttons (guest only) */}
                 {!isLoggedIn && (
-                  <div className="w-full flex justify-center border-b border-neutral-300">
-                    <div className="max-w-[300px] w-full mb-5">
-                      <AuthButtons />
-                    </div>
+                  <div className={cardCls}>
+                    <AuthButtons />
                   </div>
                 )}
-                <form onSubmit={handleSubmit}>
+
+                {/* Contact */}
+                <div className={cardCls}>
                   {isLoggedIn ? (
-                    <div className="border-b border-neutral-300 pb-2 flex items-center justify-between">
-                      {user && (
-                        <>
-                          <div className="flex items-center gap-[10px]">
-                            <div className="rounded-full w-[32px] h-[32px] bg-neutral-200 flex items-center justify-center text-xs">
-                              {user?.name_initials && user.name_initials}
-                            </div>
-                            <div className="font-medium text-neutral-700 text-sm">
-                              {user?.email && user.email}
-                            </div>
+                    user && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 select-none">
+                            {user.name_initials}
                           </div>
-                          <LogoutDropDown />
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <div className="border-b border-neutral-300 pb-2">
-                        <label
-                          htmlFor="email"
-                          className="font-semibold flex items-center justify-between"
-                        >
-                          <span>Contact</span>
-                          {/* <div className="flex gap-[5px]">
-                            <button
-                              type="button"
-                              className="underline font-light text-xs"
-                              onClick={handleLogin}
-                            >
-                              Sign In
-                            </button>
-                            <Link
-                              href={`${BASE_URL}/login`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline font-light text-xs"
-                            >
-                              Register
-                            </Link>
-                          </div> */}
-                        </label>
-                        <input
-                          type="email"
-                          name="shipping_email"
-                          placeholder="Email"
-                          value={form?.shipping_email || ""}
-                          onChange={handleChange}
-                          required
-                          className="text-sm  w-full mt-2 px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                        />
+                          <div>
+                            <p className="text-xs font-semibold text-charcoal dark:text-white">
+                              {user.email}
+                            </p>
+                            <p className="text-[10px] text-stone-400 dark:text-stone-500">
+                              Logged in
+                            </p>
+                          </div>
+                        </div>
+                        <LogoutButton />
                       </div>
-                      <div className="flex items-start text-sm text-neutral-700 py-1">
+                    )
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider">
+                        Contact
+                      </p>
+                      <input
+                        type="email"
+                        name="shipping_email"
+                        placeholder="Email"
+                        value={form?.shipping_email || ""}
+                        onChange={handleChange}
+                        required
+                        className={inputCls}
+                      />
+                      <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 cursor-pointer select-none">
                         <input
                           id="newsletter"
                           name="newsletter"
                           type="checkbox"
-                          value={form?.newsletter}
                           checked={form?.newsletter}
                           onChange={handleChange}
-                          className="text-sm mt-1 mr-2 h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                          className="rounded border-stone-300 text-fire focus:ring-orange-300 h-3.5 w-3.5"
                         />
-                        <label htmlFor="newsletter" className="text-sm">
-                          Email me with news and offers
-                        </label>
-                      </div>
-                    </>
-                  )}
-                  <div className="pb-2 mt-3">
-                    <label className="font-semibold">Shipping Address</label>
-                    <div className="flex flex-col gap-[10px] mt-2">
-                      <div className="flex gap-[10px]">
-                        <input
-                          type="text"
-                          name="shipping_first_name"
-                          placeholder="First Name"
-                          value={form?.shipping_first_name || ""}
-                          onChange={handleChange}
-                          required
-                          className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                        />
-                        <input
-                          type="text"
-                          name="shipping_last_name"
-                          placeholder="Last Name"
-                          value={form?.shipping_last_name || ""}
-                          onChange={handleChange}
-                          required
-                          className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        name="shipping_address"
-                        placeholder="Address"
-                        value={form?.shipping_address || ""}
-                        onChange={handleChange}
-                        required
-                        className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                      />
-                      <div className="flex gap-[10px]">
-                        <div className="w-full">
-                          <input
-                            type="text"
-                            name="shipping_zip_code"
-                            placeholder="Postal code"
-                            value={form?.shipping_zip_code || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                        </div>
-                        <div className="w-full relative">
-                          <input
-                            type="text"
-                            name="shipping_country"
-                            placeholder="Country"
-                            disabled
-                            value={form?.shipping_country || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                            title="Auto-filled on valid zipcode entry"
-                          >
-                            <QuestionIcon />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-[10px]">
-                        <div className="w-full relative">
-                          <input
-                            type="text"
-                            name="shipping_city"
-                            placeholder="City"
-                            disabled
-                            title="Autopopulated on valid zipcode entry"
-                            value={form?.shipping_city || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                            title="Auto-filled on valid zipcode entry"
-                          >
-                            <QuestionIcon />
-                          </div>
-                        </div>
-                        <div className="w-full relative">
-                          <input
-                            type="text"
-                            name="shipping_province"
-                            placeholder="State"
-                            disabled
-                            title="Autopopulated on valid zipcode entry"
-                            value={form?.shipping_province || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                          <div
-                            className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                            title="Auto-filled on valid zipcode entry"
-                          >
-                            <QuestionIcon />
-                          </div>
-                        </div>
-                      </div>
-                      <input
-                        type="text"
-                        name="shipping_phone"
-                        placeholder="Phone"
-                        value={form?.shipping_phone || ""}
-                        onChange={handleChange}
-                        required
-                        className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                      />
-                      <input
-                        type="text"
-                        name="notes"
-                        placeholder="Notes: Give me a call, and etc (optional)"
-                        value={form?.notes || ""}
-                        onChange={handleChange}
-                        className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                      />{" "}
+                        Email me with news and offers
+                      </label>
                     </div>
-                    <div className="flex items-start text-sm text-neutral-700 py-1 mt-2">
+                  )}
+                </div>
+
+                {/* Shipping Address */}
+                <div className={cardCls}>
+                  <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider mb-4">
+                    Shipping Address
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="text" name="shipping_first_name" placeholder="First Name" value={form?.shipping_first_name || ""} onChange={handleChange} required className={inputCls} />
+                      <input type="text" name="shipping_last_name" placeholder="Last Name" value={form?.shipping_last_name || ""} onChange={handleChange} required className={inputCls} />
+                    </div>
+                    <input type="text" name="shipping_address" placeholder="Address" value={form?.shipping_address || ""} onChange={handleChange} required className={inputCls} />
+                    <div className="grid grid-cols-2 gap-3">
+                      <input type="text" name="shipping_zip_code" placeholder="Postal code" value={form?.shipping_zip_code || ""} onChange={handleChange} required className={inputCls} />
+                      <AutoInput name="shipping_country" placeholder="Country" value={form?.shipping_country} onChange={handleChange} required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <AutoInput name="shipping_city" placeholder="City" value={form?.shipping_city} onChange={handleChange} required />
+                      <AutoInput name="shipping_province" placeholder="State" value={form?.shipping_province} onChange={handleChange} required />
+                    </div>
+                    <input type="text" name="shipping_phone" placeholder="Phone" value={form?.shipping_phone || ""} onChange={handleChange} required className={inputCls} />
+                    <input type="text" name="notes" placeholder="Notes (optional)" value={form?.notes || ""} onChange={handleChange} className={inputCls} />
+                    <label className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 cursor-pointer select-none mt-1">
                       <input
                         id="save_information"
                         name="save_information"
                         type="checkbox"
-                        value={form?.save_information}
                         checked={form?.save_information}
                         onChange={handleChange}
-                        className="text-sm mt-1 mr-2 h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                        className="rounded border-stone-300 text-fire focus:ring-orange-300 h-3.5 w-3.5"
                       />
-                      <label htmlFor="save_information" className="text-sm">
-                        Save this information for next time
-                      </label>
-                    </div>
+                      Save this information for next time
+                    </label>
                   </div>
-                  {/* braintree form */}
-                  <div className="border rounded bg-neutral-200 w-full min-h-[330px]">
-                    <div ref={dropinContainer}></div>
+                </div>
+
+                {/* Payment */}
+                <div className={cardCls}>
+                  <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider mb-4">
+                    Payment
+                  </p>
+                  <div className="rounded-xl overflow-hidden border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 min-h-[330px]">
+                    <div ref={dropinContainer} />
                   </div>
-                  <div className="flex items-start text-sm text-neutral-700 py-1 mt-2">
+                </div>
+
+                {/* Billing Address */}
+                <div className={cardCls}>
+                  <label className="flex items-center gap-2 text-xs font-medium text-stone-600 dark:text-stone-300 cursor-pointer select-none">
                     <input
                       id="shipping_to_billing"
                       name="shipping_to_billing"
                       type="checkbox"
-                      value={form?.shipping_to_billing}
                       checked={form?.shipping_to_billing}
                       onChange={handleChange}
-                      className="text-sm mt-1 mr-2 h-4 w-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
+                      className="rounded border-stone-300 text-fire focus:ring-orange-300 h-3.5 w-3.5"
                     />
-                    <label htmlFor="shipping_to_billing" className="text-sm">
-                      Use shipping address as billing address
-                    </label>
-                  </div>
-                  {!form?.shipping_to_billing ? (
-                    <div className="pb-2 mt-3 ">
-                      <label className="font-semibold">Billing Address</label>
+                    Use shipping address as billing address
+                  </label>
 
-                      <div className="flex flex-col gap-[10px] mt-2">
-                        <div className="flex gap-[10px]">
-                          <input
-                            type="text"
-                            name="billing_first_name"
-                            placeholder="First Name"
-                            value={form?.billing_first_name || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                          <input
-                            type="text"
-                            name="billing_last_name"
-                            placeholder="Last Name"
-                            value={form?.billing_last_name || ""}
-                            onChange={handleChange}
-                            required
-                            className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          name="billing_address"
-                          placeholder="Address"
-                          value={form?.billing_address || ""}
-                          onChange={handleChange}
-                          required
-                          className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                        />
-                        <div className="flex gap-[10px]">
-                          <div className="w-full">
-                            <input
-                              type="text"
-                              name="billing_zip_code"
-                              placeholder="Postal code"
-                              value={form?.billing_zip_code || ""}
-                              onChange={handleChange}
-                              required
-                              className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                            />
-                          </div>
-                          <div className="w-full relative">
-                            <input
-                              type="text"
-                              name="billing_country"
-                              placeholder="Country"
-                              disabled
-                              value={form?.billing_country || ""}
-                              onChange={handleChange}
-                              required
-                              className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                            />
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                              title="Auto-filled on valid zipcode entry"
-                            >
-                              <QuestionIcon />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-[10px]">
-                          <div className="w-full relative">
-                            <input
-                              type="text"
-                              name="billing_city"
-                              placeholder="City"
-                              disabled
-                              title="Autopopulated on valid zipcode entry"
-                              value={form?.billing_city || ""}
-                              onChange={handleChange}
-                              required
-                              className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                            />
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                              title="Auto-filled on valid zipcode entry"
-                            >
-                              <QuestionIcon />
-                            </div>
-                          </div>
-                          <div className="w-full relative">
-                            <input
-                              type="text"
-                              name="billing_province"
-                              placeholder="State"
-                              disabled
-                              title="Autopopulated on valid zipcode entry"
-                              value={form?.billing_province || ""}
-                              onChange={handleChange}
-                              required
-                              className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                            />
-                            <div
-                              className="absolute top-1/2 -translate-y-1/2 right-1 text-stone-500"
-                              title="Auto-filled on valid zipcode entry"
-                            >
-                              <QuestionIcon />
-                            </div>
-                          </div>
-                        </div>
-                        <input
-                          type="text"
-                          name="billing_phone"
-                          placeholder="Phone"
-                          value={form?.billing_phone || ""}
-                          onChange={handleChange}
-                          required
-                          className="text-sm w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-stone-600"
-                        />
+                  {!form?.shipping_to_billing && (
+                    <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-stone-100 dark:border-stone-800">
+                      <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider">
+                        Billing Address
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" name="billing_first_name" placeholder="First Name" value={form?.billing_first_name || ""} onChange={handleChange} required className={inputCls} />
+                        <input type="text" name="billing_last_name" placeholder="Last Name" value={form?.billing_last_name || ""} onChange={handleChange} required className={inputCls} />
                       </div>
+                      <input type="text" name="billing_address" placeholder="Address" value={form?.billing_address || ""} onChange={handleChange} required className={inputCls} />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" name="billing_zip_code" placeholder="Postal code" value={form?.billing_zip_code || ""} onChange={handleChange} required className={inputCls} />
+                        <AutoInput name="billing_country" placeholder="Country" value={form?.billing_country} onChange={handleChange} required />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <AutoInput name="billing_city" placeholder="City" value={form?.billing_city} onChange={handleChange} required />
+                        <AutoInput name="billing_province" placeholder="State" value={form?.billing_province} onChange={handleChange} required />
+                      </div>
+                      <input type="text" name="billing_phone" placeholder="Phone" value={form?.billing_phone || ""} onChange={handleChange} required className={inputCls} />
                     </div>
-                  ) : null}
-                  <div className="hidden md:flex">
-                    <CompletePaymentButton items={cartItems} />
-                  </div>
-                </form>
-              </div>
+                  )}
+                </div>
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={!cartItems?.length}
+                  className="w-full py-3.5 bg-fire hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                >
+                  Complete Payment
+                </button>
+              </form>
             )}
           </div>
-          {/* divider */}
-          <div className="border-l border-neutral-300 hidden md:block"></div>
-          {/* items section */}
-          <div className="w-full flex md:justify-start">
-            <div className="w-full md:max-w-[500px] flex flex-col gap-2 md:py-5 px-5">
-              <div className="md:hidden">
-                <button
-                  type="button"
-                  onClick={() => setExpandOrderSummary((prev) => !prev)}
-                  className="w-full flex items-center justify-between py-[10px]"
-                >
-                  <span className="font-semibold">Order Summary</span>
-                  <span className="font-light text-xs flex items-center gap-[4px]">
-                    {expandOrderSummary ? (
-                      <>
-                        <span>Hide</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            d="M16.53 14.03a.75.75 0 0 1-1.06 0L12 10.56l-3.47 3.47a.75.75 0 0 1-1.06-1.06l4-4a.75.75 0 0 1 1.06 0l4 4a.75.75 0 0 1 0 1.06"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </>
-                    ) : (
-                      <>
-                        <span>Show</span>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="20"
-                          height="20"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            d="M16.53 8.97a.75.75 0 0 1 0 1.06l-4 4a.75.75 0 0 1-1.06 0l-4-4a.75.75 0 1 1 1.06-1.06L12 12.44l3.47-3.47a.75.75 0 0 1 1.06 0"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </>
-                    )}
-                  </span>
-                </button>
-                <div
-                  className={`${expandOrderSummary ? "" : "hidden"} py-[20px]`}
-                >
-                  <ItemsList items={cartItems} />
-                </div>
+
+          {/* ── Col 2: Order Summary ── */}
+          <div className="flex flex-col gap-4 lg:sticky lg:top-6">
+            {!loading && (
+              <div className={cardCls}>
+                <p className="text-xs font-bold text-charcoal dark:text-white uppercase tracking-wider mb-4">
+                  Order Summary
+                </p>
+                <ItemsList items={cartItems} />
+                <ComputationSection data={cartTotal} items={cartItems} />
               </div>
-              {!loading && (
-                <>
-                  <div className="hidden md:block mb-5">
-                    <ItemsList items={cartItems} />
-                  </div>
-                  <ComputationSection data={cartTotal} items={cartItems} />
-                </>
-              )}
-              <div className="md:hidden">
-                <CompletePaymentButton items={cartItems} />
-              </div>
-              <OrderQuerySection reference_number={ref_number} />
-            </div>
+            )}
+            <OrderQuerySection reference_number={ref_number} />
           </div>
+
         </div>
+
       </div>
+
       <style jsx>{`
-        :global(.braintree-placeholder) {
-          display: none !important;
-        }
-        :global(.braintree-sheet__container.braintree-sheet--active) {
-          margin: 0px;
-        }
+        :global(.braintree-placeholder) { display: none !important; }
+        :global(.braintree-sheet__container.braintree-sheet--active) { margin: 0px; }
       `}</style>
-      {/* <LoginModal isOpen={openLogin} setOpen={setOpenLogin} /> */}
-    </section>
+    </div>
   );
 }
 

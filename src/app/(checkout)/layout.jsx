@@ -10,7 +10,7 @@ import {
   Playfair,
   Playfair_Display_SC,
 } from "next/font/google";
-import Footer from "@/app/components/section/Footer";
+import Footer from "@/app/components/new-design/layout/Footer";
 import { AuthProvider } from "@/app/context/auth";
 import { CartProvider } from "@/app/context/cart";
 import { GoogleReCaptchaProvider } from "@/app/context/recaptcha";
@@ -61,40 +61,41 @@ export const metadata = await generateMetadata();
 
 const Header = ({ logo }) => {
   return (
-    <section className="border-b border-neutral-300 shadow">
-      <div className="container mx-auto px-5">
-        <div className="flex items-center justify-center">
-          <div className="w-full max-w-[1000px] flex items-center justify-between py-3">
-            <div className="w-[150px] aspect-[191/94] relative">
-              <Image
-                src={logo || `/Logo.webp`}
-                alt="Logo"
-                fill
-                objectFit="contain"
-              />
-            </div>
-            <div>
-              {/* <Link
-                prefetch={false}
-                href={`${BASE_URL}/cart`}
-                className="border py-2 px-10 shadow rounded-[4px] font-bold text-white bg-theme-600 hover:bg-theme-700 text-sm"
-              >
-                BACK TO CART
-              </Link>
-               */}
-              <Link
-                href={`${BASE_URL}/cart`}
-                title="Back to cart"
-                prefetch={false}
-                className={`relative text-theme-600 hover:text-theme-700`}
-              >
-                <CartIcon width="30" height="30" />
-              </Link>
-            </div>
+    <header className="bg-white dark:bg-stone-900 border-b border-stone-200 dark:border-stone-700">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+
+        {/* Logo */}
+        <Link href={BASE_URL} prefetch={false} className="flex-shrink-0">
+          <div className="w-[130px] aspect-[191/94] relative">
+            <Image
+              src={logo || `/Logo.webp`}
+              alt="Logo"
+              fill
+              className="object-contain"
+            />
           </div>
-        </div>
+        </Link>
+
+        {/* Secure badge */}
+        <span className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium text-stone-400 dark:text-stone-500 select-none">
+          <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          Secure Checkout
+        </span>
+
+        {/* Back to cart */}
+        <Link
+          href={`${BASE_URL}/cart`}
+          prefetch={false}
+          className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 dark:text-stone-400 hover:text-fire dark:hover:text-orange-400 transition-colors"
+        >
+          <CartIcon width="18" height="18" />
+          <span className="hidden sm:inline">Cart</span>
+        </Link>
+
       </div>
-    </section>
+    </header>
   );
 };
 
