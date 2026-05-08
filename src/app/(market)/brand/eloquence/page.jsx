@@ -364,7 +364,7 @@ const Block3 = async () => {
           </h2>
         </div>
       </div>
-      <div className="p-4 sm:px-6 md:py-20">
+      <div className="lg:max-w-[1240] lg:mx-auto p-4 sm:px-6 md:py-20">
         <CarouselWrap breakpoints={breakpoints}>
           {products &&
             products.map((item) => (
