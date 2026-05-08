@@ -7,6 +7,7 @@ import AddToCartButtonWrap from "@/app/components/atom/AddToCartButtonWrap";
 import CarouselWrap from "@/app/components/atom/CarouselWrap";
 import { Rating } from "@smastrom/react-rating";
 import StarRating from "@/app/components/new-design/ui/StarRating";
+import SubscribeWidget from "@/app/components/new-design/ui/SubscribeWidget";
 
 import {
   BASE_URL,
@@ -617,16 +618,7 @@ const Newsletter = () => (
         Subscribe for exclusive sales, recipes, guides, and backyard inspiration
         delivered straight to your inbox.
       </p>
-      <div className="flex flex-col sm:flex-row gap-2 w-full max-w-md">
-        <input
-          type="email"
-          placeholder="Your email address"
-          className="flex-1 text-sm py-3 px-5 rounded-full outline-none bg-stone-800 text-white placeholder-stone-500 border border-stone-700 focus:border-[#e98f3b] transition-colors duration-300"
-        />
-        <button className="py-3 px-8 text-white bg-[#e53237] rounded-full text-sm font-semibold hover:bg-[#c62b30] transition-colors duration-300 whitespace-nowrap tracking-wide">
-          Subscribe →
-        </button>
-      </div>
+      <SubscribeWidget label="Subscribe →" />
       <p className="text-stone-600 text-xs">
         No spam. Unsubscribe at any time.
       </p>
