@@ -8430,6 +8430,8 @@ export const CartProvider = ({ children }) => {
   // for stale value
   const cartRef = useRef(cart);
   const userRef = useRef(abandonedCartUser);
+  const isSendingAbandonedCart = useRef(false); // prevents concurrent API calls
+  const beaconSent = useRef(false);             // prevents double beacon on unload+visibilitychange
 
   const guestCartToActive = async () => {
     if (!forage) {
@@ -8488,6 +8490,11 @@ export const CartProvider = ({ children }) => {
   };
 
   const createAbandonedCart = async (cart_obj, user_obj, trigger = "timed") => {
+    if (isSendingAbandonedCart.current) return;
+    isSendingAbandonedCart.current = true;
+
+    try {
+
     if (loading) return;
 
     if (!cart_obj && !cart_obj?.id) return;
@@ -8564,6 +8571,10 @@ export const CartProvider = ({ children }) => {
       const newCart = { ...cart };
       const key = `abandoned:${newCart?.cart_id}`;
       await updateRedisAbandonedRecord(key, newCart?.is_abandoned);
+    }
+
+    } finally {
+      isSendingAbandonedCart.current = false;
     }
   };
 
@@ -9293,18 +9304,29 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     if (!cart || !abandonedCartUser) return;
 
-    const handleUnload = () => {
+    const sendBeaconOnce = () => {
+      if (beaconSent.current) return;
+      beaconSent.current = true;
       createAbandonedCart(cartRef.current, userRef.current, "beacon");
     };
 
+    const handleUnload = () => sendBeaconOnce();
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
-        createAbandonedCart(cartRef.current, userRef.current, "beacon");
+        sendBeaconOnce();
+      } else {
+        // tab became visible again — allow future beacon if user leaves again
+        beaconSent.current = false;
       }
     };
 
+    let activityDebounce;
     const handleEvent = () => {
-      createAbandonedCart(cartRef.current, userRef.current, "timed");
+      clearTimeout(activityDebounce);
+      activityDebounce = setTimeout(() => {
+        createAbandonedCart(cartRef.current, userRef.current, "timed");
+      }, 2000);
     };
 
     const activityEvents = ["click", "keydown", "scroll"];
@@ -9316,6 +9338,7 @@ export const CartProvider = ({ children }) => {
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
+      clearTimeout(activityDebounce);
       activityEvents.forEach((evt) =>
         document.removeEventListener(evt, handleEvent),
       );
