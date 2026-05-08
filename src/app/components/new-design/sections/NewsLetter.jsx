@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from "react";
+import { subscribe, unsubscribe } from "@/app/lib/api";
 
 export default function Newsletter() {
   const [email, setEmail] = useState("");
