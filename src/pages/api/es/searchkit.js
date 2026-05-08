@@ -1,5 +1,6 @@
 // pages/api/es/searchkit.js
 import API from "@searchkit/api";
+import crypto from "crypto";
 
 import {
   BaseNavObj,
@@ -16,6 +17,17 @@ import {
   getActiveRuntimeMappings,
 } from "../../../app/lib/filter-helper";
 import { fixObservableSubclass } from "@apollo/client/utilities";
+import { redis } from "../../../app/lib/redis";
+
+const CACHE_TTL = 60; // seconds
+
+function buildCacheKey(body) {
+  const hash = crypto
+    .createHash("sha1")
+    .update(JSON.stringify(body))
+    .digest("hex");
+  return `searchkit:${hash}`;
+}
 
 const priceBuckets = {
   "Under $1,000": { gte: 0, lt: 1000 },
@@ -54,6 +66,19 @@ export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method Not Allowed" });
     return;
+  }
+
+  // Check Redis cache before hitting Elasticsearch
+  const cacheKey = buildCacheKey(req.body);
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      return res.status(200).json(cached);
+    }
+  } catch (cacheErr) {
+    // Cache miss or Redis unavailable — proceed normally
+    console.warn("[searchkit] Redis read failed:", cacheErr.message);
   }
 
   try {
@@ -391,6 +416,14 @@ export default async function handler(req, res) {
       results = await apiClient.handleRequest(data);
     }
 
+    // Store in Redis for subsequent identical requests
+    try {
+      await redis.set(cacheKey, results, { ex: CACHE_TTL });
+    } catch (cacheErr) {
+      console.warn("[searchkit] Redis write failed:", cacheErr.message);
+    }
+
+    res.setHeader("X-Cache", "MISS");
     res.status(200).json(results);
   } catch (err) {
     console.error("Searchkit Error:", err);

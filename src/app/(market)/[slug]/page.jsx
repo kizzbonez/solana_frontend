@@ -4,11 +4,32 @@ import { notFound } from "next/navigation";
 
 import { keys, redis } from "@/app/lib/redis";
 import { STORE_NAME } from "@/app/lib/store_constants";
-import { getRootByUrl, getPageData, BASE_URL } from "@/app/lib/helpers";
+import { getRootByUrl, getPageData, BASE_URL, BaseNavKeys } from "@/app/lib/helpers";
 import { fetchCollectionsCount } from "@/app/lib/fn_server";
 
 import NewProductGallery from "@/app/components/new-design/page/ProductGallery";
 import BaseNavPage from "@/app/components/template/BaseNavItemPage";
+
+// Computes the Elasticsearch filter string from page metadata.
+// Mirrors the same logic in ProductsSectionV2 so V2 can receive the correct
+// filterString as a prop on the very first render — before its context
+// useEffect resolves — preventing a blank→filtered re-render cycle.
+function computeFilterString(d) {
+  if (!d) return "";
+  if (d.nav_type === "category")
+    return `page_category:${d.origin_name}:${d.filter_type}`;
+  if (d.nav_type === "brand")
+    return `page_brand:${d.origin_name}:${d.filter_type}`;
+  if (d.nav_type === "custom_page") {
+    if (d.name === "Search") return "custom_page:Search:Search";
+    if (BaseNavKeys.includes(d.name))
+      return `custom_page:${d.name}:${d.filter_type}`;
+    return `custom_page:${d.collection_display?.name || "NA"}:${d.filter_type}`;
+  }
+  if (d.nav_type === "category1")
+    return `page_category1:${d.name}:${d.filter_type}`;
+  return "";
+}
 
 const defaultMenuKey = keys.dev_shopify_menu.value;
 
@@ -82,5 +103,12 @@ export default async function GenericCategoryPage({ params }) {
     };
   });
 
-  return <NewProductGallery slug={slug} config={{ root: rootNav, url, subs }} />;
+  return (
+    <NewProductGallery
+      slug={slug}
+      config={{ root: rootNav, url, subs }}
+      filterType={pageData?.filter_type ?? null}
+      initialFilterString={computeFilterString(pageData)}
+    />
+  );
 }

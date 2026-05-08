@@ -530,8 +530,9 @@ export function URLHandler() {
     if (type === "filter") {
       const keys = Object.keys(value);
       params = deleteParamsWithPrefix("filter:", params);
-      keys.forEach((v, i) => {
-        params.set(`filter:${v}`, value?.[v]);
+      keys.forEach((v) => {
+        const vals = Array.isArray(value?.[v]) ? value[v] : [value?.[v]];
+        vals.forEach((val) => params.append(`filter:${v}`, val));
       });
     }
 

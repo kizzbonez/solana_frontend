@@ -2,16 +2,26 @@
 import React from "react";
 import HeroBanner from "@/app/components/new-design/sections/gallery/HeroBanner";
 import SubcategoryTabs from "@/app/components/new-design/sections/gallery/SubcategoryTabs";
-import ProductsSection from "@/app/components/molecule/ProductsSection";
+// import PerfComparisonLayout from "@/app/components/dev/PerfComparisonLayout";
+import ProductsSectionV2 from "@/app/components/molecule/ProductsSectionV2";
 
-function ProductGallery({ config, slug }) {
-return (
+function ProductGallery({ config, slug, filterType, initialFilterString }) {
+  return (
     <main>
       <HeroBanner config={config} />
-      {config?.root?.url !== "brands" && <SubcategoryTabs subs={config?.subs} />}
-      <div className="px-1 md:px-[20px]">
-        <ProductsSection category={slug} />
-      </div>
+      {config?.root?.url !== "brands" && (
+        <SubcategoryTabs subs={config?.subs} />
+      )}
+      {/* <PerfComparisonLayout
+        category={slug}
+        filterType={filterType}
+        initialFilterString={initialFilterString}
+      /> */}
+      <ProductsSectionV2
+        category={slug}
+        filterType={filterType}
+        initialFilterString={initialFilterString}
+      />
     </main>
   );
 }

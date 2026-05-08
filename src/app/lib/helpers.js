@@ -628,20 +628,20 @@ export const getInitialUiStateFromUrl = (url) => {
     let sortBy = `${ES_INDEX}_popular`;
     let page = 1;
 
-    for (const [key, value] of searchParams.entries()) {
+    for (const key of new Set(searchParams.keys())) {
       if (key.startsWith("filter:")) {
         const attribute = key.replace("filter:", "");
-        refinementList[attribute] = value.split(",");
+        refinementList[attribute] = searchParams.getAll(key);
       }
       if (key.startsWith("range:")) {
         const attribute = key.replace("range:", "");
-        range[attribute] = value;
+        range[attribute] = searchParams.get(key);
       }
       if (key === "sort") {
-        sortBy = `${ES_INDEX}_${value}`;
+        sortBy = `${ES_INDEX}_${searchParams.get(key)}`;
       }
       if (key === "page") {
-        page = value;
+        page = searchParams.get(key);
       }
     }
 
