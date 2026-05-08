@@ -16,7 +16,7 @@ const channels = [
     label: "Call Us",
     value: STORE_CONTACT,
     sub: "Mon–Fri 8am–6pm PST",
-    href: "tel:8885759720",
+    href: `tel:${STORE_CONTACT}`,
   },
   {
     icon: "✉️",
