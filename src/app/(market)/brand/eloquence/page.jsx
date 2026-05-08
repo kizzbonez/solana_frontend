@@ -13,7 +13,7 @@ import {
   createSlug,
   parseRatingCount,
   formatProduct,
-  formatPrice
+  formatPrice,
 } from "@/app/lib/helpers";
 
 export const metadata = {
@@ -286,25 +286,24 @@ const PriceFormatter = ({ price, was, save }) => {
         <div className="inline-block text-3xl relative text-[#e98f3b] font-bold mr-[30px]">
           <span className="text-sm self-start">$</span>
           {intPart}
-          <span className="absolute top-1 left-full text-sm">{decimalPart}</span>
+          <span className="absolute top-1 left-full text-sm">
+            {decimalPart}
+          </span>
         </div>
-        {
-          was &&
-        <div className="inline-block text-base relative text-neutral-600 line-through">
-          ${formatPrice(was)}
-        </div>
-        }
+        {was && (
+          <div className="inline-block text-base relative text-neutral-600 line-through">
+            ${formatPrice(was)}
+          </div>
+        )}
       </div>
       <div className="text-xs text-emerald-600">
-        {
-          save && `Save $${formatPrice(save)}`
-        }
+        {save && `Save $${formatPrice(save)}`}
       </div>
     </div>
   );
 };
 
-const ProductImage = ({ data }) => {
+const ProductImage = ({ data, className = "object-contain" }) => {
   if (!data?.images) return null;
   const image = data.images.find(({ position }) => position === 1);
   if (!image) return null;
@@ -314,7 +313,7 @@ const ProductImage = ({ data }) => {
       title={`${data.title}`}
       alt={`${createSlug(data.title)}-image`}
       fill
-      className="object-contain"
+      className={className}
       sizes="(max-width: 768px) 100vw, 300px"
     />
   );
@@ -356,62 +355,68 @@ const Block3 = async () => {
   ];
 
   return (
-    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20">
-      <div className="text-center mb-10">
-        <div className="w-8 h-[2px] bg-[#e98f3b] mx-auto mb-4" />
-        <h2 className="text-3xl sm:text-[40px] font-semibold leading-tight font-playfair-display text-stone-800">
-          Our <span className="text-[#e98f3b] italic">Best Sellers</span>
-        </h2>
+    <>
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20">
+        <div className="text-center mb-10">
+          <div className="w-8 h-[2px] bg-[#e98f3b] mx-auto mb-4" />
+          <h2 className="text-3xl sm:text-[40px] font-semibold leading-tight font-playfair-display text-stone-800">
+            Our <span className="text-[#e98f3b] italic">Best Sellers</span>
+          </h2>
+        </div>
       </div>
-      <CarouselWrap breakpoints={breakpoints}>
-        {products &&
-          products.map((item) => (
-            <div
-              key={`carousel-product-item-${item?.handle}`}
-              className="bg-white border border-stone-100 hover:border-[#e98f3b] hover:shadow-md transition-all duration-300 rounded-xl overflow-hidden group"
-            >
-              <Link
-                prefetch={false}
-                href={`${BASE_URL}/${createSlug(item?.brand)}/product/${item?.handle}`}
-                title={item?.title}
+      <div className="p-4 sm:px-6 md:py-20">
+        <CarouselWrap breakpoints={breakpoints}>
+          {products &&
+            products.map((item) => (
+              <div
+                key={`carousel-product-item-${item?.handle}`}
+                className="w-full relative min-w-0 bg-white border border-stone-100 hover:border-[#e98f3b] hover:shadow-md transition-all duration-300 rounded-xl overflow-hidden group"
               >
-                <div className="aspect-[4/3] relative bg-stone-50 w-full overflow-hidden">
-                  <div className="absolute inset-0 group-hover:scale-105 transition-transform duration-500">
-                    <ProductImage data={item} />
-                  </div>
-                </div>
-              </Link>
-              <div className="p-4 flex flex-col gap-3">
-                <div className="text-xs tracking-widest uppercase text-[#e98f3b] font-bold">
-                  {item?.brand}
-                </div>
                 <Link
                   prefetch={false}
                   href={`${BASE_URL}/${createSlug(item?.brand)}/product/${item?.handle}`}
-                  className="line-clamp-2 text-sm font-medium text-stone-800 group-hover:text-[#e53237] transition-colors duration-200 leading-snug"
                   title={item?.title}
+                  className="block"
                 >
-                  {item?.title}
+                  <div className="aspect-[4/3] relative bg-stone-50 w-full overflow-hidden">
+                    <ProductImage
+                      data={item}
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
                 </Link>
-                <StarRating rating={item?.ratings} />
-                <PriceFormatter
-                  price={item?.price}
-                  was={item?.was}
-                  save={item?.save_amt}
-                />
-                <AddToCartButtonWrap product={item}>
-                  <button
-                    className="w-full bg-[#e53237] text-white font-semibold rounded-full py-2 px-6 text-sm hover:bg-[#c62b30] transition-colors duration-300"
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="text-xs tracking-widest uppercase text-[#e98f3b] font-bold">
+                    {item?.brand}
+                  </div>
+                  <Link
+                    prefetch={false}
+                    href={`${BASE_URL}/${createSlug(item?.brand)}/product/${item?.handle}`}
+                    className="line-clamp-2 text-sm font-medium text-stone-800 group-hover:text-[#e53237] transition-colors duration-200 leading-snug"
                     title={item?.title}
                   >
-                    Buy Now
-                  </button>
-                </AddToCartButtonWrap>
+                    {item?.title}
+                  </Link>
+                  <StarRating rating={item?.ratings} />
+                  <PriceFormatter
+                    price={item?.price}
+                    was={item?.was}
+                    save={item?.save_amt}
+                  />
+                  <AddToCartButtonWrap product={item}>
+                    <button
+                      className="w-full bg-[#e53237] text-white font-semibold rounded-full py-2 px-6 text-sm hover:bg-[#c62b30] transition-colors duration-300"
+                      title={item?.title}
+                    >
+                      Buy Now
+                    </button>
+                  </AddToCartButtonWrap>
+                </div>
               </div>
-            </div>
-          ))}
-      </CarouselWrap>
-      <div className="text-center mt-10">
+            ))}
+        </CarouselWrap>
+      </div>
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20 text-center lg:mt-10">
         <Link
           prefetch={false}
           href={`${BASE_URL}/eloquence`}
@@ -420,7 +425,7 @@ const Block3 = async () => {
           View All Products →
         </Link>
       </div>
-    </div>
+    </>
   );
 };
 
