@@ -523,15 +523,45 @@ function CheckoutComponent() {
 
         const order_response = await createOrder(orders);
 
-        if (order_response.success) {
-          instance.teardown();
-          setInstance(null);
-          clearCartItems();
-          saveInformation(form?.save_information);
-          router.push(`${BASE_URL}/payment_success`);
-        } else {
-          alert("Something went wrong! Please try again.");
-        }
+        console.log("[ORDER RESPONSE]", order_response);
+
+        // if (order_response.success) {
+        //   const orderSummary = {
+        //     orderId:
+        //       order_response.data?.id ||
+        //       order_response.data?.order_id ||
+        //       order_response.data?.data?.id ||
+        //       null,
+        //     transactionId: result?.transaction?.id || null,
+        //     email: form?.shipping_email || "",
+        //     firstName: form?.shipping_first_name || "",
+        //     lastName: form?.shipping_last_name || "",
+        //     items: cartItems.map((item) => ({
+        //       title: item.title,
+        //       quantity: item.quantity,
+        //       price: item?.variants?.[0]?.price,
+        //       image: item.images?.find((img) => img.position === 1)?.src || null,
+        //     })),
+        //     cartTotal,
+        //     shipping: {
+        //       name: `${form.shipping_first_name} ${form.shipping_last_name}`.trim(),
+        //       address: form.shipping_address,
+        //       city: form.shipping_city,
+        //       state: form.shipping_province,
+        //       zip: form.shipping_zip_code,
+        //       country: form.shipping_country,
+        //     },
+        //     isLoggedIn,
+        //   };
+        //   sessionStorage.setItem("order_summary", JSON.stringify(orderSummary));
+        //   instance.teardown();
+        //   setInstance(null);
+        //   clearCartItems();
+        //   saveInformation(form?.save_information);
+        //   router.push(`${BASE_URL}/payment_success`);
+        // } else {
+        //   alert("Something went wrong! Please try again.");
+        // }
       } else {
         alert(`Payment failed: ${result.error}`);
       }

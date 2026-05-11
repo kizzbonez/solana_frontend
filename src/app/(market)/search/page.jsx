@@ -88,7 +88,7 @@ function BrandResults({ searchResult }) {
           <Link
             prefetch={false}
             key={`search-page-brand-result-${b.url}`}
-            href={`${BASE_URL}/${b.url}`}
+            href={b.url || "#"}
             className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-orange-400 hover:shadow-md transition-all group"
           >
             <div>

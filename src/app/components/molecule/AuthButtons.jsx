@@ -69,7 +69,7 @@ function AuthButtons({ uiVersion = 1 }) {
         <button
           type="button"
           onClick={() => setOpenLogin(true)}
-          className="w-full bg-theme-600 hover:bg-theme-700 text-white rounded-[4px] p-3 text-xs font-semibold"
+          className="w-full text-fire border border-fire rounded-xl p-3 text-xs font-semibold"
         >
           Sign In
         </button>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGoogleReCaptcha } from "@/app/context/recaptcha";
 import { BASE_URL } from "@/app/lib/helpers";
 import { useAuth } from "@/app/context/auth";
@@ -42,6 +42,23 @@ function RegisterForm() {
     password: "",
     password2: "",
   });
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("register_prefill");
+      if (!raw) return;
+      const prefill = JSON.parse(raw);
+      sessionStorage.removeItem("register_prefill");
+      setForm((prev) => ({
+        ...prev,
+        email: prefill.email || prev.email,
+        first_name: prefill.first_name || prev.first_name,
+        last_name: prefill.last_name || prev.last_name,
+      }));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -180,6 +197,7 @@ function RegisterForm() {
           <input
             name="first_name"
             placeholder="First Name"
+            value={form.first_name}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -192,6 +210,7 @@ function RegisterForm() {
           <input
             name="last_name"
             placeholder="Last Name"
+            value={form.last_name}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -205,6 +224,7 @@ function RegisterForm() {
             name="email"
             type="email"
             placeholder="Email"
+            value={form.email}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
