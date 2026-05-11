@@ -188,7 +188,7 @@ function ProductCard({ hit, page_details, onCompare }) {
               <path d="m21 21-4.35-4.35" />
             </svg>
           </button>
-          <AddToCartButtonWrap product={hit}>
+          <AddToCartButtonWrap product={{...formatProduct(hit,"card"), quantity:1}}>
             <button
               onClick={handleAdd}
               className={`w-full flex justify-center   items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${added ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}
