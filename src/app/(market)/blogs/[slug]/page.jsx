@@ -1,7 +1,7 @@
 const DEFAULT_URL = "https://bbq-blog.onsitestorage.com";
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   const DEFAULT_BLOG_IMAGE = `https://bbq-spaces.sfo3.digitaloceanspaces.com/uploads/blog-default.png`;
 
   const res = await fetch(
