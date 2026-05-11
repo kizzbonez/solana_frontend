@@ -73,7 +73,7 @@ export default function YouMayAlsoLike({ displayItems }) {
 
         // console.log("[YMAL DATA]", data);
         const formatted_data = data?.hits?.hits?.map(({ _source }) =>
-          formatProduct(_source, "card"),
+          ({...formatProduct(_source, "card"), quantity:1})
         );
         // console.log("[YMAL formatted_data]", formatted_data);
         setProducts(formatted_data);
