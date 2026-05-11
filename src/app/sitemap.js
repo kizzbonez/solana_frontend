@@ -118,7 +118,7 @@ async function fetchAllCategories() {
         aggs: {
           categories: {
             terms: {
-              field: "product_category.category_name.keyword",
+              field: "accentuate_data.category",
               size: 1000,
             },
           },
