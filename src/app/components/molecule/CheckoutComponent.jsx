@@ -260,6 +260,7 @@ function CheckoutComponent() {
   const dropinContainer = useRef(null);
   const [instance, setInstance] = useState(null);
   const [formError, setFormError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [forage, setForage] = useState(null);
   const { isLoggedIn, user, loading, updateProfile, userOrderCreate } = useAuth();
@@ -472,10 +473,13 @@ function CheckoutComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     setFormError(null);
 
     if (!executeRecaptcha) {
       setFormError("reCAPTCHA not available. Please refresh the page and try again.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -485,16 +489,19 @@ function CheckoutComponent() {
     } catch (err) {
       console.error("[Checkout] reCAPTCHA verification failed:", err);
       setFormError("reCAPTCHA verification failed. Please try again.");
+      setIsSubmitting(false);
       return;
     }
 
     if (!cartTotal?.allowPay) {
       setFormError("Please fill in your shipping postal code so we can calculate your shipping total.");
+      setIsSubmitting(false);
       return;
     }
 
     if (!instance) {
       setFormError("Payment UI is not initialized. Please refresh the page.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -503,6 +510,7 @@ function CheckoutComponent() {
       if (!nonce) {
         console.error("[Checkout] No nonce received from Braintree.");
         setFormError("Payment method error. Please try again.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -561,14 +569,17 @@ function CheckoutComponent() {
         } else {
           console.error("[Checkout] Order creation failed:", order_response);
           setFormError("Something went wrong creating your order. Please contact support.");
+          setIsSubmitting(false);
         }
       } else {
         console.error("[Checkout] Payment failed:", result.error);
         setFormError(result.error || "Payment failed. Please try again.");
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("[Checkout] Unexpected error:", error);
       setFormError("An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -835,10 +846,16 @@ function CheckoutComponent() {
                 )}
                 <button
                   type="submit"
-                  disabled={!cartItems?.length}
-                  className="w-full py-3.5 bg-fire hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
+                  disabled={!cartItems?.length || isSubmitting}
+                  className="w-full py-3.5 bg-fire hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  Complete Payment
+                  {isSubmitting && (
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  )}
+                  {isSubmitting ? "Processing…" : "Complete Payment"}
                 </button>
               </form>
             )}
