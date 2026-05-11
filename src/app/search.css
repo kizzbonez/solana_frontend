@@ -330,13 +330,13 @@ label.ais-RefinementList-label .ais-RefinementList-count {
 }
 
 .ais-Pagination-link:hover {
-  border-color: #fb923c;
-  color: #f97316;
+  border-color: var(--theme-primary-400);
+  color: var(--theme-primary-600);
 }
 
 .ais-Pagination-item--selected .ais-Pagination-link {
-  background-color: #f97316;
-  border-color: #f97316;
+  background-color: var(--theme-primary-600);
+  border-color: var(--theme-primary-600);
   color: #ffffff;
 }
 
@@ -357,8 +357,14 @@ label.ais-RefinementList-label .ais-RefinementList-count {
 }
 
 .dark .ais-Pagination-link:hover {
-  border-color: #f97316;
-  color: #fb923c;
+  border-color: var(--theme-primary-500);
+  color: var(--theme-primary-400);
+}
+
+.dark .ais-Pagination-item--selected .ais-Pagination-link {
+  background-color: var(--theme-primary-600);
+  border-color: var(--theme-primary-600);
+  color: #ffffff;
 }
 
 .dark .ais-Pagination-item--disabled .ais-Pagination-link {
