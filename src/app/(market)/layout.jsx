@@ -11,7 +11,7 @@ import { CategoriesProvider } from "@/app/context/category";
 import { CompareProductsProvider } from "@/app/context/compare_product";
 import { generateMetadata } from "@/app/metadata";
 import SessionWrapper from "@/app/components/wrapper/SessionWrapper";
-import ZohoSalesIQButton from "@/app/components/widget/ZohoSalesIQButton";
+import ConditionalZohoButton from "@/app/components/widget/ConditionalZohoButton";
 import { fetchUniqueCategories } from "@/app/lib/fn_server";
 import { notFound } from "next/navigation";
 import Topbar from "@/app/components/new-design/layout/Topbar";
@@ -130,7 +130,7 @@ export default async function MarketLayout({ children }) {
                           {children}
                         </main>
                         <Footer logo={redisLogo} />
-                        <ZohoSalesIQButton />
+                        <ConditionalZohoButton />
                       </QuickViewProvider>
                     </SessionWrapper>
                   </SearchProvider>
