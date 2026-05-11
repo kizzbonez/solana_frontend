@@ -259,6 +259,7 @@ function CheckoutComponent() {
   const { clearCartItems, fetchOrderTotal, loadCart, cartObject, cartItems } = useCart();
   const dropinContainer = useRef(null);
   const [instance, setInstance] = useState(null);
+  const [formError, setFormError] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [forage, setForage] = useState(null);
   const { isLoggedIn, user, loading, updateProfile, userOrderCreate } = useAuth();
@@ -471,33 +472,37 @@ function CheckoutComponent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setFormError(null);
+
     if (!executeRecaptcha) {
-      alert("reCAPTCHA not available. Please try again.");
+      setFormError("reCAPTCHA not available. Please refresh the page and try again.");
       return;
     }
 
     let recaptchaToken;
     try {
       recaptchaToken = await executeRecaptcha("checkout");
-    } catch {
-      alert("reCAPTCHA verification failed. Please try again.");
+    } catch (err) {
+      console.error("[Checkout] reCAPTCHA verification failed:", err);
+      setFormError("reCAPTCHA verification failed. Please try again.");
       return;
     }
 
     if (!cartTotal?.allowPay) {
-      alert("Please fill in your shipping postal code so we can calculate your shipping total.");
+      setFormError("Please fill in your shipping postal code so we can calculate your shipping total.");
       return;
     }
 
     if (!instance) {
-      alert("Payment UI is not initialized.");
+      setFormError("Payment UI is not initialized. Please refresh the page.");
       return;
     }
 
     try {
       const { nonce } = await instance.requestPaymentMethod();
       if (!nonce) {
-        alert("Error: No nonce received. Try again.");
+        console.error("[Checkout] No nonce received from Braintree.");
+        setFormError("Payment method error. Please try again.");
         return;
       }
 
@@ -554,13 +559,16 @@ function CheckoutComponent() {
           saveInformation(form?.save_information);
           router.push(`${BASE_URL}/payment_success`);
         } else {
-          alert("Something went wrong! Please try again.");
+          console.error("[Checkout] Order creation failed:", order_response);
+          setFormError("Something went wrong creating your order. Please contact support.");
         }
       } else {
-        alert(`Payment failed: ${result.error}`);
+        console.error("[Checkout] Payment failed:", result.error);
+        setFormError(result.error || "Payment failed. Please try again.");
       }
     } catch (error) {
-      console.error("Payment error:", error);
+      console.error("[Checkout] Unexpected error:", error);
+      setFormError("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -622,7 +630,8 @@ function CheckoutComponent() {
         const data = await res.json();
 
         if (!data.clientToken) {
-          alert("Error: No client token received");
+          console.error("[Checkout] Braintree client token not received.");
+          setFormError("Payment system unavailable. Please refresh the page or try again later.");
           return;
         }
 
@@ -816,6 +825,14 @@ function CheckoutComponent() {
                 </div>
 
                 {/* Submit */}
+                {formError && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3">
+                    <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <p className="text-xs text-red-600 dark:text-red-400 font-medium">{formError}</p>
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={!cartItems?.length}
