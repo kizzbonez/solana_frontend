@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useReveal } from "@/app/hooks/useReveal";
+import useReviews from "@/app/hooks/useReviews";
 
 const StarRow = ({ rating, size = "sm" }) => {
   const stars = Math.round(Number(rating) || 0);
@@ -129,29 +130,8 @@ function ReviewCard({ initial, gradient, user, comment, rating, product }) {
 }
 
 export default function Reviews() {
-  const [reviewDetails, setReviewDetails] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { reviewDetails, loading } = useReviews();
   const hdrRef = useReveal();
-
-  useEffect(() => {
-    const fetchAllProductReviews = async () => {
-      try {
-        const response = await fetch("/api/reviews/list", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message || `Error: ${response.status}`);
-        setReviewDetails(data);
-      } catch (error) {
-        console.error("Failed to fetch reviews:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllProductReviews();
-  }, []);
 
   const avgRating = reviewDetails?.summary?.average_rating;
   const totalReviews = reviewDetails?.summary?.total_reviews;

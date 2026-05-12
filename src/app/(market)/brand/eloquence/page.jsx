@@ -5,8 +5,8 @@ import { Suspense } from "react";
 import MobileLoader from "@/app/components/molecule/MobileLoader";
 import AddToCartButtonWrap from "@/app/components/atom/AddToCartButtonWrap";
 import CarouselWrap from "@/app/components/atom/CarouselWrap";
-import { Rating } from "@smastrom/react-rating";
 import StarRating from "@/app/components/new-design/ui/StarRating";
+import Reviews from "@/app/components/brand/Reviews";
 import SubscribeWidget from "@/app/components/new-design/ui/SubscribeWidget";
 
 import {
@@ -53,29 +53,6 @@ const CATEGORIES = [
   },
 ];
 
-const REVIEWS = [
-  {
-    rating: 5,
-    title: "Unlock Your Inner Chef",
-    text: "I'm thrilled with this Blaze grill! It's live having a professional grade.",
-    img: "/images/home/user-profile-review-1.webp",
-    name: "Rendell Silver",
-  },
-  {
-    rating: 5,
-    title: "Impressive Quality",
-    text: "What a fantastic grill! This Grandeur Premium has...",
-    img: "/images/home/user-profile-review-1.webp",
-    name: "Zachary Pugh",
-  },
-  {
-    rating: 5,
-    title: "Super Team",
-    text: "Great customer service and even sent me a replacement...",
-    img: "/images/home/user-profile-review-2.webp",
-    name: "Sarah Smith",
-  },
-];
 
 const BLOGS = [
   {
@@ -430,80 +407,6 @@ const Block3 = async () => {
   );
 };
 
-const Reviews = () => {
-  const breakpoints = [
-    { minWidth: 0, value: 1 },
-    { minWidth: 1024, value: 2 },
-    { minWidth: 1280, value: 3 },
-  ];
-
-  return (
-    <div className="w-full mt-10">
-      <div className="max-w-[1240] mx-auto">
-        <div className="flex-col lg:flex-row flex gap-[50px] lg:gap-[10px] items-center">
-          <div className="lg:w-[30%] lg:p-[20px] flex flex-col gap-[8px] justify-center text-center lg:justify-normal lg:text-left">
-            <h2 className="text-[#e98f3b] text-[40px] font-medium leading-[120%] italic font-playfair-display">
-              Our customer reviews
-            </h2>
-            <div className="flex justify-center lg:justify-start">
-              <Rating
-                readOnly
-                value={4.5}
-                fractions={2}
-                style={{ maxWidth: 150 }}
-              />
-            </div>
-            <div className="text-xs lg:text-base">
-              4.4 stars out of based from{" "}
-              <span className="underline cursor-pointer">122 reviews</span>
-            </div>
-            <div className="flex justify-center lg:justify-start">
-              <div className="w-[250px] border border-stone-500 bg-stone-200 h-[35px] rounded-lg overflow-hidden">
-                <div className="h-[35px] w-[90%] bg-amber-400 border-t border-t-white" />
-              </div>
-            </div>
-            <div className="text-xs lg:text-sm underline text-stone-700 cursor-pointer">
-              Write a review
-            </div>
-          </div>
-          <div className="w-full lg:w-[70%] flex-col lg:flex-row flex gap-[10px] min-h-[227px]">
-            <CarouselWrap breakpoints={breakpoints}>
-              {REVIEWS.map((i, idx) => (
-                <div key={`review-${idx}`} className="bg-white w-full p-[20px]">
-                  <div className="flex flex-col gap-[15px] justify-center items-center text-center">
-                    <div className="flex text-center justify-center">
-                      <Rating
-                        readOnly
-                        value={i.rating}
-                        style={{ maxWidth: 150 }}
-                      />
-                    </div>
-                    <div className="font-extrabold text-sm lg:text-base">
-                      {i.title}
-                    </div>
-                    <div className="text-xs lg:text-sm">{i.text}</div>
-                    <div className="flex items-center justify-center">
-                      <div className="relative w-[30px] h-[30px]">
-                        <Image
-                          src={i.img}
-                          alt={`${i.name}-image`}
-                          className="w-full h-full object-cover"
-                          width={200}
-                          height={200}
-                        />
-                      </div>
-                      <div className="text-xs text-stone-700">{i.name}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CarouselWrap>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const Block5 = () => (
   <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-12 md:py-20">
