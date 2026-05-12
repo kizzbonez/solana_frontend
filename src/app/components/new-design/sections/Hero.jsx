@@ -39,11 +39,6 @@ function TopbarRow({ cta, label }) {
     <div className="bg-charcoal dark:bg-black py-2.5 text-[11px] border-b border-white/5 last:border-0">
       <div className="max-w-[1240px] mx-auto px-6">
         <div className="hidden md:flex items-center justify-between">
-          {/* Label (delete once you pick one) */}
-          <span className="text-white/20 font-mono text-[10px] w-16 shrink-0">
-            {label}
-          </span>
-
           <h2 className="font-normal tracking-wide text-xs">
             <span className="text-white font-semibold uppercase tracking-[.1em] italic">
               ✦ Name Your Price
