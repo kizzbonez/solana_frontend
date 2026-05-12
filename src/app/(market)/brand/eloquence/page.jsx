@@ -7,7 +7,7 @@ import AddToCartButtonWrap from "@/app/components/atom/AddToCartButtonWrap";
 import CarouselWrap from "@/app/components/atom/CarouselWrap";
 import StarRating from "@/app/components/new-design/ui/StarRating";
 import Reviews from "@/app/components/brand/Reviews";
-import SubscribeWidget from "@/app/components/new-design/ui/SubscribeWidget";
+import NewsletterSection from "@/app/components/brand/NewsletterSection";
 
 import {
   BASE_URL,
@@ -510,24 +510,6 @@ const Blogs = () => (
   </div>
 );
 
-const Newsletter = () => (
-  <div className="bg-stone-900 py-16 md:py-24">
-    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 flex flex-col items-center gap-6 text-center">
-      <div className="w-8 h-[2px] bg-[#e98f3b] mx-auto" />
-      <h2 className="text-2xl sm:text-3xl font-playfair-display font-semibold text-white leading-tight">
-        Stay in the Loop
-      </h2>
-      <p className="text-stone-400 text-sm sm:text-base max-w-md leading-relaxed">
-        Subscribe for exclusive sales, recipes, guides, and backyard inspiration
-        delivered straight to your inbox.
-      </p>
-      <SubscribeWidget label="Subscribe →" />
-      <p className="text-stone-600 text-xs">
-        No spam. Unsubscribe at any time.
-      </p>
-    </div>
-  </div>
-);
 
 export default async function EloquencePage() {
   return (
@@ -543,7 +525,7 @@ export default async function EloquencePage() {
       <Reviews />
       <Block5 />
       <Blogs />
-      <Newsletter />
+      <NewsletterSection />
     </>
   );
 }
