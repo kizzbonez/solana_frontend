@@ -79,7 +79,7 @@ export default function Navbar({ logo }) {
     >
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         {/* ── Row 1: Logo + Search + Actions ── */}
-        <div className="flex items-center h-16 gap-2 sm:gap-4">
+        <div className="flex items-center justify-between h-16 gap-2 sm:gap-4">
           {/* Logo — flex-none so it never shrinks; width set on the inner div */}
           <Link
             href="/"
@@ -109,8 +109,8 @@ export default function Navbar({ logo }) {
             )}
           </Link>
 
-          {/* Search — flex-1 so it consumes all space between logo and buttons */}
-          <div className="flex-1 min-w-0">
+          {/* Search — desktop only inside Row 1 */}
+          <div className="hidden lg:flex flex-1 min-w-0">
             <SearchBox />
           </div>
 
@@ -147,6 +147,11 @@ export default function Navbar({ logo }) {
               />
             </button>
           </div>
+        </div>
+
+        {/* ── Row 1b: Search — mobile only ── */}
+        <div className="lg:hidden pb-3">
+          <SearchBox />
         </div>
 
         {/* ── Row 2: Nav Links — desktop only ── */}
