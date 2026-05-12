@@ -340,7 +340,7 @@ const ScrollOnPaginate = ({ targetRef }) => {
   return null;
 };
 
-const InnerUI = ({ category, page_details, onDataLoaded }) => {
+const InnerUI = ({ category, page_details, onDataLoaded, initialHits }) => {
   const { status, results } = useInstantSearch();
   const [loadHint, setLoadHint] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -378,6 +378,11 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
       document.body.style.overflow = "";
     };
   }, [mobileFiltersOpen]);
+
+  // Show the pre-fetched static grid until InstantSearch has its own results.
+  // Once live results arrive the swap is invisible — same products, same order.
+  const hasLiveResults = results && results.nbHits !== undefined && results.nbHits > 0;
+  const showStaticHits = !hasLiveResults && !!initialHits?.length;
 
   // Memoized so FilterContent doesn't re-render when unrelated state changes
   const filters = useMemo(
@@ -522,7 +527,22 @@ const InnerUI = ({ category, page_details, onDataLoaded }) => {
           </div>
           <QueryRulesBanner />
           <ScrollOnPaginate targetRef={productSectionRef} />
-          <Hits hitComponent={hitComponent} />
+          {showStaticHits ? (
+            <div className="ais-Hits">
+              <ol className="ais-Hits-list">
+                {initialHits.map((hit) => (
+                  <li
+                    key={hit.objectID || hit.product_id}
+                    className="ais-Hits-item"
+                  >
+                    <SPProductCard hit={hit} page_details={page_details} />
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : (
+            <Hits hitComponent={hitComponent} />
+          )}
           <Pagination />
         </div>
       </div>
@@ -635,13 +655,22 @@ function ProductsSectionV2({
   search = "",
   filterType = null,
   initialFilterString = "",
+  initialHits = null,
 }) {
   const { categories, flatCategories } = useSolanaCategories();
   const [pageDetails, setPageDetails] = useState(null);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  // Start loaded immediately when we have server-prefetched hits — no skeleton shown.
+  const [dataLoaded, setDataLoaded] = useState(!!initialHits?.length);
   // initialFilterString comes from the server so InstantSearch has the right
   // filter on the very first render — before the context useEffect resolves.
   const [filterString, setFilterString] = useState(initialFilterString);
+
+  // When initial hits are present, never allow the loader to re-appear while
+  // InstantSearch is warming up — the static grid covers that window.
+  const handleDataLoaded = useCallback(
+    (loaded) => setDataLoaded(initialHits?.length ? true : loaded),
+    [initialHits?.length],
+  );
 
   // Computed once from the initial URL — URLHandler takes over after mount
   const initialUiState = useRef(
@@ -740,7 +769,8 @@ function ProductsSectionV2({
             <InnerUI
               category={category}
               page_details={pageDetails}
-              onDataLoaded={setDataLoaded}
+              onDataLoaded={handleDataLoaded}
+              initialHits={initialHits}
             />
           </InstantSearch>
         </div>

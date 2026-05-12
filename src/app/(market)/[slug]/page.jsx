@@ -1,10 +1,11 @@
 import "@/app/styles/product-pages.css";
 
 import { notFound } from "next/navigation";
+import { unstable_cache } from "next/cache";
 
 import { keys, redis } from "@/app/lib/redis";
 import { STORE_NAME } from "@/app/lib/store_constants";
-import { getRootByUrl, getPageData, BASE_URL, BaseNavKeys } from "@/app/lib/helpers";
+import { getRootByUrl, getPageData, BASE_URL, BaseNavKeys, ES_INDEX } from "@/app/lib/helpers";
 import { fetchCollectionsCount } from "@/app/lib/fn_server";
 
 import NewProductGallery from "@/app/components/new-design/page/ProductGallery";
@@ -30,6 +31,41 @@ function computeFilterString(d) {
     return `page_category1:${d.name}:${d.filter_type}`;
   return "";
 }
+
+// Fetches and caches the first-page product hits for a given filter string.
+// Cached for 24h (revalidate: 86400) and tagged so the /api/revalidate-plp
+// endpoint can bust all PLP caches instantly when product data is updated.
+// Throws on failure so unstable_cache never caches an error response.
+const getInitialHits = unstable_cache(
+  async (filterString) => {
+    const body = [
+      {
+        indexName: ES_INDEX,
+        params: {
+          hitsPerPage: 30,
+          page: 0,
+          query: "",
+          ...(filterString ? { filter: filterString } : {}),
+        },
+      },
+    ];
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_BASE_URL}/api/es/searchkit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!res.ok) throw new Error(`Searchkit prefetch failed: ${res.status}`);
+    const data = await res.json();
+    const hits = data?.[0]?.hits;
+    if (!hits?.length) throw new Error("No hits returned");
+    return hits;
+  },
+  ["plp-initial-hits"],
+  { revalidate: 86400, tags: ["plp-initial-hits"] },
+);
 
 const defaultMenuKey = keys.dev_shopify_menu.value;
 
@@ -87,7 +123,13 @@ export default async function GenericCategoryPage({ params }) {
     .map((item) => item?.collection_display?.id)
     .filter(Boolean);
 
-  const collection_aggs = await fetchCollectionsCount(collection_ids);
+  const filterString = computeFilterString(pageData);
+
+  const [collection_aggs, initialHits] = await Promise.all([
+    fetchCollectionsCount(collection_ids),
+    getInitialHits(filterString).catch(() => null),
+  ]);
+
   const buckets =
     collection_aggs?.aggregations?.counts_per_collection?.buckets || [];
 
@@ -108,7 +150,8 @@ export default async function GenericCategoryPage({ params }) {
       slug={slug}
       config={{ root: rootNav, url, subs }}
       filterType={pageData?.filter_type ?? null}
-      initialFilterString={computeFilterString(pageData)}
+      initialFilterString={filterString}
+      initialHits={initialHits}
     />
   );
 }

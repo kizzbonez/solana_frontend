@@ -19,7 +19,17 @@ import {
 import { fixObservableSubclass } from "@apollo/client/utilities";
 import { redis } from "../../../app/lib/redis";
 
-const CACHE_TTL = 60; // seconds
+const CACHE_TTL = 60; // seconds for filtered/paginated requests
+const INITIAL_PAGE_TTL = 86400; // 24h for page-0, unfiltered requests
+
+// Page-0 requests with no search query are the "initial load" state for each
+// PLP page. These are safe to cache for 24h since the server-side prefetch
+// (unstable_cache in page.jsx) keeps the data fresh and busts this alongside it.
+function isInitialPageRequest(body) {
+  if (!Array.isArray(body) || !body[0]) return false;
+  const { page = 0, query = "" } = body[0].params || {};
+  return page === 0 && query === "";
+}
 
 function buildCacheKey(body) {
   const hash = crypto
@@ -70,6 +80,7 @@ export default async function handler(req, res) {
 
   // Check Redis cache before hitting Elasticsearch
   const cacheKey = buildCacheKey(req.body);
+  const cacheTTL = isInitialPageRequest(req.body) ? INITIAL_PAGE_TTL : CACHE_TTL;
   try {
     const cached = await redis.get(cacheKey);
     if (cached) {
@@ -418,7 +429,7 @@ export default async function handler(req, res) {
 
     // Store in Redis for subsequent identical requests
     try {
-      await redis.set(cacheKey, results, { ex: CACHE_TTL });
+      await redis.set(cacheKey, results, { ex: cacheTTL });
     } catch (cacheErr) {
       console.warn("[searchkit] Redis write failed:", cacheErr.message);
     }
