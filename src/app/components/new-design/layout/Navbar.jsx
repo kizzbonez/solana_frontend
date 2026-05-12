@@ -234,38 +234,41 @@ export default function Navbar({ logo }) {
           </Link>
         </div>
 
-        {/* ── Mobile Menu ── */}
-        {menuOpen && (
-          <div className="lg:hidden border-t border-stone-100 dark:border-stone-800 py-4 flex flex-col gap-1">
+      </div>
+
+      {/* ── Mobile Menu — absolute so it overlays content below ── */}
+      {menuOpen && (
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-charcoal border-b border-stone-100 dark:border-stone-800 shadow-lg z-30">
+          <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4 flex flex-col gap-1">
             {NAV_LINKS.map(({ name, url, id }) => (
               <Link
                 key={`mobile-nav-item-${id}`}
                 href={`${BASE_URL}/${url}`}
                 prefetch={false}
+                onClick={() => setMenuOpen(false)}
                 className="px-3 py-2.5 text-sm font-medium text-charcoal dark:text-stone-200 hover:text-fire hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg transition-colors"
               >
                 {name}
               </Link>
             ))}
-            {/* <Link href="#" className="px-3 py-2.5 text-sm font-semibold text-fire">Open Box</Link> */}
             <Link
               href={`${BASE_URL}/brand/eloquence`}
+              onClick={() => setMenuOpen(false)}
               className="px-3 py-2.5 text-sm font-semibold text-fire"
             >
               Current Deals 🔥
             </Link>
             <Link
               href={PHONE_HREF}
+              onClick={() => setMenuOpen(false)}
               className="mt-2 flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-charcoal dark:text-white"
             >
-              <span className="text-fire">
-                <PhoneIcon />
-              </span>{" "}
+              <span className="text-fire"><PhoneIcon /></span>
               {PHONE}
             </Link>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </nav>
   );
 }
