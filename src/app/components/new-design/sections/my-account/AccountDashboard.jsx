@@ -8,6 +8,7 @@ import { subscribe, unsubscribe } from "@/app/lib/api";
 // ─── Newsletter ───────────────────────────────────────────────────────────────
 
 function NewsletterSection({ email }) {
+  const { user } = useAuth();
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -29,15 +30,93 @@ function NewsletterSection({ email }) {
     }
   };
 
+  if (user?.is_subscribed)
+    return (
+      <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500 flex-shrink-0">
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+              />
+            </svg>
+          </span>
+          <h3 className="text-sm font-bold text-charcoal dark:text-white">
+            Newsletter
+          </h3>
+          <span className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-semibold">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-3 h-3"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Subscribed
+          </span>
+        </div>
+
+        <p className="text-sm font-semibold text-charcoal dark:text-white mb-1">
+          You&rsquo;re all caught up!
+        </p>
+        <p className="text-xs text-stone-500 dark:text-stone-400 mb-5 leading-relaxed">
+          You&rsquo;ll keep receiving product drops, seasonal discounts, and
+          outdoor living inspiration.
+        </p>
+        <button
+          onClick={async () => {
+            if (loading) return;
+            setLoading(true);
+            try {
+              await unsubscribe(email);
+            } catch (err) {
+              console.warn("[NewsletterSection]", err);
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          className="px-4 py-2 border border-stone-200 dark:border-stone-700 text-xs font-semibold text-stone-500 dark:text-stone-400 hover:border-red-300 hover:text-red-500 dark:hover:border-red-800 dark:hover:text-red-400 rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {loading ? "Updating…" : "Unsubscribe"}
+        </button>
+      </div>
+    );
+
   return (
     <div className="bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 p-6">
       <div className="flex items-center gap-3 mb-4">
         <span className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center text-orange-500 flex-shrink-0">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
+            />
           </svg>
         </span>
-        <h3 className="text-sm font-bold text-charcoal dark:text-white">Newsletter</h3>
+        <h3 className="text-sm font-bold text-charcoal dark:text-white">
+          Newsletter
+        </h3>
       </div>
 
       {isSubscribed ? (
@@ -46,7 +125,8 @@ function NewsletterSection({ email }) {
             You're subscribed!
           </p>
           <p className="text-xs text-stone-500 dark:text-stone-400 mb-5 leading-relaxed">
-            You'll keep receiving product drops, seasonal discounts, and outdoor living inspiration.
+            You'll keep receiving product drops, seasonal discounts, and outdoor
+            living inspiration.
           </p>
           <button
             onClick={handleToggle}
@@ -85,8 +165,18 @@ const quickLinks = [
     description: "View your order history",
     href: `${BASE_URL}/my-account/orders`,
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+        />
       </svg>
     ),
   },
@@ -95,8 +185,18 @@ const quickLinks = [
     description: "Manage addresses",
     href: `${BASE_URL}/my-account/profile`,
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+        />
       </svg>
     ),
   },
@@ -105,8 +205,18 @@ const quickLinks = [
     description: "Update your password",
     href: `${BASE_URL}/my-account/change-password`,
     icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+        />
       </svg>
     ),
   },
@@ -153,15 +263,27 @@ export default function AccountDashboard() {
 
         <p className="text-xs text-stone-500 dark:text-stone-400 mt-5 leading-relaxed">
           From your dashboard you can view your recent{" "}
-          <Link prefetch={false} href={`${BASE_URL}/my-account/orders`} className="text-fire hover:text-orange-600 font-semibold transition-colors">
+          <Link
+            prefetch={false}
+            href={`${BASE_URL}/my-account/orders`}
+            className="text-fire hover:text-orange-600 font-semibold transition-colors"
+          >
             orders
           </Link>
           , manage your{" "}
-          <Link prefetch={false} href={`${BASE_URL}/my-account/profile`} className="text-fire hover:text-orange-600 font-semibold transition-colors">
+          <Link
+            prefetch={false}
+            href={`${BASE_URL}/my-account/profile`}
+            className="text-fire hover:text-orange-600 font-semibold transition-colors"
+          >
             shipping and billing addresses
           </Link>
           , and update your{" "}
-          <Link prefetch={false} href={`${BASE_URL}/my-account/change-password`} className="text-fire hover:text-orange-600 font-semibold transition-colors">
+          <Link
+            prefetch={false}
+            href={`${BASE_URL}/my-account/change-password`}
+            className="text-fire hover:text-orange-600 font-semibold transition-colors"
+          >
             password
           </Link>
           .
@@ -184,7 +306,9 @@ export default function AccountDashboard() {
               <p className="text-xs font-semibold text-charcoal dark:text-white group-hover:text-fire transition-colors truncate">
                 {label}
               </p>
-              <p className="text-[10px] text-stone-400 dark:text-stone-500 truncate">{description}</p>
+              <p className="text-[10px] text-stone-400 dark:text-stone-500 truncate">
+                {description}
+              </p>
             </div>
           </Link>
         ))}
