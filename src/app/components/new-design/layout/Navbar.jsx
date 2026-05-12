@@ -79,15 +79,15 @@ export default function Navbar({ logo }) {
     >
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
         {/* ── Row 1: Logo + Search + Actions ── */}
-        <div className="flex items-center h-16 gap-4">
-          {/* Logo */}
+        <div className="flex items-center h-16 gap-2 sm:gap-4">
+          {/* Logo — flex-none so it never shrinks; width set on the inner div */}
           <Link
             href="/"
-            className="flex items-center gap-2 flex-none w-8 sm:w-auto"
+            className="flex items-center gap-2 flex-none"
           >
             {!logo && (
               <>
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fire to-red-700 flex items-center justify-center text-lg">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-fire to-red-700 flex items-center justify-center text-lg flex-shrink-0">
                   🔥
                 </div>
                 <span className="font-serif font-bold text-xl text-charcoal dark:text-white hidden sm:block">
@@ -96,26 +96,26 @@ export default function Navbar({ logo }) {
               </>
             )}
             {logo && (
-              <div className="relative w-[120px] aspect-2">
-                {
-                  <Image
-                    src={logo}
-                    alt={`${STORE_NAME} logo`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-contain transition-transform duration-300 group-hover:scale-105"
-                    priority={false} // Set to true if this is "above the fold"
-                  />
-                }
+              <div className="relative w-[72px] sm:w-[120px] aspect-[2/1] flex-shrink-0">
+                <Image
+                  src={logo}
+                  alt={`${STORE_NAME} logo`}
+                  fill
+                  sizes="(max-width: 640px) 72px, 120px"
+                  className="object-contain"
+                  priority={false}
+                />
               </div>
             )}
           </Link>
 
-          {/* Search */}
-          <SearchBox />
+          {/* Search — flex-1 so it consumes all space between logo and buttons */}
+          <div className="flex-1 min-w-0">
+            <SearchBox />
+          </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2 flex-none w-[88px] md:w-auto">
+          {/* Actions — flex-none, no fixed width; gap tightened on mobile */}
+          <div className="flex items-center gap-1 sm:gap-2 flex-none">
             {/* Phone — hidden on mobile/tablet */}
             <Link
               href={PHONE_HREF}
