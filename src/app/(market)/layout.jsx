@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { unstable_cache } from "next/cache";
 import "@/app/globals.css";
 import { THEME_COLORS } from "@/app/data/theme-colors";
 import { redis, keys } from "@/app/lib/redis";
@@ -38,24 +39,27 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata = await generateMetadata();
 
-async function getInitData() {
-  try {
-    const mgetKeys = [
-      keys.dev_shopify_menu.value,
-      keys.logo.value,
-      keys.theme.value,
-    ];
+// Both cached for 24h under the "layout-data" tag.
+// Bust via GET /api/revalidate-all?secret=... after updating menu, logo, theme, or categories.
+const getInitData = unstable_cache(
+  async () => {
+    const mgetKeys = [keys.dev_shopify_menu.value, keys.logo.value, keys.theme.value];
     return await redis.mget(mgetKeys);
-  } catch (err) {
-    console.error("[Redis Init Error]:", err);
-    return null;
-  }
-}
+  },
+  ["layout-init-data"],
+  { revalidate: 86400, tags: ["layout-data"] },
+);
+
+const getCachedCategories = unstable_cache(
+  () => fetchUniqueCategories(),
+  ["layout-categories"],
+  { revalidate: 86400, tags: ["layout-data"] },
+);
 
 export default async function MarketLayout({ children }) {
   const [initData, categories] = await Promise.all([
     getInitData(),
-    fetchUniqueCategories(),
+    getCachedCategories(),
   ]);
 
   if (!initData) {
