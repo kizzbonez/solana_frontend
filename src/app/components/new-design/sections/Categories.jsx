@@ -8,7 +8,7 @@ import Link from "next/link";
 
 const INITIAL_COUNT = 4;
 
-function CategoryCard({ name, description, slug, image }) {
+function CategoryCard({ name, description, slug, image, index }) {
   const ref = useReveal();
   return (
     <Link href={slug ? `/category/${slug}` : "#"} aria-label={name} title={name} prefetch={false}>
@@ -31,6 +31,7 @@ function CategoryCard({ name, description, slug, image }) {
             sizes="(max-width: 1024px) calc(50vw - 2rem), calc(33vw - 2rem)"
             className="object-cover transition-transform duration-500 hover:scale-105"
             quality={40}
+            priority={index === 0}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
           <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
@@ -87,8 +88,8 @@ export default function Categories() {
 
         {/* Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visible.map((c) => (
-            <CategoryCard key={c.slug} {...c} />
+          {visible.map((c, i) => (
+            <CategoryCard key={c.slug} {...c} index={i} />
           ))}
         </div>
 

@@ -27,6 +27,7 @@
 - [x] **Lazy-load Zoho SalesIQ** — moved from `<head>` to `LazyZohoLoader` client component. Fixes render-blocking (400ms), TBT (~600ms), and forced reflow.
 - [x] **Remove Zoho idle timer** — removed the 6s fallback timeout from `LazyZohoLoader`. Zoho now only loads on first user interaction (scroll, click, etc.). Root cause: the 6s timer fired within PageSpeed's ~10s trace window; Zoho then injected its own `<link rel="stylesheet">` and `<script>` tags into `<head>`, which PageSpeed flagged as render-blocking (300ms). PageSpeed's bot never interacts, so Zoho is now invisible to it entirely. Real users who interact still get the chat widget.
 - [x] **Remove `Cache-Control: no-store` from homepage header** — this header in `next.config.ts` was overriding `export const revalidate = 86400`, preventing Vercel's CDN from caching the homepage HTML. Every request was hitting the origin server (~200–400ms TTFB) instead of the CDN edge (~50ms). Removed the conflicting header so ISR actually works.
+- [x] **Fix LCP image lazy-loading** — Navbar logo had `priority={false}` (explicit lazy load). First category card in `Categories.jsx` had no `priority` prop (default lazy). Both are above the fold on mobile. Fixed: logo → `priority`, first category card → `priority={index === 0}`. Next.js now injects `<link rel="preload">` in `<head>` for both, so the browser starts downloading them before React hydrates.
 - [x] **Fix preconnects in layout** — removed `preconnect` for CDN origins, kept `dns-prefetch` only. Keeps total preconnects under browser's 4-connection warning (Next.js adds 2 for Google Fonts automatically).
 - [x] **Hero card image `priority`** — added `priority={index === 0}` to first card in `Hero.jsx`. Injects `<link rel="preload">` in `<head>` for desktop LCP fix.
 - [x] **Categories.jsx `sizes` fix** — corrected from `calc(100vw - 2rem)` to `calc(50vw - 2rem)` on mobile. Grid is 2-column on mobile so each image is half viewport width — halves image download size on mobile.
@@ -39,31 +40,44 @@
 
 ## Remaining Issues
 
-### 🔴 High Priority
+> **Current focus: LCP = 3.4s (🔴). Target: under 2.5s.**
+> Priority order for LCP impact: Image delivery → Network dependency tree → Render blocking → Unused CSS → Forced reflow → Unused JS → Legacy JS
 
-- [ ] **Identify mobile LCP element** — PageSpeed tests mobile by default. Hero cards are `hidden md:flex` so desktop `priority` fix doesn't help mobile. Open Chrome DevTools → Lighthouse → mobile run → expand LCP opportunity to find exact element. Then optimize that specific image/element.
+---
 
-- [ ] **Compress hero images** — `home-gas-fireplace.webp` and `home-built-in-grills.webp` are served at full resolution. Use [Squoosh](https://squoosh.app): target under 80KB each at 1200px wide, WebP quality 75–80. Could drop LCP by 0.5–1s.
+### 🔴 LCP — Fix in this order
+
+- [x] **1. Improve image delivery** — Identified mobile LCP element as first category card image (`grills-and-smokers.webp` from `Categories.jsx`) and Navbar logo. Both had `loading="lazy"` which delayed the LCP download. Fixed: added `priority={index === 0}` to first `CategoryCard` image (injects `<link rel="preload">` in `<head>`) and changed Navbar logo from `priority={false}` to `priority`. Source images are already reasonable size; Next.js serves them at `quality={40}` through `/_next/image`. Expected LCP improvement: 0.5–1s.
+
+- [ ] **2. Network dependency tree** — Check whether the LCP image URL is discoverable in the initial HTML or is injected by JS after hydration. If the browser can't see the image URL until React renders, it can't start downloading early. Fix: ensure LCP image is rendered server-side with `priority` so Next.js emits a `<link rel="preload">` in `<head>`.
+
+- [ ] **3. Render blocking requests** — Two Next.js CSS bundles (`data-precedence="next"`) remain. React 19 streaming CSS — not directly fixable, but reducing CSS bundle size (item 6 below) shrinks them.
+
+- [ ] **4. Forced reflow** — JS reading layout properties after DOM writes forces synchronous layout recalculation, delaying LCP paint. Check DevTools → Performance tab → look for "Recalculate Style / Layout" events during the LCP window. Often caused by third-party scripts or carousel/slider libraries.
+
+---
+
+### 🔴 High Priority (other)
 
 - [ ] **Audit and lazy-load all third-party scripts** — check production HTML source for Google Analytics, Facebook Pixel, TikTok, Hotjar, etc. Every eager third-party script costs 100–400ms TBT *and* causes score fluctuation between runs. Each should be lazy-loaded like Zoho. **This is also the #1 fix for score consistency.**
 
 ### 🟡 Medium Priority
 
-- [ ] **Reduce unused JavaScript — 23KiB savings** — run bundle analyzer to identify what's being shipped but not used on the homepage:
+- [ ] **5. Reduce unused CSS — 21KiB savings** — verify Tailwind `content` array in `tailwind.config.js` covers all component paths. A missing glob means those components' class names never get purged in production. Smaller CSS = faster render start = earlier LCP.
+
+- [ ] **6. Reduce unused JavaScript — 23KiB savings** — run bundle analyzer to identify what's being shipped but not used on the homepage:
   ```bash
   ANALYZE=true next build
   ```
   Install `@next/bundle-analyzer` first. Look for large chunks loaded on `/` that can be deferred or removed.
 
-- [ ] **Reduce unused CSS — 21KiB savings** — verify Tailwind `content` array in `tailwind.config.js` covers all component paths. A missing glob means those components' class names never get purged in production.
-
-- [ ] **Legacy JavaScript — 14KiB savings** — likely from a third-party library shipping ES5. Identify via DevTools → Coverage tab → reload → sort by unused bytes. Usually fixable by importing a modern alternative or updating the package.
+- [ ] **7. Legacy JavaScript — 14KiB savings** — likely from a third-party library shipping ES5. Identify via DevTools → Coverage tab → reload → sort by unused bytes. Usually fixable by importing a modern alternative or updating the package.
 
 ### 🟢 Low Priority / External
 
 - [ ] **Minimize main-thread work (3.8s)** — partially improved by Zoho lazy load. Remaining work is React hydration cost + any other synchronous JS. Hard to improve without major architecture changes.
 
-- [ ] **Network dependency tree warning** — chain of resources where one blocks the next. Identify via DevTools → Performance tab → waterfall view. Usually resolved by preloading critical resources or deferring non-critical ones.
+- [ ] **Re-enable HeroBackground image** — `HeroBackground.jsx` currently returns `null`. If re-enabled with `priority` and proper compression, it could become the mobile LCP element and load fast. Evaluate after identifying the current mobile LCP element.
 
 - [ ] **Re-enable HeroBackground image** — `HeroBackground.jsx` currently returns `null` (image commented out). If re-enabled with `priority` and proper compression, it could become the LCP element and load fast. Evaluate whether the visual benefit is worth it.
 

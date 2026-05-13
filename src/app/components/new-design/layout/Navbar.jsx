@@ -103,7 +103,7 @@ export default function Navbar({ logo }) {
                   fill
                   sizes="(max-width: 640px) 72px, 120px"
                   className="object-contain"
-                  priority={false}
+                  priority
                 />
               </div>
             )}
