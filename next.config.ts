@@ -105,10 +105,6 @@ const config: NextConfig = {
         source: "/",
         headers: [
           {
-            key: "Cache-Control",
-            value: "no-store",
-          },
-          {
             key: "Content-Security-Policy",
             value: CSP.replace(/\s+/g, " ").trim(),
           },
