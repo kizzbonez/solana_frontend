@@ -1,3 +1,5 @@
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import Hero from "@/app/components/brand/Hero"
 import TopSelling from "@/app/components/brand/TopSelling"
 import About from "@/app/components/brand/About"

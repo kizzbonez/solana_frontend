@@ -3,8 +3,6 @@ import Slider from "react-slick";
 import { FluentChevronLeft, FluentChevronRight } from "../icons/lib";
 import { useBreakpointValue } from "@/app/hooks/useBreakPointValue";
 
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
 function SampleNextArrow(props) {
   const { className, style, onClick } = props;
