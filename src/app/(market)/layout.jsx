@@ -80,6 +80,14 @@ export default async function MarketLayout({ children }) {
       is_base_nav: !["On Sale", "New Arrivals"].includes(i?.name),
     })) || [];
 
+  // First category card is the LCP element on mobile — preload its optimized image
+  // so the browser can fetch it in parallel with JS parsing instead of waiting for
+  // next/image to register the request after client hydration.
+  const firstCatSlug = categories?.[0]?.slug;
+  const firstCatImgBase = firstCatSlug
+    ? `/_next/image?url=%2Fimages%2Fcategories%2F${firstCatSlug}.webp&q=40`
+    : null;
+
   return (
     <html lang="en">
       <head>
@@ -92,6 +100,16 @@ export default async function MarketLayout({ children }) {
           href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
         />
         <link rel="dns-prefetch" href="https://cdn.shopify.com" />
+        {firstCatImgBase && (
+          <link
+            rel="preload"
+            as="image"
+            href={`${firstCatImgBase}&w=640`}
+            imageSrcSet={`${firstCatImgBase}&w=375 375w, ${firstCatImgBase}&w=640 640w, ${firstCatImgBase}&w=750 750w, ${firstCatImgBase}&w=828 828w`}
+            imageSizes="(max-width: 1024px) calc(50vw - 2rem), calc(33vw - 2rem)"
+            fetchPriority="high"
+          />
+        )}
         {/* eslint-disable-next-line react/no-danger */}
         <style
           dangerouslySetInnerHTML={{ __html: themeCSS }}
