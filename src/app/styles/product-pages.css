@@ -104,3 +104,141 @@ body.gallery-fullscreen-active .product-option-item-link {
   z-index: -10 !important;
   pointer-events: none !important;
 }
+
+/* ── PDP description styles ─────────────────────────────────────── */
+.pdp-description-wrapper {
+  line-height: 1.7;
+  color: #374151;
+}
+
+.pdp-description-wrapper p {
+  margin-bottom: 1.25rem;
+}
+
+.pdp-description-wrapper h4 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.pdp-description-wrapper a {
+  color: var(--theme-primary-600) !important;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.pdp-description-wrapper a:hover {
+  opacity: 0.8;
+}
+
+.pdp-description-wrapper ul {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pdp-description-wrapper ul li {
+  position: relative;
+  padding-left: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.pdp-description-wrapper ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6rem;
+  width: 12px;
+  height: 4px;
+  border-radius: 999px;
+  background-color: var(--theme-primary-600);
+}
+
+.pdp-description-wrapper ol {
+  counter-reset: pdp-counter;
+  list-style: none;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.pdp-description-wrapper ol li {
+  counter-increment: pdp-counter;
+  position: relative;
+  padding-left: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.pdp-description-wrapper ol li:last-child {
+  margin-bottom: 0;
+}
+
+.pdp-description-wrapper ol li::before {
+  content: counter(pdp-counter);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: #111827;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.pdp-description-wrapper li b,
+.pdp-description-wrapper li strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+/* ── PDP FAQ accordion styles ───────────────────────────────────── */
+.pdp-faq-accordion-container > div + div {
+  margin-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.pdp-faq-accordion-container .px-5.pb-5 p {
+  margin-bottom: 12px;
+}
+
+.pdp-faq-accordion-container .px-5.pb-5 p:last-child {
+  margin-bottom: 0;
+}
+
+.pdp-faq-accordion-container button {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+@media (min-width: 768px) {
+  .pdp-faq-accordion-container {
+    padding: 8px;
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pdp-faq-accordion-container > div {
+    border: 1px solid transparent;
+    border-radius: 10px;
+  }
+
+  .pdp-faq-accordion-container div:has(svg.rotate-45) {
+    border-color: #fee2e2;
+    background-color: #fffaf8;
+  }
+}
