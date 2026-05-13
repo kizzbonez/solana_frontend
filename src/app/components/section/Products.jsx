@@ -6,7 +6,6 @@ import useESFetchProducts from "@/app/hooks/useESFetchProducts";
 import TuiFilterSort from "@/app/components/template/tui_filter_sort";
 import {
   getCategoryIds,
-  getCategoryFilters,
   filter_price_range,
 } from "@/app/lib/helpers";
 import { bc_categories, flatCategories } from "@/app/lib/category-helpers";

@@ -17,8 +17,8 @@ import {
   createSlug,
   main_products,
   shouldApplyMainProductSort,
-  popular_keywords,
 } from "@/app/lib/helpers";
+import { popular_keywords } from "@/app/lib/filter-helpers";
 import { mapCategoryResults } from "../lib/helpers";
 
 // ============================================================================

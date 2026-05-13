@@ -1,6 +1,13 @@
 // next.config.ts
 import type { NextConfig } from "next";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+  analyzerMode: "static",
+  openAnalyzer: false,
+});
+
 // 1. Define all necessary external hostnames once
 const imageDomains = [
   "cdn11.bigcommerce.com",
@@ -134,4 +141,4 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+export default withBundleAnalyzer(config);
