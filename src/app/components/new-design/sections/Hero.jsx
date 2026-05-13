@@ -144,7 +144,7 @@ export default function Hero({ background }) {
 
           {/* ── Right: Feature Cards — hidden on mobile ── */}
           <div className="hidden md:flex flex-col gap-3 hero-cards-reveal">
-            {CARDS.map(({ image, url, title, sub }) => (
+            {CARDS.map(({ image, url, title, sub }, index) => (
               <Link
                 key={title}
                 href={url}
@@ -162,7 +162,7 @@ export default function Hero({ background }) {
                     src={image}
                     alt={title}
                     fill
-                    loading="eager"
+                    priority={index === 0}
                     sizes="(max-width: 1200px) 50vw, 33vw"
                     className="object-cover"
                   />

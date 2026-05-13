@@ -79,7 +79,7 @@ function ProductCard({ hit, page_details, onCompare }) {
     <article className="group bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:shadow-xl hover:shadow-neutral-200/60 dark:hover:shadow-black/40 hover:-translate-y-1 transition-all duration-300">
       {/* Image */}
       <div className="relative h-52 bg-neutral-100 dark:bg-neutral-800 overflow-hidden">
-        <Link title={product?.name} href={product?.url} prefetch={false}>
+        <Link aria-label={product?.name} title={product?.name} href={product?.url} prefetch={false}>
           <FireplaceThumb product={hit} />
         </Link>
 
@@ -124,7 +124,7 @@ function ProductCard({ hit, page_details, onCompare }) {
         >
           {product?.brand}
         </p>
-        <Link title={product?.name} href={product?.url} prefetch={false}>
+        <Link aria-label={product?.name} title={product?.name} href={product?.url} prefetch={false}>
           <h2
             className="line-clamp-2 min-h-[38.5px] text-sm font-semibold text-neutral-900 dark:text-white leading-snug mb-2"
             style={{ fontFamily: "Georgia, serif" }}
@@ -175,6 +175,7 @@ function ProductCard({ hit, page_details, onCompare }) {
         <div className="flex gap-2 mt-2">
           <button
             onClick={() => viewItem(hit)}
+            aria-label="Quick view"
             className="w-9 h-9 min-w-9 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 dark:text-neutral-300 hover:bg-neutral-800 dark:hover:bg-neutral-600 hover:text-white dark:hover:text-white transition-colors"
           >
             <svg

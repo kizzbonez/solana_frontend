@@ -67,7 +67,7 @@ function ProductCard({ product }) {
       "
     >
       {/* Image */}
-      <Link href={product?.url || "#"} title={product?.title}>
+      <Link href={product?.url || "#"} aria-label={product?.title} title={product?.title}>
         <div className="relative h-48 bg-white">
           {onSale && (
             <div className="absolute top-2.5 left-2.5 z-10">
@@ -94,7 +94,7 @@ function ProductCard({ product }) {
         <p className="text-[10px] tracking-widest uppercase text-stone-400 dark:text-stone-500 mb-0.5">
           {product?.brand}
         </p>
-        <Link href={product?.url || "#"} title={product.title}>
+        <Link href={product?.url || "#"} aria-label={product?.title} title={product?.title}>
           <h3 className="font-serif text-base text-charcoal dark:text-white mb-2 leading-snug line-clamp-2">
             {product?.title}
           </h3>

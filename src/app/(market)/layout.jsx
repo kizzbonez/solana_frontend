@@ -13,6 +13,7 @@ import { CompareProductsProvider } from "@/app/context/compare_product";
 import { generateMetadata } from "@/app/metadata";
 import SessionWrapper from "@/app/components/wrapper/SessionWrapper";
 import ConditionalZohoButton from "@/app/components/widget/ConditionalZohoButton";
+import LazyZohoLoader from "@/app/components/widget/LazyZohoLoader";
 import { fetchUniqueCategories } from "@/app/lib/fn_server";
 import { notFound } from "next/navigation";
 import Topbar from "@/app/components/new-design/layout/Topbar";
@@ -82,16 +83,10 @@ export default async function MarketLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link
-          rel="preconnect"
-          href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preconnect"
-          href="https://cdn.shopify.com"
-          crossOrigin="anonymous"
-        />
+        {/* dns-prefetch is cheap (DNS only, no TCP/TLS).
+            preconnect is intentionally omitted here — Next.js already adds 2
+            for Google Fonts, and adding more pushes past the browser's 4-connection
+            warning. Pages that need fast CDN image loading add their own preconnect. */}
         <link
           rel="dns-prefetch"
           href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
@@ -101,17 +96,6 @@ export default async function MarketLayout({ children }) {
         <style
           dangerouslySetInnerHTML={{ __html: themeCSS }}
           suppressHydrationWarning
-        />
-        {/* eslint-disable-next-line react/no-danger */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){$zoho.salesiq.floatbutton.visible("hide");}};`,
-          }}
-        />
-        <script
-          id="zsiqscript"
-          src={`https://salesiq.zohopublic.com/widget?wc=${process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE}`}
-          defer
         />
       </head>
       <body
@@ -135,6 +119,7 @@ export default async function MarketLayout({ children }) {
                         </main>
                         <Footer logo={redisLogo} />
                         <ConditionalZohoButton />
+                        <LazyZohoLoader />
                       </QuickViewProvider>
                     </SessionWrapper>
                   </SearchProvider>
