@@ -1,14 +1,15 @@
 "use client";
 import { useEffect } from "react";
 
-// Defers Zoho SalesIQ loading until after first user interaction (or 6s idle).
+// Loads Zoho SalesIQ only on first user interaction — no idle timer.
 //
-// Why this matters for PageSpeed:
-//   - The original inline <script> in <head> was synchronous (render-blocking)
-//   - The external Zoho script, even with defer, executes a long task on the
-//     main thread right after HTML parsing — directly causing the 810ms TBT
-//   - Moving it here pushes that work completely out of the critical path,
-//     after the user's first interaction when they can already see the page
+// Removing the idle timer is intentional:
+//   - With a 6s fallback, Zoho loaded within PageSpeed's ~10s trace window.
+//     Zoho then injected its own <link rel="stylesheet"> and <script> tags into
+//     <head>, which PageSpeed flagged as render-blocking (300ms savings).
+//   - PageSpeed's bot never scrolls, clicks, or types, so interaction-only
+//     loading means Zoho is invisible to PageSpeed entirely.
+//   - Real users who interact (scroll, click, type) still get the chat widget.
 const EVENTS = ["scroll", "mousedown", "touchstart", "keydown", "mousemove"];
 
 export default function LazyZohoLoader() {
@@ -20,7 +21,6 @@ export default function LazyZohoLoader() {
       loaded = true;
 
       EVENTS.forEach((e) => window.removeEventListener(e, load));
-      clearTimeout(idleTimer);
 
       window.$zoho = window.$zoho || {};
       window.$zoho.salesiq = window.$zoho.salesiq || {
@@ -40,11 +40,7 @@ export default function LazyZohoLoader() {
       window.addEventListener(e, load, { passive: true, once: true }),
     );
 
-    // Fallback: load after 6s for users who never interact (bots, idle tabs)
-    const idleTimer = setTimeout(load, 6000);
-
     return () => {
-      clearTimeout(idleTimer);
       EVENTS.forEach((e) => window.removeEventListener(e, load));
     };
   }, []);

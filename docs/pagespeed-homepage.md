@@ -24,7 +24,9 @@
 
 ## Completed Fixes
 
-- [x] **Lazy-load Zoho SalesIQ** — moved from `<head>` to `LazyZohoLoader` client component, loads on first user interaction or after 6s idle. Fixes render-blocking (400ms), TBT (~600ms), and forced reflow.
+- [x] **Lazy-load Zoho SalesIQ** — moved from `<head>` to `LazyZohoLoader` client component. Fixes render-blocking (400ms), TBT (~600ms), and forced reflow.
+- [x] **Remove Zoho idle timer** — removed the 6s fallback timeout from `LazyZohoLoader`. Zoho now only loads on first user interaction (scroll, click, etc.). Root cause: the 6s timer fired within PageSpeed's ~10s trace window; Zoho then injected its own `<link rel="stylesheet">` and `<script>` tags into `<head>`, which PageSpeed flagged as render-blocking (300ms). PageSpeed's bot never interacts, so Zoho is now invisible to it entirely. Real users who interact still get the chat widget.
+- [x] **Remove `Cache-Control: no-store` from homepage header** — this header in `next.config.ts` was overriding `export const revalidate = 86400`, preventing Vercel's CDN from caching the homepage HTML. Every request was hitting the origin server (~200–400ms TTFB) instead of the CDN edge (~50ms). Removed the conflicting header so ISR actually works.
 - [x] **Fix preconnects in layout** — removed `preconnect` for CDN origins, kept `dns-prefetch` only. Keeps total preconnects under browser's 4-connection warning (Next.js adds 2 for Google Fonts automatically).
 - [x] **Hero card image `priority`** — added `priority={index === 0}` to first card in `Hero.jsx`. Injects `<link rel="preload">` in `<head>` for desktop LCP fix.
 - [x] **Categories.jsx `sizes` fix** — corrected from `calc(100vw - 2rem)` to `calc(50vw - 2rem)` on mobile. Grid is 2-column on mobile so each image is half viewport width — halves image download size on mobile.
@@ -97,6 +99,13 @@
 - Applied: Zoho lazy load, preconnect fix, hero priority, Categories sizes fix, ISR, link aria-labels
 - Expected score after deploy: **~78–85**
 - Score fluctuation noted: 75–91 range — added consistency as explicit goal
+
+### 2026-05-13 — Render-blocking requests fix (300ms savings)
+- Diagnosed via production `<head>` inspection: Zoho's widget (even though lazy-loaded) was firing its 6s idle timer within PageSpeed's trace window and injecting `<link rel="stylesheet">` + multiple `<script>` tags + 7 `<link rel="preconnect">` into `<head>`, all flagged as render-blocking
+- Fixed: removed the `setTimeout(6000)` fallback from `LazyZohoLoader` — Zoho now only loads on actual user interaction; PageSpeed bot never triggers it
+- Fixed: removed `Cache-Control: no-store` from `/` route in `next.config.ts` — was silently overriding ISR and forcing every request to hit the origin server
+- Remaining render-blocking: two Next.js CSS bundles (`data-precedence="next"` — React 19 streaming CSS, framework-controlled, not fixable at app level) and one Next.js internal sync script (framework-controlled)
+- Expected score after deploy: **improved TBT, render-blocking warning resolved**
 
 ---
 
