@@ -19,10 +19,11 @@ export async function GET(request) {
   }
 
   revalidateTag("plp-initial-hits");
+  revalidateTag("home-products");
 
   return NextResponse.json({
     revalidated: true,
     timestamp: new Date().toISOString(),
-    message: "All PLP initial-hits caches cleared. Pages will re-fetch on next visit.",
+    message: "All PLP and homepage product caches cleared. Pages will re-fetch on next visit.",
   });
 }
