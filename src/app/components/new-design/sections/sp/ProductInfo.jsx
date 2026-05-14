@@ -100,7 +100,7 @@ const ProductInfo = ({ product }) => {
       />
 
       {/* Rating */}
-      <div className="flex items-center gap-3 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
+      {/* <div className="flex items-center gap-3 flex-wrap pb-4 border-b border-gray-100 dark:border-gray-800">
         <StarRating
           rating={product?.ratings}
           showCount
@@ -110,13 +110,7 @@ const ProductInfo = ({ product }) => {
           {product?.ratings} out of 5
         </span>
         <span className="text-gray-200 dark:text-gray-700">·</span>
-        {/* <Link
-          href="#reviews"
-          className="text-xs font-semibold text-orange-500 hover:underline"
-        >
-          Write a Review
-        </Link> */}
-      </div>
+      </div> */}
 
       {/* Price */}
       <div className="flex items-end gap-3 flex-wrap">
