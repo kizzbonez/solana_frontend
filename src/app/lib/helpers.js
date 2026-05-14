@@ -592,7 +592,6 @@ export const formatToInches = (items) => {
 
 export const decimalToFraction = (decimal) => {
   if (decimal === null || decimal === undefined) return "";
-  if (isNaN(decimal)) return "";
 
   // 1. Handle whole numbers immediately
   if (decimal % 1 === 0) return decimal.toString();
