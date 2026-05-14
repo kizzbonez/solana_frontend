@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { BASE_URL } from "@/app/lib/helpers";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { PHONE, PHONE_HREF } from "@/app/data/new-homepage";
 import {
   PhoneIcon,
@@ -16,12 +17,28 @@ import { useSolanaCategories } from "@/app/context/category";
 import MyAccountButton from "@/app/components/new-design/ui/MyAccountButton";
 import { STORE_NAME } from "@/app/lib/store_constants";
 
+function NavSpinner({ className = "" }) {
+  return (
+    <svg
+      className={`animate-spin w-3 h-3 text-fire flex-shrink-0 ${className}`}
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
 export default function Navbar({ logo }) {
   const { solana_categories: solana_menu_object } = useSolanaCategories();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [showDrop, setShowDrop] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [lockedMenu, setLockedMenu] = useState(null);
+  const [hoveredMenu, setHoveredMenu] = useState(null);
+  const [loadingHref, setLoadingHref] = useState(null);
   const [galleryOnFullscreen, setGalleryOnFullscreen] = useState(false);
   const searchRef = useRef(null);
   const navRowRef = useRef(null);
@@ -56,6 +73,13 @@ export default function Navbar({ logo }) {
     document.addEventListener("mousedown", fn);
     return () => document.removeEventListener("mousedown", fn);
   }, []);
+
+  // Close dropdown and clear loading state when navigation completes
+  useEffect(() => {
+    setLoadingHref(null);
+    setLockedMenu(null);
+    setHoveredMenu(null);
+  }, [pathname]);
 
   const NAV_LINKS = useMemo(() => {
     return solana_menu_object.filter(
@@ -161,10 +185,13 @@ export default function Navbar({ logo }) {
         >
           {NAV_LINKS.map(({ name, children, id, url }) => {
             const isLocked = lockedMenu === id;
+            const isOpen = isLocked || hoveredMenu === id;
             return (
               <div
                 key={`desktop-nav-item-${id}`}
-                className="relative group flex items-center"
+                className="relative flex items-center"
+                onMouseEnter={() => setHoveredMenu(id)}
+                onMouseLeave={() => setHoveredMenu(null)}
               >
                 <Link
                   href={`${BASE_URL}/${url}`}
@@ -174,11 +201,11 @@ export default function Navbar({ logo }) {
                     setLockedMenu(isLocked ? null : id);
                   }}
                   className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-150 flex items-center gap-0.5
-                  ${isLocked ? "bg-stone-100 dark:bg-stone-800 text-fire" : "text-charcoal dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-fire"}`}
+                  ${isOpen ? "bg-stone-100 dark:bg-stone-800 text-fire" : "text-charcoal dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-fire"}`}
                 >
                   {name}{" "}
                   <span
-                    className={`text-[10px] opacity-60 transition-transform duration-150 ${isLocked ? "rotate-180" : ""}`}
+                    className={`text-[10px] opacity-60 transition-transform duration-150 ${isOpen ? "rotate-180" : ""}`}
                   >
                     ▾
                   </span>
@@ -191,21 +218,25 @@ export default function Navbar({ logo }) {
                 rounded-xl shadow-2xl min-w-[200px] overflow-hidden
                 transition-all duration-200 z-30
                 ${
-                  isLocked
+                  isOpen
                     ? "opacity-100 pointer-events-auto translate-y-0"
-                    : "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto translate-y-2 group-hover:translate-y-0"
+                    : "opacity-0 pointer-events-none translate-y-2"
                 }
               `}
                 >
                   {/* Parent category link */}
                   <Link
                     href={`${BASE_URL}/${url}`}
-                    onClick={() => setLockedMenu(null)}
+                    onClick={() => {
+                      if (`/${url}` === pathname) { setLockedMenu(null); setHoveredMenu(null); return; }
+                      setLoadingHref(`${BASE_URL}/${url}`);
+                    }}
                     className="flex items-center justify-between px-4 py-2.5 bg-stone-50 dark:bg-stone-800 border-b border-stone-100 dark:border-stone-700 text-[13px] font-semibold text-charcoal dark:text-white hover:text-fire transition-colors group/parent"
                   >
                     <span>All {name}</span>
-                    <span className="text-fire opacity-0 group-hover/parent:opacity-100 transition-opacity text-xs">
-                      →
+                    <span className="relative w-3 h-3 flex-shrink-0 flex items-center justify-center">
+                      <span className={`absolute text-fire text-xs transition-opacity ${loadingHref === `${BASE_URL}/${url}` ? "invisible" : "opacity-0 group-hover/parent:opacity-100"}`}>→</span>
+                      <NavSpinner className={loadingHref === `${BASE_URL}/${url}` ? "visible" : "invisible"} />
                     </span>
                   </Link>
                   {/* Children */}
@@ -214,10 +245,14 @@ export default function Navbar({ logo }) {
                       <Link
                         key={`desktop-child-nav-item-${c.id}`}
                         href={`${BASE_URL}/${c?.url}`}
-                        onClick={() => setLockedMenu(null)}
-                        className="block px-4 py-2 rounded-lg text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-fire transition-colors"
+                        onClick={() => {
+                          if (`/${c?.url}` === pathname) { setLockedMenu(null); setHoveredMenu(null); return; }
+                          setLoadingHref(`${BASE_URL}/${c?.url}`);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 rounded-lg text-sm text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 hover:text-fire transition-colors"
                       >
-                        {c.name}
+                        <span>{c.name}</span>
+                        <NavSpinner className={loadingHref === `${BASE_URL}/${c?.url}` ? "visible" : "invisible"} />
                       </Link>
                     ))}
                   </div>
