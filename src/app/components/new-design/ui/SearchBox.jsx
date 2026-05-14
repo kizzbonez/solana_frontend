@@ -154,6 +154,28 @@ function Divider() {
   );
 }
 
+function SearchSpinner({ className = "" }) {
+  return (
+    <svg className={`animate-spin w-3 h-3 text-stone-400 flex-shrink-0 ${className}`} fill="none" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  );
+}
+
+function TagWithSpinner({ type, isLoading }) {
+  return (
+    <span className="hidden sm:inline-flex relative flex-shrink-0">
+      <span className={isLoading ? "invisible" : "visible"}>
+        <Tag type={type} />
+      </span>
+      <span className={`absolute inset-0 flex items-center justify-center ${isLoading ? "visible" : "invisible"}`}>
+        <SearchSpinner />
+      </span>
+    </span>
+  );
+}
+
 function SearchBox() {
   const {
     setSearch,
@@ -173,6 +195,7 @@ function SearchBox() {
   const isSearchPage = pathname === "/search";
 
   const [open, setOpen] = useState(false);
+  const [loadingHref, setLoadingHref] = useState(null);
   const [showAllPopular, setShowAllPopular] = useState(false);
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
@@ -269,9 +292,21 @@ function SearchBox() {
     // if (!isSearchPage) inputRef.current?.focus();
   }
 
-  function handleItemClick() {
-    setOpen(false);
-    setFocused(false);
+  useEffect(() => {
+    if (loadingHref) {
+      setLoadingHref(null);
+      setOpen(false);
+      setFocused(false);
+    }
+  }, [pathname]);
+
+  function handleItemClick(href) {
+    if (!href || href.replace(BASE_URL, "") === pathname) {
+      setOpen(false);
+      setFocused(false);
+      return;
+    }
+    setLoadingHref(href);
   }
 
   function clearSearch() {
@@ -392,7 +427,7 @@ function SearchBox() {
               <Link
                 prefetch={false}
                 href={getProductUrl(top)}
-                onClick={handleItemClick}
+                onClick={() => handleItemClick(getProductUrl(top))}
                 className="mx-2 sm:mx-3 mb-1 rounded-lg sm:rounded-xl border border-orange-100 dark:border-orange-900/40 bg-orange-50/50 dark:bg-orange-950/20 flex items-center gap-2 sm:gap-3 p-2 sm:p-3 cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-950/40 transition group"
               >
                 <div className="rounded-lg sm:rounded-xl min-w-14 min-h-14 sm:min-w-20 sm:min-h-20 relative overflow-hidden flex-shrink-0 border border-stone-200 dark:border-stone-700">
@@ -435,11 +470,16 @@ function SearchBox() {
                   <span className="text-base font-bold text-stone-900 dark:text-white">
                     ${formatPrice(top.price)}
                   </span>
-                  <span
-                    className="text-xs text-white px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition"
-                    style={{ background: FIRE }}
-                  >
-                    View →
+                  <span className="relative">
+                    <span
+                      className={`text-xs text-white px-2 py-1 rounded-lg transition ${loadingHref === getProductUrl(top) ? "invisible" : "opacity-0 group-hover:opacity-100"}`}
+                      style={{ background: FIRE }}
+                    >
+                      View →
+                    </span>
+                    <span className={`absolute inset-0 flex items-center justify-center ${loadingHref === getProductUrl(top) ? "visible" : "invisible"}`}>
+                      <SearchSpinner />
+                    </span>
                   </span>
                 </div>
               </Link>
@@ -508,7 +548,7 @@ function SearchBox() {
                       prefetch={false}
                       href={getProductUrl(p)}
                       key={`product-${p.product_id}-${index}`}
-                      onClick={handleItemClick}
+                      onClick={() => handleItemClick(getProductUrl(p))}
                       className="flex items-center gap-2 sm:gap-3 px-2 py-1.5 sm:py-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition group"
                     >
                       <div className="rounded-md sm:rounded-lg min-w-12 min-h-12 sm:min-w-16 sm:min-h-16 bg-white relative overflow-hidden flex-shrink-0 border border-stone-100 dark:border-stone-700">
@@ -531,9 +571,7 @@ function SearchBox() {
                           {p.brand} · ${formatPrice(p.price)}
                         </div>
                       </div>
-                      <span className="hidden sm:inline-flex">
-                        <Tag type="product" />
-                      </span>
+                      <TagWithSpinner type="product" isLoading={loadingHref === getProductUrl(p)} />
                     </Link>
                   ))}
               </div>
@@ -556,39 +594,40 @@ function SearchBox() {
               <div className="px-2 sm:px-3 pb-1">
                 {categories
                   .slice(0, showAllCategories ? categories.length : 3)
-                  .map((c, index) => (
-                    <Link
-                      prefetch={false}
-                      href={`${BASE_URL}/category/${c.slug}`}
-                      key={`category-${c.slug}-${index}`}
-                      onClick={handleItemClick}
-                      className="flex items-center gap-2 sm:gap-3 px-2 py-1.5 sm:py-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition"
-                    >
-                      <div className="rounded-md sm:rounded-lg min-w-12 min-h-12 sm:min-w-16 sm:min-h-16 bg-white relative overflow-hidden flex-shrink-0 border border-stone-100 dark:border-stone-700">
-                        {c?.image && (
-                          <Image
-                            src={c.image}
-                            alt={c.name || "Category search result thumbnail"}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 64px"
-                            className="object-cover"
-                            priority={false}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-stone-800 dark:text-stone-200">
-                          {c.name}
+                  .map((c, index) => {
+                    const href = `${BASE_URL}/category/${c.slug}`;
+                    return (
+                      <Link
+                        prefetch={false}
+                        href={href}
+                        key={`category-${c.slug}-${index}`}
+                        onClick={() => handleItemClick(href)}
+                        className="flex items-center gap-2 sm:gap-3 px-2 py-1.5 sm:py-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition"
+                      >
+                        <div className="rounded-md sm:rounded-lg min-w-12 min-h-12 sm:min-w-16 sm:min-h-16 bg-white relative overflow-hidden flex-shrink-0 border border-stone-100 dark:border-stone-700">
+                          {c?.image && (
+                            <Image
+                              src={c.image}
+                              alt={c.name || "Category search result thumbnail"}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 64px"
+                              className="object-cover"
+                              priority={false}
+                            />
+                          )}
                         </div>
-                        <div className="text-xs text-stone-400 dark:text-stone-500">
-                          {c.count + ` item` + (!!(c.count > 1) ? "s" : "")}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-stone-800 dark:text-stone-200">
+                            {c.name}
+                          </div>
+                          <div className="text-xs text-stone-400 dark:text-stone-500">
+                            {c.count + ` item` + (!!(c.count > 1) ? "s" : "")}
+                          </div>
                         </div>
-                      </div>
-                      <span className="hidden sm:inline-flex">
-                        <Tag type="category" />
-                      </span>
-                    </Link>
-                  ))}
+                        <TagWithSpinner type="category" isLoading={loadingHref === href} />
+                      </Link>
+                    );
+                  })}
               </div>
             </>
           )}
@@ -609,37 +648,40 @@ function SearchBox() {
               <div className="px-3 pb-1">
                 {brands
                   .slice(0, showAllBrands ? brands.length : 3)
-                  .map((b, index) => (
-                    <Link
-                      prefetch={false}
-                      href={`${BASE_URL}/${b.url}`}
-                      key={`brand-${b.name}-${index}`}
-                      onClick={handleItemClick}
-                      className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition"
-                    >
-                      <div className="rounded-lg min-w-16 min-h-16 bg-white relative overflow-hidden flex-shrink-0 border border-stone-100 dark:border-stone-700">
-                        {b?.image && (
-                          <Image
-                            src={b.image}
-                            alt={b.name || "Brand search result thumbnail"}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 64px"
-                            className="object-contain"
-                            priority={false}
-                          />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-stone-800 dark:text-stone-200">
-                          {b.name}
+                  .map((b, index) => {
+                    const href = `${BASE_URL}/${b.url}`;
+                    return (
+                      <Link
+                        prefetch={false}
+                        href={href}
+                        key={`brand-${b.name}-${index}`}
+                        onClick={() => handleItemClick(href)}
+                        className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition"
+                      >
+                        <div className="rounded-lg min-w-16 min-h-16 bg-white relative overflow-hidden flex-shrink-0 border border-stone-100 dark:border-stone-700">
+                          {b?.image && (
+                            <Image
+                              src={b.image}
+                              alt={b.name || "Brand search result thumbnail"}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 64px"
+                              className="object-contain"
+                              priority={false}
+                            />
+                          )}
                         </div>
-                        <div className="text-xs text-stone-400 dark:text-stone-500">
-                          {b.count + ` item` + (!!(b.count > 1) ? "s" : "")}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-stone-800 dark:text-stone-200">
+                            {b.name}
+                          </div>
+                          <div className="text-xs text-stone-400 dark:text-stone-500">
+                            {b.count + ` item` + (!!(b.count > 1) ? "s" : "")}
+                          </div>
                         </div>
-                      </div>
-                      <Tag type="brand" />
-                    </Link>
-                  ))}
+                        <TagWithSpinner type="brand" isLoading={loadingHref === href} />
+                      </Link>
+                    );
+                  })}
               </div>
             </>
           )}
