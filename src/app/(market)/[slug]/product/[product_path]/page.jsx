@@ -118,8 +118,8 @@ function buildJsonLd(product, slug, product_path) {
 
   if (product?.ratings) {
     const ratingValue = parseFloat(product.ratings) || 0;
-    const reviewCount = product.reviews || 1;
-    if (ratingValue > 0) {
+    const reviewCount = product.reviews;
+    if (ratingValue > 0 && reviewCount > 0) {
       jsonLd.aggregateRating = {
         "@type": "AggregateRating",
         ratingValue: ratingValue.toFixed(1),
