@@ -592,6 +592,7 @@ export const formatToInches = (items) => {
 
 export const decimalToFraction = (decimal) => {
   if (decimal === null || decimal === undefined) return "";
+  if (isNaN(decimal)) return "";
 
   // 1. Handle whole numbers immediately
   if (decimal % 1 === 0) return decimal.toString();
@@ -630,7 +631,8 @@ export const decimalToFraction = (decimal) => {
 
 export const transformNumber = (value) => {
   if (!value) return "";
-  return Number(value);
+  const num = Number(value);
+  return isNaN(num) ? "" : num;
 };
 
 export const transformFilterNumber = (items) => {
@@ -642,7 +644,9 @@ export const transformFilterNumber = (items) => {
 
 export const transformNumberBurners = (value) => {
   if (!value) return "";
-  return Number(value) + "-Burner";
+  const num = Number(value);
+  if (isNaN(num)) return "";
+  return num + "-Burner";
 };
 
 export const transformFilterNumberBurners = (items) => {
@@ -654,7 +658,9 @@ export const transformFilterNumberBurners = (items) => {
 
 export const transformNumberDoors = (value) => {
   if (!value) return "";
-  return Number(value) + "-Door";
+  const num = Number(value);
+  if (isNaN(num)) return "";
+  return num + "-Door";
 };
 
 export const transformFilterNumberDoors = (items) => {
@@ -705,7 +711,7 @@ export const transformDimension = (value) => {
 
   const suf = ["Inches W", "Inches D", "Inches H"];
 
-  return String(value)
+  const result = String(value)
     .split("x")
     .map((part, index) => {
       const trimmed = part.trim();
@@ -722,6 +728,8 @@ export const transformDimension = (value) => {
     })
     .filter((part) => part !== "") // Remove empty segments
     .join(" x ");
+
+  return result.includes("NaN") ? "" : result;
 };
 
 export const transformFilterDimensions = (items) => {
@@ -733,7 +741,9 @@ export const transformFilterDimensions = (items) => {
 
 export const transformWeight = (value) => {
   if (!value) return "";
-  return `${Number(value)} lbs`;
+  const num = Number(value);
+  if (isNaN(num)) return "";
+  return `${num} lbs`;
 };
 
 export const transformFilterWeight = (items) => {
@@ -745,7 +755,9 @@ export const transformFilterWeight = (items) => {
 
 export const transformGrillArea = (value) => {
   if (!value) return "";
-  return `${Number(value)} Sq. Inches`;
+  const num = Number(value);
+  if (isNaN(num)) return "";
+  return `${num} Sq. Inches`;
 };
 
 export const transformFilterGrillArea = (items) => {
