@@ -137,7 +137,6 @@ export default async function ProductPage({ params }) {
   const { slug, product_path } = await params;
 
   const product = await fetchProduct(product_path);
-  console.log("PRODUCT", product);
   const product_id = product?.product_id;
   const ymal_products = await getYMALProducts();
 

@@ -53,7 +53,6 @@ const SOCIALS = [
 ];
 
 export default function Footer({ logo }) {
-  console.log("FOOTER LOGO", logo);
   return (
     <footer className="bg-charcoal dark:bg-black text-white/60 pt-16 pb-8">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
