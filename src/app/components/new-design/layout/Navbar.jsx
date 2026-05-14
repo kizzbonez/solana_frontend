@@ -39,6 +39,7 @@ export default function Navbar({ logo }) {
   const [lockedMenu, setLockedMenu] = useState(null);
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [loadingHref, setLoadingHref] = useState(null);
+  const [expandedMobileMenu, setExpandedMobileMenu] = useState(null);
   const [galleryOnFullscreen, setGalleryOnFullscreen] = useState(false);
   const searchRef = useRef(null);
   const navRowRef = useRef(null);
@@ -273,19 +274,47 @@ export default function Navbar({ logo }) {
 
       {/* ── Mobile Menu — absolute so it overlays content below ── */}
       {menuOpen && (
-        <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-charcoal border-b border-stone-100 dark:border-stone-800 shadow-lg z-30">
-          <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4 flex flex-col gap-1">
-            {NAV_LINKS.map(({ name, url, id }) => (
-              <Link
-                key={`mobile-nav-item-${id}`}
-                href={`${BASE_URL}/${url}`}
-                prefetch={false}
-                onClick={() => setMenuOpen(false)}
-                className="px-3 py-2.5 text-sm font-medium text-charcoal dark:text-stone-200 hover:text-fire hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg transition-colors"
-              >
-                {name}
-              </Link>
-            ))}
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-charcoal border-b border-stone-100 dark:border-stone-800 shadow-lg z-30 max-h-[75vh] overflow-y-auto">
+          <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-3 flex flex-col gap-0.5">
+            {NAV_LINKS.map(({ name, url, id, children }) => {
+              const isExpanded = expandedMobileMenu === id;
+              return (
+                <div key={`mobile-nav-item-${id}`}>
+                  <button
+                    onClick={() => setExpandedMobileMenu(isExpanded ? null : id)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-medium text-charcoal dark:text-stone-200 hover:text-fire hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                  >
+                    <span>{name}</span>
+                    <span className={`text-[11px] opacity-50 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>▾</span>
+                  </button>
+                  <div className={`grid transition-all duration-200 ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                    <div className="overflow-hidden">
+                      <div className="ml-3 mt-0.5 mb-1 flex flex-col gap-0.5 border-l-2 border-orange-100 dark:border-orange-900/30 pl-3">
+                        <Link
+                          href={`${BASE_URL}/${url}`}
+                          prefetch={false}
+                          onClick={() => setMenuOpen(false)}
+                          className="px-3 py-2 text-sm font-semibold text-fire hover:bg-orange-50 dark:hover:bg-orange-950 rounded-lg transition-colors"
+                        >
+                          All {name}
+                        </Link>
+                        {children?.map((c) => (
+                          <Link
+                            key={`mobile-child-nav-item-${c.id}`}
+                            href={`${BASE_URL}/${c?.url}`}
+                            prefetch={false}
+                            onClick={() => setMenuOpen(false)}
+                            className="px-3 py-2 text-sm text-stone-600 dark:text-stone-400 hover:text-fire hover:bg-stone-50 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                          >
+                            {c.name}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
             <Link
               href={`${BASE_URL}/brand/eloquence`}
               onClick={() => setMenuOpen(false)}
@@ -296,7 +325,7 @@ export default function Navbar({ logo }) {
             <Link
               href={PHONE_HREF}
               onClick={() => setMenuOpen(false)}
-              className="mt-2 flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-charcoal dark:text-white"
+              className="mt-1 flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-charcoal dark:text-white border-t border-stone-100 dark:border-stone-800"
             >
               <span className="text-fire"><PhoneIcon /></span>
               {PHONE}
