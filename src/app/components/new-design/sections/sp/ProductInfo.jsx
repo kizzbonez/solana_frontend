@@ -5,6 +5,9 @@ import StarRating from "@/app/components/new-design/sections/sp/StarRating";
 import Badge from "@/app/components/new-design/sections/sp/Badge";
 import AddToCartWidget from "@/app/components/new-design/sections/sp/AddToCartWidget";
 import ProductOptionItemLink from "@/app/components/new-design/sections/sp/ProductOptionItemLink";
+import FicDropDown from "@/app/components/atom/FicDropDown";
+import { ICRoundPhone } from "@/app/components/icons/lib";
+
 // HELPERS
 import { STORE_CONTACT } from "@/app/lib/store_constants";
 import { createSlug, formatPrice } from "@/app/lib/helpers";
@@ -149,6 +152,15 @@ const ProductInfo = ({ product }) => {
         </svg>
         <span className="font-medium">{product?.ships}</span>
       </div>
+
+      <FicDropDown contact_number={STORE_CONTACT}>
+        <div className="text-xs my-[5px] text-blue-500 flex items-center cursor-default gap-[7px] flex-wrap">
+          Found It Cheaper?
+          <div className="hover:underline flex items-center gap-[3px] cursor-pointer">
+            <ICRoundPhone width={16} height={16} /> <div>{STORE_CONTACT}</div>
+          </div>
+        </div>
+      </FicDropDown>
 
       {/* ProductOptions */}
       <div className="flex flex-col gap-4">

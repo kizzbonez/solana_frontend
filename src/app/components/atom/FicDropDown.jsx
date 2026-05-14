@@ -28,50 +28,49 @@ function FicDropDown({ children, contact_number }) {
 
   return (
     <Popover>
-      <PopoverButton className="block text-sm/6 font-semibold text-dark/50 focus:outline-none data-[active]:text-dark data-[hover]:text-dark data-[focus]:outline-1 data-[focus]:outline-white">
+      <PopoverButton className="focus:outline-none">
         {children}
       </PopoverButton>
+
       <PopoverPanel
         transition
         anchor="bottom"
-        className="shadow-lg divide-y divide-white/5 rounded bg-white text-sm/6 transition duration-200 ease-in-out [--anchor-gap:var(--spacing-5)] data-[closed]:-translate-y-1 data-[closed]:opacity-0"
+        className="z-50 w-56 bg-white border border-neutral-200 rounded-lg shadow-sm text-sm transition duration-150 ease-out data-[closed]:-translate-y-1 data-[closed]:opacity-0 [--anchor-gap:8px]"
       >
-        <div className="px-2 py-2 bg-neutral-200 font-semibold">Contact Us</div>
-        <div className="px-3 py-1">
-          <div className="block rounded-lg p-1 transition hover:bg-white/30">
-            <Link
-              href={`tel:${contact_number || STORE_CONTACT}`}
-              className="flex items-center gap-5 text-dark"
-            >
-              <ICRoundPhone />
-              {contact_number || STORE_CONTACT}
-            </Link>
-          </div>
-          <div className="block rounded-lg p-1 transition hover:bg-white/30">
-            <Link
-              href="mailto:info@OnSiteStorage.com"
-              className="flex items-center gap-5 text-dark"
-            >
-              <MDIEmailOutline />
-              Email Us
-            </Link>
-          </div>
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-neutral-100">
+          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+            Contact Us
+          </p>
         </div>
-        <div className="px-3 py-1 text-xs">
-          <div className="block rounded-lg p-1">
-            <p className="font-semibold text-dark underline">Sales</p>
-            <div className="flex flex-col gap-1 mt-2">
-              <p className="text-dark/50">Mon-Fri: 5:00am - 5:00pm PST</p>
-              <p className="text-dark/50">Sat and Sun: Closed</p>
+
+        {/* Links */}
+        <div className="px-2 py-2 border-b border-neutral-100">
+          <Link
+            href={`tel:${contact_number || STORE_CONTACT}`}
+            className="flex items-center gap-3 px-2 py-2 rounded-md text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            <ICRoundPhone className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+            <span>{contact_number || STORE_CONTACT}</span>
+          </Link>
+          <Link
+            href="mailto:info@solanafireplaces.com"
+            className="flex items-center gap-3 px-2 py-2 rounded-md text-neutral-700 hover:bg-neutral-50 transition-colors"
+          >
+            <MDIEmailOutline className="w-4 h-4 text-neutral-400 flex-shrink-0" />
+            <span>Email Us</span>
+          </Link>
+        </div>
+
+        {/* Hours */}
+        <div className="px-4 py-3 space-y-3">
+          {[{ label: "Sales" }, { label: "Support" }].map(({ label }) => (
+            <div key={label}>
+              <p className="text-xs font-semibold text-neutral-500 mb-1">{label}</p>
+              <p className="text-xs text-neutral-400">Mon – Fri: 5:00am – 5:00pm PST</p>
+              <p className="text-xs text-neutral-400">Sat – Sun: Closed</p>
             </div>
-          </div>
-          <div className="block rounded-lg p-1">
-            <p className="font-semibold text-dark underline">Support</p>
-            <div className="flex flex-col gap-1 mt-2">
-              <p className="text-dark/50">Mon-Fri: 5:00am - 5:00pm PST</p>
-              <p className="text-dark/50">Sat and Sun: Closed</p>
-            </div>
-          </div>
+          ))}
         </div>
       </PopoverPanel>
     </Popover>
