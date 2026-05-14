@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import { useSolanaCategories } from "@/app/context/category";
+import { useCart } from "@/app/context/cart";
 
 import Link from "next/link";
 import Image from "next/image";
@@ -12,6 +13,8 @@ import { STORE_CONTACT } from "@/app/lib/store_constants";
 import { useQuickView } from "@/app/context/quickview";
 import { formatPrice, formatProduct } from "@/app/lib/helpers";
 import StarRating from "@/app/components/new-design/ui/StarRating";
+import { Eos3DotsLoading } from "@/app/components/icons/lib";
+
 
 const BADGE_STYLES = {
   bestseller: "bg-orange-500 text-white",
@@ -48,14 +51,21 @@ function FireplaceThumb({ product }) {
 
 function ProductCard({ hit, page_details, onCompare }) {
   const { viewItem } = useQuickView();
+  const { addToCart } = useCart();
   const [wished, setWished] = useState(false);
-  const [added, setAdded] = useState(false);
   const { isPriceVisible, getProductUrl } = useSolanaCategories();
   const [product, setProduct] = useState(formatProduct(hit, "card"))
 
-  function handleAdd() {
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1800);
+  const [atcLoading, setAtcLoading] = useState(false);
+
+  async function handleAdd() {
+    setAtcLoading(true);
+    try{
+      const response = await addToCart({...formatProduct(product), quantity:1});
+      setAtcLoading(false);
+    }catch(err){
+      console.log("[ERROR]", err);
+    }
   }
 
   return (
@@ -172,11 +182,19 @@ function ProductCard({ hit, page_details, onCompare }) {
               <path d="m21 21-4.35-4.35" />
             </svg>
           </button>
-          <AddToCartButtonWrap product={{...formatProduct(hit,"card"), quantity:1}}>
             <button
               onClick={handleAdd}
-              className={`w-full flex justify-center   items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors ${added ? "bg-green-500 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}`}
+              disabled={atcLoading}
+              className={`relative w-full flex justify-center   items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors bg-orange-500 hover:bg-orange-600 text-white`}
             >
+              {
+                atcLoading && <div>
+                  <Eos3DotsLoading />
+                </div>
+              }
+              {
+                !atcLoading && <>
+                
               <svg
                 className="w-3.5 h-3.5"
                 fill="none"
@@ -186,9 +204,9 @@ function ProductCard({ hit, page_details, onCompare }) {
               >
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0" />
               </svg>
-              Add
+              Add to Cart</>
+              }
             </button>
-          </AddToCartButtonWrap>
         </div>
         <FicDropDown contact_number={page_details?.contact_number}>
           <div className="text-xs my-[5px] text-blue-500 flex items-center cursor-default gap-[7px] flex-wrap">
