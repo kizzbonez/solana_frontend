@@ -111,9 +111,17 @@ function GuestEmailCaptureDialog() {
     };
   }, []);
 
+  const handleClose = () => {
+    if (!infoEmail) {
+      sessionStorage.setItem("guest_dialog_dismissed", "1");
+    }
+    setToggle(false);
+  };
+
   useEffect(() => {
     const handler = () => {
-      if (!infoEmail && !pathname_exclusion.includes(pathname)) {
+      const dismissed = sessionStorage.getItem("guest_dialog_dismissed");
+      if (!infoEmail && !dismissed && !pathname_exclusion.includes(pathname)) {
         setToggle(true);
       }
     };
@@ -122,7 +130,7 @@ function GuestEmailCaptureDialog() {
   }, [infoEmail, pathname]);
 
   return (
-    <GuestModal isOpen={toggle} onClose={setToggle} />
+    <GuestModal isOpen={toggle} onClose={handleClose} />
     // <Dialog open={toggle} onClose={setToggle} className="relative z-10">
     //   <DialogBackdrop
     //     transition
