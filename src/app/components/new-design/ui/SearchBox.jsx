@@ -371,10 +371,13 @@ function SearchBox() {
 
       {/* ── DROPDOWN ── */}
       {open && (
-        <div
-          className="absolute top-[calc(100%+4px)] sm:top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-700 rounded-lg sm:rounded-2xl shadow-2xl overflow-hidden z-50"
-          style={{ maxHeight: "80vh", overflowY: "auto" }}
-        >
+        <div className="absolute top-[calc(100%+4px)] sm:top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-700 rounded-lg sm:rounded-2xl shadow-2xl overflow-hidden z-50 flex flex-col">
+          {/* Loading progress bar — always mounted so transition is smooth */}
+          <div className={`h-0.5 flex-shrink-0 bg-orange-400 transition-opacity duration-300 ${loading ? "opacity-100 animate-pulse" : "opacity-0"}`} />
+          <div
+            className={`transition-opacity duration-150 ${loading ? "opacity-60 pointer-events-none select-none" : ""}`}
+            style={{ maxHeight: "80vh", overflowY: "auto" }}
+          >
           {/* TOP RESULT */}
           {top && (
             <>
@@ -681,51 +684,31 @@ function SearchBox() {
           )}
 
           {/* FOOTER */}
-          <div className="flex items-center justify-end px-4 py-2.5 border-t border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50">
-            {/* <div className="flex items-center gap-2 text-[11px] text-stone-400 dark:text-stone-500">
-              <span className="hidden sm:flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded text-[10px] font-mono shadow-sm">
-                  ↑↓
-                </kbd>{" "}
-                navigate
+          <div className="flex items-center justify-between px-4 py-2.5 border-t border-stone-100 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50">
+            {loading ? (
+              <span className="flex items-center gap-1.5 text-[11px] text-stone-400 dark:text-stone-500">
+                <svg className="animate-spin w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Updating…
               </span>
-              <span className="hidden sm:flex items-center gap-1 ml-2">
-                <kbd className="px-1.5 py-0.5 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded text-[10px] font-mono shadow-sm">
-                  ↵
-                </kbd>{" "}
-                select
-              </span>
-              <span className="flex items-center gap-1 sm:ml-2">
-                <kbd className="px-1.5 py-0.5 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded text-[10px] font-mono shadow-sm">
-                  esc
-                </kbd>{" "}
-                close
-              </span>
-            </div> */}
-            {
-              localInput.trim() !== "" &&
-            <Link
-              prefetch={false}
-              href={
-                searchQuery ? `${BASE_URL}/search?query=${searchQuery}` : "#"
-              }
-              className="text-xs font-semibold flex items-center gap-1 transition hover:underline"
-              style={{ color: FIRE }}
-            >
-              View all results
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
+            ) : <span />}
+            {localInput.trim() !== "" && (
+              <Link
+                prefetch={false}
+                href={searchQuery ? `${BASE_URL}/search?query=${searchQuery}` : "#"}
+                className="text-xs font-semibold flex items-center gap-1 transition hover:underline"
+                style={{ color: FIRE }}
               >
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </Link>
-            }
+                View all results
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            )}
           </div>
+          </div>{/* end content wrapper */}
         </div>
       )}
     </div>
