@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Eos3DotsLoading } from "../icons/lib";
-import YmalCarousel from "@/app/components/atom/YmalCarousel";
 import ProductCartToCart from "@/app/components/atom/ProductCardToCart";
 import {
   BASE_URL,
@@ -49,33 +48,22 @@ const YouMightAlsoLike = () => {
     fetchProducts();
   }, []);
 
-  const items_per_break_point = [
-    { minWidth: 0, value: 1 },
-    { minWidth: 640, value: 2 },
-    { minWidth: 768, value: 3 },
-    { minWidth: 1280, value: 4 },
-  ];
-
   return (
     <div>
-      <h3>You Might Also Like</h3>
-      <div className="min-h-[366px] flex items-center justify-center text-neutral-700">
-        {products && Array.isArray(products) && products.length === 0 && (
+      <h3 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-3">You Might Also Like</h3>
+      {products.length === 0 ? (
+        <div className="flex items-center justify-center min-h-[180px]">
           <Eos3DotsLoading width={100} height={100} />
-        )}
-        {products && Array.isArray(products) && products.length > 0 && (
-          <YmalCarousel breakpoints={items_per_break_point}>
-            {products.map((item, index) => (
-              <div
-                key={`ymal-product-${index}`}
-                className="min-w-[170px] flex flex-col p-3"
-              >
-                <ProductCartToCart item={item} />
-              </div>
-            ))}
-          </YmalCarousel>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {products.map((item, index) => (
+            <div key={`ymal-product-${index}`} className="flex-shrink-0 w-[160px]">
+              <ProductCartToCart item={item} />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
