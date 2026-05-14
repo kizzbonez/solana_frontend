@@ -96,7 +96,7 @@ function buildJsonLd(product, slug, product_path) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description: stripHtml(product?.seo?.description || product?.body_html || ""),
+    description: stripHtml(product?.body_html || ""),
     image: product.images?.map((img) => img.src).filter(Boolean) || [],
     sku: variant?.sku || "",
     brand: {
@@ -116,13 +116,16 @@ function buildJsonLd(product, slug, product_path) {
     },
   };
 
-  if (product?.ratings?.rating_count) {
-    const ratingValue = parseFloat(product.ratings.rating_count) || 0;
+  if (product?.ratings) {
+    const ratingValue = parseFloat(product.ratings) || 0;
+    const reviewCount = product.reviews || 1;
     if (ratingValue > 0) {
       jsonLd.aggregateRating = {
         "@type": "AggregateRating",
         ratingValue: ratingValue.toFixed(1),
-        reviewCount: product.ratings.review_count || 1,
+        bestRating: "5",
+        worstRating: "1",
+        reviewCount,
       };
     }
   }
@@ -134,6 +137,7 @@ export default async function ProductPage({ params }) {
   const { slug, product_path } = await params;
 
   const product = await fetchProduct(product_path);
+  console.log("PRODUCT", product);
   const product_id = product?.product_id;
   const ymal_products = await getYMALProducts();
 

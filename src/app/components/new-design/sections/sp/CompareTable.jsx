@@ -38,7 +38,7 @@ const ItemValue = ({ specs, specKey, className }) => {
 const ProductTableHeadItem = ({ product, activeId }) => {
   return (
     <th
-      className={`border-b min-w-[250px] ${product.product_id === activeId ? "bg-blue-50 border-x border-blue-200" : ""}`}
+      className={`border-b min-w-[250px] ${product?.product_id === activeId ? "bg-blue-50 border-x border-blue-200" : ""}`}
     >
       <div className="p-2">
         <Link
@@ -149,7 +149,7 @@ const CompareTable = ({ products, activeProductId }) => {
                     key={`table-item-${product.product_id}-${key}`}
                     specs={product?.compare_specs || []}
                     specKey={key}
-                    className={`px-6 py-4 border-b text-gray-600 text-center text-xs ${product.product_id === activeProductId ? "bg-blue-50/30 border-x border-blue-100" : ""}`}
+                    className={`px-6 py-4 border-b text-gray-600 text-center text-xs ${product?.product_id === activeProductId ? "bg-blue-50/30 border-x border-blue-100" : ""}`}
                   />
                 ))}
               </tr>
