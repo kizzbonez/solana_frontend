@@ -113,20 +113,20 @@ const ProductInfo = ({ product }) => {
       </div> */}
 
       {/* Price */}
-      <div className="flex items-end gap-3 flex-wrap">
-        <span className="text-4xl font-black text-gray-900 dark:text-white">
+      <div className="flex flex-col items-start gap-3 flex-wrap my-3">
+        <div className="text-4xl font-black text-gray-900 dark:text-white">
           ${formatPrice(product?.price)}
-        </span>
+        </div>
         {product?.save_pct > 0 && (
           <div className="flex flex-col pb-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-400 line-through">
+              <span className="text-sm text-neutral-500 line-through">
                 ${formatPrice(product?.was)}
               </span>
               <Badge variant="green">SAVE {product?.save_pct}%</Badge>
             </div>
-            <span className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              You save ${formatPrice(product?.save_amt)}
+            <span className="text-xs text-neutral-700 dark:text-gray-500 mt-0.5">
+              You save <strong>${formatPrice(product?.save_amt)}</strong>
               {product?.is_freeshipping && ` · Free Shipping`}
             </span>
           </div>
@@ -134,27 +134,29 @@ const ProductInfo = ({ product }) => {
       </div>
 
       {/* Ships */}
-      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-        <svg
-          className="w-4 h-4 text-green-500 flex-shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span className="font-medium">{product?.ships}</span>
-      </div>
-
-      <FicDropDown contact_number={STORE_CONTACT}>
-        <div className="text-xs my-[5px] text-blue-500 flex items-center cursor-default gap-[7px] flex-wrap">
-          Found It Cheaper?
-          <div className="hover:underline flex items-center gap-[3px] cursor-pointer">
-            <ICRoundPhone width={16} height={16} /> <div>{STORE_CONTACT}</div>
-          </div>
+      <div>
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <svg
+            className="w-4 h-4 text-green-500 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="font-medium">{product?.ships}</span>
         </div>
-      </FicDropDown>
+
+        <FicDropDown contact_number={STORE_CONTACT}>
+          <div className="text-xs my-[5px] text-blue-500 flex items-center cursor-default gap-[7px] flex-wrap">
+            Found It Cheaper?
+            <div className="hover:underline flex items-center gap-[3px] cursor-pointer">
+              <ICRoundPhone width={16} height={16} /> <div>{STORE_CONTACT}</div>
+            </div>
+          </div>
+        </FicDropDown>
+      </div>
 
       {/* ProductOptions */}
       <div className="flex flex-col gap-4">
