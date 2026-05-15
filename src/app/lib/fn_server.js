@@ -418,7 +418,7 @@ async function _fetchProduct(product_path) {
  * The 86400s revalidate is a safety-net fallback in case a manual trigger
  * is missed; it does not replace the on-demand invalidation.
  */
-export function fetchProduct(product_path) {
+export async function fetchProduct(product_path) {
   return unstable_cache(
     () => _fetchProduct(product_path),
     [`product-${product_path}`],
@@ -531,7 +531,7 @@ async function _getReviewsByProductId(product_id) {
  *   revalidateTag("product-reviews-{id}") → busts one product's reviews
  *   revalidateTag("pdp-reviews")          → busts all product reviews
  */
-export function getReviewsByProductId(product_id) {
+export async function getReviewsByProductId(product_id) {
   return unstable_cache(
     () => _getReviewsByProductId(product_id),
     [`product-reviews-${product_id}`],

@@ -11,32 +11,41 @@ import CompareTable from "@/app/components/new-design/sections/sp/CompareTable";
 import StickyCTA from "@/app/components/new-design/sections/sp/StickyCTA";
 import MobileStickyCTA from "@/app/components/new-design/sections/sp/MobileStickyCTA";
 
-// Below-fold — lazy loaded to reduce initial JS bundle
+// Below-fold — lazy loaded to reduce initial JS bundle.
+// Each dynamic() gets its own loading:()=>null so chunk-fetch suspense is
+// contained per-section and never bubbles up to the page-level Suspense
+// boundary (which would flash ProductPlaceholder over the whole page).
 const CollectionStrip = dynamic(
   () => import("@/app/components/new-design/sections/sp/CollectionStrip"),
+  { loading: () => null },
 );
 const DescriptionSection = dynamic(
   () => import("@/app/components/new-design/sections/sp/DescriptionSection"),
+  { loading: () => null },
 );
 const SpecsShipping = dynamic(
   () => import("@/app/components/new-design/sections/sp/SpecsShipping"),
+  { loading: () => null },
 );
 const ReviewsSection = dynamic(
   () => import("@/app/components/new-design/sections/sp/ReviewsSection"),
+  { loading: () => null },
 );
 const FAQSection = dynamic(
   () => import("@/app/components/new-design/sections/sp/FAQSection"),
+  { loading: () => null },
 );
 const SupportCTA = dynamic(
   () => import("@/app/components/new-design/sections/sp/SupportCTA"),
+  { loading: () => null },
 );
-
 const ProductGrid = dynamic(
   () => import("@/app/components/new-design/sections/sp/ProductGrid"),
+  { loading: () => null },
 );
-
 const RecentViews = dynamic(
   () => import("@/app/components/new-design/sections/sp/RecentViews"),
+  { loading: () => null },
 );
 
 const STATIC_SPECS = [

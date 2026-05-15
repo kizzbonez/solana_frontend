@@ -5,7 +5,6 @@ import "@/app/styles/product-pages.css";
 // via /api/revalidate-pdp using revalidatePath + revalidateTag.
 export const revalidate = 86400;
 import { redis, keys } from "@/app/lib/redis";
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import RatingStyles from "@/app/components/atom/RatingStyles";
 import { BASE_URL, ES_INDEX } from "@/app/lib/helpers";
@@ -13,7 +12,6 @@ import { STORE_NAME } from "@/app/lib/store_constants";
 
 import { fetchProduct, getReviewsByProductId, getYMALProducts } from "@/app/lib/fn_server";
 
-import ProductPlaceholder from "@/app/components/atom/SingleProductPlaceholder";
 import ProductClient from "@/app/components/molecule/ProductClient";
 import SingleProductPage from "@/app/components/new-design/page/SingleProductPage";
 
@@ -173,15 +171,13 @@ export default async function ProductPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Suspense fallback={<ProductPlaceholder />}>
-        <SingleProductPage
+      <SingleProductPage
         product={product}
         slug={slug}
         reviews={product_reviews}
         faqs={FAQS}
         ymalProducts={ymal_products}
-        />
-      </Suspense>
+      />
     </>
   );
 }
