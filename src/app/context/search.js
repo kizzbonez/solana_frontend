@@ -29,6 +29,7 @@ const SEARCH_RESULT_SIZE = 100;
 const MIN_SUGGESTION_LENGTH = 2;
 const DEBOUNCE_DELAY = 400;
 const HIDDEN_COLLECTIONS = ["American Outdoor Grill"];
+const CACHE_TTL = 5 * 60 * 1000; // 5 min client-side ES response cache
 
 // ============================================================================
 // CONTEXT
@@ -89,6 +90,7 @@ export const SearchProvider = ({ children }) => {
   const debounceTimeoutRef = useRef(null);
   const lastProcessedUrlQuery = useRef(null);
   const currentSearchQuery = useRef("");
+  const searchCache = useRef(new Map()); // query → { data, ts }
 
   // ---------------------------------------------------------------------------
   // HELPER: Build Elasticsearch Query
@@ -547,66 +549,83 @@ export const SearchProvider = ({ children }) => {
   );
 
   // ---------------------------------------------------------------------------
+  // HELPER: Apply an ES response object to all search state slices.
+  // Used by both live fetches and cache hits so the two paths stay in sync.
+  // ---------------------------------------------------------------------------
+  const applyEsResponse = useCallback(
+    async (trim_query, data) => {
+      const formatted_results = data?.hits?.hits
+        ?.filter(Boolean)
+        .map(({ _source }) => _source);
+
+      const result_total_count = data?.hits?.total?.value;
+      const suggest_options = data?.suggest?.did_you_mean?.[0]?.options;
+      const sku_ac_options = data?.suggest?.sku_autocomplete?.[0]?.options || [];
+      const aggs_brands = data?.aggregations?.brands_facet?.buckets || [];
+      const aggs_collections = data?.aggregations?.collections_facet?.buckets || [];
+      const aggs_categories = data?.aggregations?.categories_facet?.buckets;
+
+      setSkusResults(trim_query.length > 2 ? sku_ac_options : []);
+
+      const { exactMatch, products } = processProductSearchResult(
+        trim_query,
+        formatted_results || [],
+      );
+
+      setProductHit(exactMatch);
+      setProductResults(products);
+      setProductResultsCount(result_total_count || 0);
+
+      await getSearchResults(
+        trim_query,
+        suggest_options?.[0]?.text || "",
+        aggs_brands,
+        aggs_categories,
+        aggs_collections,
+      );
+    },
+    [processProductSearchResult, getSearchResults],
+  );
+
+  // ---------------------------------------------------------------------------
   // API: Fetch Products from Elasticsearch
   // ---------------------------------------------------------------------------
   const fetchProducts = useCallback(
     async (query_string) => {
-      setLoading(true);
-      try {
-        if (abortControllerRef.current) {
-          abortControllerRef.current.abort();
-        }
+      // Always abort any in-flight request first — prevents stale results racing in
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
+      setLoading(true);
+      const trim_query = query_string.trim();
+
+      // Client cache hit — apply instantly, skip the network entirely
+      const cached = searchCache.current.get(trim_query);
+      if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        await applyEsResponse(trim_query, cached.data);
+        setLoading(false);
+        return cached.data;
+      }
+
+      try {
         const abortController = new AbortController();
         abortControllerRef.current = abortController;
-
-        const trim_query = query_string.trim();
-        const rawQuery = buildSearchQuery(trim_query);
 
         const res = await fetch("/api/es/shopify/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(rawQuery),
+          body: JSON.stringify(buildSearchQuery(trim_query)),
           signal: abortController.signal,
         });
 
-        if (!res.ok) {
-          // console.log("ERROR RESPONSE:", res);
-          // throw new Error(`[SHOPIFY SEARCH] Failed: ${res.status}`);
-        }
-
         const data = await res.json();
-        const formatted_results = data?.hits?.hits
-          ?.filter(Boolean)
-          .map(({ _source }) => _source);
 
-        const result_total_count = data?.hits?.total?.value;
-        const suggest_options = data?.suggest?.did_you_mean?.[0]?.options;
-        const sku_ac_options =
-          data?.suggest?.sku_autocomplete?.[0]?.options || [];
-        const aggs_brands = data?.aggregations?.brands_facet?.buckets || [];
-        const aggs_collections =
-          data?.aggregations?.collections_facet?.buckets || [];
-        const aggs_categories = data?.aggregations?.categories_facet?.buckets;
+        await applyEsResponse(trim_query, data);
 
-        setSkusResults(trim_query.length > 2 ? sku_ac_options : []);
-
-        const { exactMatch, products } = processProductSearchResult(
-          trim_query,
-          formatted_results || [],
-        );
-
-        setProductHit(exactMatch);
-        setProductResults(products);
-        setProductResultsCount(result_total_count || 0);
-
-        await getSearchResults(
-          trim_query,
-          suggest_options?.[0]?.text || "",
-          aggs_brands,
-          aggs_categories,
-          aggs_collections,
-        );
+        // Store response — cap at 200 entries to prevent unbounded growth
+        if (searchCache.current.size >= 200) searchCache.current.clear();
+        searchCache.current.set(trim_query, { data, ts: Date.now() });
 
         setLoading(false);
         return data;
@@ -617,7 +636,7 @@ export const SearchProvider = ({ children }) => {
         return null;
       }
     },
-    [buildSearchQuery, getSearchResults, processProductSearchResult],
+    [buildSearchQuery, applyEsResponse],
   );
 
   // ---------------------------------------------------------------------------

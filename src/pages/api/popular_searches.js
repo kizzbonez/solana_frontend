@@ -30,14 +30,9 @@ export default async function handler(req, res) {
     );
   }
 
-  // Return top results (limited by limit parameter)
   const finalResults = filtered.slice(0, limit);
 
-  // console.log("popular", {
-  //   query,
-  //   limit,
-  //   count: finalResults.length,
-  //   results: finalResults,
-  // });
+  // Popular searches change slowly — safe to cache for 5 min, serve stale for 10 more
+  res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
   res.status(200).json(finalResults);
 }
