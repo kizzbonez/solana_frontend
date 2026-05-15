@@ -9,6 +9,7 @@ import {
   formatProduct,
 } from "@/app/lib/helpers";
 import { accentuateSpecLabels } from "@/app/lib/filter-helper";
+import { unstable_cache } from "next/cache";
 
 // ─── Private: Elasticsearch ──────────────────────────────────────────────────
 
@@ -334,7 +335,7 @@ export async function getCollectionProducts(id) {
 /**
  * Refactored fetchProduct
  */
-export async function fetchProduct(product_path) {
+async function _fetchProduct(product_path) {
   try {
     // 1. Initial Search
     const searchResponse = await esSearch(
@@ -410,6 +411,22 @@ export async function fetchProduct(product_path) {
 }
 
 /**
+ * Public export — wraps _fetchProduct in unstable_cache so the result is
+ * stored per product handle and can be invalidated in two ways:
+ *   revalidateTag("product-{handle}") → busts one product
+ *   revalidateTag("pdp")              → busts all product data at once
+ * The 86400s revalidate is a safety-net fallback in case a manual trigger
+ * is missed; it does not replace the on-demand invalidation.
+ */
+export function fetchProduct(product_path) {
+  return unstable_cache(
+    () => _fetchProduct(product_path),
+    [`product-${product_path}`],
+    { tags: ["pdp", `product-${product_path}`], revalidate: 86400 },
+  )();
+}
+
+/**
  * Helper to handle the secondary fetch for related product handles
  */
 async function fetchRelatedProductData(accentuateData) {
@@ -469,7 +486,7 @@ async function fetchRelatedProductData(accentuateData) {
   };
 }
 
-export async function getReviewsByProductId(product_id) {
+async function _getReviewsByProductId(product_id) {
   try {
     // 1. Guard clause for missing ID
     if (!product_id) return [];
@@ -478,7 +495,7 @@ export async function getReviewsByProductId(product_id) {
 
     const response = await fetch(url, {
       method: "GET",
-      next: { revalidate: 3600 },
+      cache: "no-store",
       headers: {
         "Content-Type": "application/json",
         "X-Store-Domain": process.env.NEXT_PUBLIC_STORE_DOMAIN || "",
@@ -505,6 +522,21 @@ export async function getReviewsByProductId(product_id) {
     console.error("Proxy Error:", error);
     return [];
   }
+}
+
+/**
+ * Public export — wraps _getReviewsByProductId in unstable_cache.
+ * Reviews are kept on a separate tag from product data so they can be
+ * invalidated independently (e.g. when a new review is submitted).
+ *   revalidateTag("product-reviews-{id}") → busts one product's reviews
+ *   revalidateTag("pdp-reviews")          → busts all product reviews
+ */
+export function getReviewsByProductId(product_id) {
+  return unstable_cache(
+    () => _getReviewsByProductId(product_id),
+    [`product-reviews-${product_id}`],
+    { tags: ["pdp-reviews", `product-reviews-${product_id}`], revalidate: 3600 },
+  )();
 }
 
 function mergeRelatedProducts(data, keys) {

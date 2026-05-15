@@ -1,4 +1,9 @@
 import "@/app/styles/product-pages.css";
+
+// Safety-net fallback: pages self-heal after 24h even if a manual
+// revalidation trigger was missed. Primary invalidation is on-demand
+// via /api/revalidate-pdp using revalidatePath + revalidateTag.
+export const revalidate = 86400;
 import { redis, keys } from "@/app/lib/redis";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
