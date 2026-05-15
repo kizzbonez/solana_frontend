@@ -1,26 +1,30 @@
-"use client";
-import { useState, useEffect } from "react";
-import { useReveal } from "@/app/hooks/useReveal";
-import { useSolanaCategories } from "@/app/context/category";
-import { ArrowIcon } from "@/app/components/new-design/ui/Icons";
-import Image from "next/image";
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
+import Image from "next/image";
+import { fetchUniqueCategories } from "@/app/lib/fn_server";
+import { ArrowIcon } from "@/app/components/new-design/ui/Icons";
+import CategoriesGrid from "./CategoriesGrid";
 
-const INITIAL_COUNT = 4;
+// Same key + tags as the layout's getCachedCategories → shares the same cache entry.
+// Only one fetchUniqueCategories() call happens per cache period regardless of
+// how many server components request it.
+const getCategoriesCache = unstable_cache(
+  () => fetchUniqueCategories(),
+  ["layout-categories"],
+  { revalidate: 86400, tags: ["layout-data"] },
+);
 
 function CategoryCard({ name, description, slug, image, index }) {
-  const ref = useReveal();
   return (
     <Link href={slug ? `/category/${slug}` : "#"} aria-label={name} title={name} prefetch={false}>
       <article
-        ref={ref}
         className="
-          opacity-0 translate-y-6 transition-all duration-700
           rounded-2xl overflow-hidden bg-white dark:bg-stone-900
           shadow-[0_4px_24px_rgba(0,0,0,.10)] dark:shadow-[0_4px_24px_rgba(0,0,0,.4)]
           hover:shadow-[0_12px_48px_rgba(0,0,0,.20)] dark:hover:shadow-[0_12px_48px_rgba(0,0,0,.6)]
           hover:-translate-y-1.5 cursor-pointer group
           border border-transparent dark:border-stone-800
+          transition-all duration-300
         "
       >
         <div className="relative h-36 sm:h-60 overflow-hidden">
@@ -29,7 +33,7 @@ function CategoryCard({ name, description, slug, image, index }) {
             alt={name}
             fill
             sizes="(max-width: 1024px) calc(50vw - 2rem), calc(33vw - 2rem)"
-            className="object-cover transition-transform duration-500 hover:scale-105"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
             quality={40}
             priority={index === 0}
           />
@@ -53,27 +57,14 @@ function CategoryCard({ name, description, slug, image, index }) {
   );
 }
 
-export default function Categories() {
-  const { categories } = useSolanaCategories();
-  const hdrRef = useReveal();
-  const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    // Desktop: auto-expand without requiring button click
-    if (window.innerWidth >= 640) setShowAll(true);
-  }, []);
-
-  const visible = showAll ? categories : categories.slice(0, INITIAL_COUNT);
-  const remaining = categories.length - INITIAL_COUNT;
+export default async function Categories() {
+  const categories = await getCategoriesCache();
 
   return (
     <section id="categories" className="py-20 md:py-24 bg-white dark:bg-stone-950">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div
-          ref={hdrRef}
-          className="opacity-0 translate-y-6 transition-all duration-700 text-center mb-12"
-        >
+
+        <div className="text-center mb-12">
           <p className="text-[11px] tracking-[.15em] uppercase font-semibold text-fire mb-2.5">
             Browse by Category
           </p>
@@ -86,24 +77,12 @@ export default function Categories() {
           </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visible.map((c, i) => (
+        <CategoriesGrid total={categories.length}>
+          {categories.map((c, i) => (
             <CategoryCard key={c.slug} {...c} index={i} />
           ))}
-        </div>
+        </CategoriesGrid>
 
-        {/* Show All button — mobile only, disappears once expanded */}
-        {!showAll && remaining > 0 && (
-          <div className="mt-8 text-center sm:hidden">
-            <button
-              onClick={() => setShowAll(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg border-2 border-fire text-fire font-semibold text-sm hover:bg-fire hover:text-white transition-all duration-200"
-            >
-              Show All Categories ({remaining} more)
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

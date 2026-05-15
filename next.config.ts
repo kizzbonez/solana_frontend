@@ -71,7 +71,7 @@ const config: NextConfig = {
     // Cache optimized images for 24 h at the edge
     minimumCacheTTL: 86400,
     // Explicit breakpoints so Next.js generates the right srcset for mobile
-    deviceSizes: [375, 640, 750, 828, 1080, 1200, 1920],
+    deviceSizes: [375, 512, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       { protocol: "https", hostname: "cdn11.bigcommerce.com" },

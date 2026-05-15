@@ -80,13 +80,11 @@ export default async function MarketLayout({ children }) {
       is_base_nav: !["On Sale", "New Arrivals"].includes(i?.name),
     })) || [];
 
-  // First category card is the LCP element on mobile — preload its optimized image
-  // so the browser can fetch it in parallel with JS parsing instead of waiting for
-  // next/image to register the request after client hydration.
-  const firstCatSlug = categories?.[0]?.slug;
-  const firstCatImgBase = firstCatSlug
-    ? `/_next/image?url=%2Fimages%2Fcategories%2F${firstCatSlug}.webp&q=40`
-    : null;
+  // Preload the first 4 category cards — they're all visible above-the-fold on mobile
+  // (INITIAL_COUNT = 4 in Categories.jsx). Preloading them in the server-rendered <head>
+  // lets the browser fetch in parallel with JS parsing, eliminating the "late-discovered
+  // image" PageSpeed audit. Index 0 is the LCP candidate → fetchPriority="high".
+  const initialCats = (categories || []).slice(0, 4);
 
   return (
     <html lang="en">
@@ -100,16 +98,20 @@ export default async function MarketLayout({ children }) {
           href="https://bbq-spaces.sfo3.cdn.digitaloceanspaces.com"
         />
         <link rel="dns-prefetch" href="https://cdn.shopify.com" />
-        {firstCatImgBase && (
-          <link
-            rel="preload"
-            as="image"
-            href={`${firstCatImgBase}&w=640`}
-            imageSrcSet={`${firstCatImgBase}&w=375 375w, ${firstCatImgBase}&w=640 640w, ${firstCatImgBase}&w=750 750w, ${firstCatImgBase}&w=828 828w`}
-            imageSizes="(max-width: 1024px) calc(50vw - 2rem), calc(33vw - 2rem)"
-            fetchPriority="high"
-          />
-        )}
+        {initialCats.map((cat, i) => {
+          const base = `/_next/image?url=%2Fimages%2Fcategories%2F${cat.slug}.webp&q=40`;
+          return (
+            <link
+              key={cat.slug}
+              rel="preload"
+              as="image"
+              href={`${base}&w=512`}
+              imageSrcSet={`${base}&w=375 375w, ${base}&w=512 512w, ${base}&w=640 640w, ${base}&w=750 750w`}
+              imageSizes="(max-width: 1024px) calc(50vw - 2rem), calc(33vw - 2rem)"
+              fetchPriority={i === 0 ? "high" : undefined}
+            />
+          );
+        })}
         {/* eslint-disable-next-line react/no-danger */}
         <style
           dangerouslySetInnerHTML={{ __html: themeCSS }}
