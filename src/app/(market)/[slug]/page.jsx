@@ -100,8 +100,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function GenericCategoryPage({ params }) {
+export default async function GenericCategoryPage({ params, searchParams }) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const menuData = await redis.get(defaultMenuKey);
   const flatData = flattenNav(
     menuData.map((i) => ({
@@ -125,9 +126,18 @@ export default async function GenericCategoryPage({ params }) {
 
   const filterString = computeFilterString(pageData);
 
+  // Only prefetch the base-state hits when the URL has no params that would
+  // conflict with them (sort, page, filters). When params are present the
+  // client-side InstantSearch instance already reads the correct state from
+  // the URL, so passing stale page-0 hits would cause a visible wrong-results
+  // flash before the live query resolves.
+  const hasUrlParams = Object.keys(resolvedSearchParams ?? {}).some(
+    (k) => k === "sort" || k === "page" || k.startsWith("filter:") || k.startsWith("range:"),
+  );
+
   const [collection_aggs, initialHits] = await Promise.all([
     fetchCollectionsCount(collection_ids),
-    getInitialHits(filterString).catch(() => null),
+    hasUrlParams ? Promise.resolve(null) : getInitialHits(filterString).catch(() => null),
   ]);
 
   const buckets =
