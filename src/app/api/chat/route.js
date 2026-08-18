@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { STORE_ID } from "@/app/lib/store";
 import { clientKey, withRouteRateLimit } from "@/app/lib/rate-limit";
 import { allowedCountries, chatRegion, REGION_MESSAGE } from "@/app/lib/chat-region";
+import { userTokenOf } from "@/app/lib/chat-user";
 
 /**
  * POST /api/chat — proxy to the Django backend's assistant.
@@ -176,6 +177,17 @@ async function handler(request) {
     console.warn("chat: could not determine client IP — sending without X-Client-IP");
   }
 
+  // Who is asking, when they are signed in. This is what makes the conversation
+  // recoverable later: the backend files an exchange against a user only when
+  // the request carried this, and GET /api/chat/history reads back exactly what
+  // was filed. Without it here, that endpoint would authenticate perfectly well
+  // and always return nothing.
+  //
+  // Absent for a guest, and that is the whole design rather than a gap — a
+  // guest has no account to store anything against, so their conversation stays
+  // in their own browser (see lib/chat-history.js).
+  const userToken = userTokenOf(request);
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), BACKEND_TIMEOUT_MS);
 
@@ -196,6 +208,9 @@ async function handler(request) {
         // Omitted rather than sent empty when it cannot be determined: a blank
         // value is not a fallback, it is a wrong answer that looks like one.
         ...(clientIp ? { "X-Client-IP": clientIp } : {}),
+        // Same rule: sent when there is a signed-in visitor, omitted entirely
+        // for a guest rather than sent empty.
+        ...(userToken ? { "X-User-Token": userToken } : {}),
       },
       body: JSON.stringify(payload),
       cache: "no-store",
@@ -252,7 +267,9 @@ export async function GET() {
     store: STORE_ID,
     request: { message: "string (required)", session_id: "string (optional)" },
     response: { reply: "string", session_id: "string", took_ms: "number" },
+    auth: "Authorization: Bearer <access token> — optional; identifies a signed-in visitor so the conversation is stored against them",
     availability: "/api/chat/availability",
+    history: "/api/chat/history?limit=10 (signed-in visitors only)",
     regions: allowedCountries(),
   });
 }

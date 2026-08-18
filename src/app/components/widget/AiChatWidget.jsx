@@ -34,6 +34,12 @@ const TYPING_SPEED_MS = 12; // per character
  * their next visit instead of being stuck with a stale one indefinitely.
  */
 const AVAILABILITY_KEY = "sf:chat-available";
+/**
+ * How much of a signed-in visitor's stored conversation to read back. Ten
+ * exchanges is a conversation someone would recognise as theirs without
+ * dragging a month of them into the panel every time it opens.
+ */
+const HISTORY_LIMIT = 10;
 const GREETING =
   "Hi! Ask me anything about the products here — what fits your space, what's in your budget, or how two models compare.";
 
@@ -207,13 +213,25 @@ export default function AiChatWidget() {
   // starts every page as logged-out and resolves a moment later, so acting
   // before it settles would read a signed-in visitor as a guest and hand them
   // the wrong thread.
-  const { user, isLoggedIn, loading: authLoading } = useAuth() || {};
+  const { user, isLoggedIn, loading: authLoading, accessToken } = useAuth() || {};
   const identity = useMemo(() => {
     if (!isLoggedIn || !user) return null;
     // Never the email — see historyKey.
     const id = user.id ?? user.pk ?? user.username;
     return id == null ? null : String(id);
   }, [isLoggedIn, user]);
+
+  // The token that identifies this visitor to the backend, so it can store the
+  // conversation against them and hand it back later.
+  //
+  // Held on a ref rather than read as a dependency: auth rotates the access
+  // token every ten minutes, and a rotation must not re-run the effect that
+  // loads history — that would refetch the transcript, and overwrite whatever
+  // has been said since, every ten minutes for as long as the tab is open.
+  // Reading it at call time also means a request always carries the current
+  // token rather than whichever one was current when a callback was built.
+  const tokenRef = useRef(null);
+  tokenRef.current = accessToken || null;
 
   // Rendered only after mount. The storefront is deliberately readable without
   // JavaScript (see docs/agentic-ai-readiness.md) and a chat button that cannot
@@ -255,6 +273,9 @@ export default function AiChatWidget() {
   // Which reply the shelf belongs to, so a slow lookup for an older answer
   // cannot land after a newer one.
   const latestReplyRef = useRef(null);
+  // Bumped on every identity change, so a history response for the person who
+  // just signed out cannot land in the session of the one who signed in.
+  const historyTicketRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -443,7 +464,15 @@ export default function AiChatWidget() {
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            // Signed in: the proxy turns this into X-User-Token so the backend
+            // files the exchange against this account and it can be read back
+            // from /api/chat/history later. A guest simply sends nothing.
+            ...(tokenRef.current
+              ? { Authorization: `Bearer ${tokenRef.current}` }
+              : {}),
+          },
           body: JSON.stringify(
             sessionId ? { message, session_id: sessionId } : { message },
           ),
@@ -502,39 +531,105 @@ export default function AiChatWidget() {
     setError(null);
   }, []);
 
-  /** Puts a stored conversation back on screen. Returns whether there was one. */
-  const restore = useCallback(
-    (who) => {
-      const saved = loadHistory(who);
-      if (!saved) return false;
-
+  /** Puts a conversation on screen, wherever it was read from. */
+  const apply = useCallback(
+    ({ messages: restored, sessionId: restoredSession }) => {
       // Continue the id sequence past everything restored. Starting from zero
       // again would hand a new reply the id of an old one, and the product
       // shelf would attach itself to the wrong message — the same failure that
       // once put the cards above the question.
-      messageSeq.current = saved.messages.reduce((max, m) => {
+      //
+      // Server-side ids look like "h3q" and deliberately do not match: they
+      // cannot collide with the "m<n>" sequence, so a restored server thread
+      // leaves the counter where it is and new messages carry on from m1.
+      messageSeq.current = restored.reduce((max, m) => {
         const n = /^m(\d+)$/.exec(m.id ?? "")?.[1];
         return n ? Math.max(max, Number(n)) : max;
       }, 0);
 
-      setMessages(saved.messages);
-      setSessionId(saved.sessionId);
-      savedCountRef.current = saved.messages.length;
+      setMessages(restored);
+      setSessionId(restoredSession);
+      savedCountRef.current = restored.length;
 
       // The shelf is rebuilt from stored handles rather than stored products,
       // so a conversation reopened next week shows today's prices and stock
       // instead of what was true when the answer was given.
       setSuggestions([]);
-      const lastWithProducts = [...saved.messages]
+      const lastWithProducts = [...restored]
         .reverse()
         .find((m) => m.role === "assistant" && m.handles?.length);
       if (lastWithProducts) {
         latestReplyRef.current = lastWithProducts.id;
         attachProducts(lastWithProducts.id, lastWithProducts.handles);
       }
-      return true;
     },
     [attachProducts],
+  );
+
+  /** Puts a stored conversation back on screen. Returns whether there was one. */
+  const restore = useCallback(
+    (who) => {
+      const saved = loadHistory(who);
+      if (!saved) return false;
+      apply(saved);
+      return true;
+    },
+    [apply],
+  );
+
+  /**
+   * The signed-in visitor's conversation as the backend recorded it.
+   *
+   * This is what makes an account's history more than a browser's: it survives
+   * a cleared cache and follows the person to another device, neither of which
+   * localStorage can do. It runs after the local copy has already been put on
+   * screen, so the conversation appears instantly and is replaced only if the
+   * server actually has something — a slow or failed lookup leaves the local
+   * copy exactly where it was, rather than blanking a working panel.
+   *
+   * `ticket` invalidates a response that arrives after the visitor has signed
+   * out or switched account, so one person's transcript can never land in
+   * another's session.
+   */
+  const restoreFromServer = useCallback(
+    async (ticket) => {
+      const token = tokenRef.current;
+      if (!token) return false;
+
+      // Anything typed while this was in flight makes the answer stale — the
+      // same race the product shelf guards against, with a whole conversation
+      // at stake instead of a card.
+      const lengthAtStart = messagesRef.current.length;
+
+      try {
+        const res = await fetch(`/api/chat/history?limit=${HISTORY_LIMIT}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // 401 here is ordinary rather than exceptional: the access token is
+        // rotated every ten minutes and a tab left open overnight holds a stale
+        // one. Nothing is shown for it — the local copy is already on screen.
+        if (!res.ok) return false;
+
+        const data = await res.json().catch(() => null);
+        if (!data?.messages?.length) return false;
+
+        if (historyTicketRef.current !== ticket) return false;
+        if (messagesRef.current.length !== lengthAtStart) return false;
+
+        // The greeting is this app's, not the backend's, so it is put back at
+        // the head rather than expected to come down the wire.
+        apply({
+          messages: [{ id: "m0", role: "assistant", text: GREETING }, ...data.messages],
+          sessionId: data.sessionId ?? null,
+        });
+        return true;
+      } catch {
+        // Offline, or the request was blocked. History is an enhancement; the
+        // assistant works without it.
+        return false;
+      }
+    },
+    [apply],
   );
 
   // `undefined` until auth settles — distinct from `null`, which means guest.
@@ -555,6 +650,10 @@ export default function AiChatWidget() {
     if (previous === identity) return;
     identityRef.current = identity;
 
+    // Any history request still in flight belonged to the identity we are
+    // leaving, and must not be allowed to land in this one.
+    const ticket = ++historyTicketRef.current;
+
     // First settle on this page load: pick up whatever belongs to this visitor.
     if (previous === undefined) {
       pruneExpiredHistory();
@@ -565,6 +664,10 @@ export default function AiChatWidget() {
       // it happened.
       if (!identity) clearAccountHistories();
       restore(identity);
+      // The local copy is on screen already; the account's own record replaces
+      // it if the backend has one. This is the path that matters on a new
+      // device or after a cleared browser, where there is no local copy at all.
+      if (identity) restoreFromServer(ticket);
       return;
     }
 
@@ -572,18 +675,24 @@ export default function AiChatWidget() {
     // rather than disappearing at the moment they log in. It moves under their
     // identity and the guest copy is deleted, so the next guest on this browser
     // cannot pick up where a signed-in person left off.
-    //
-    // SERVER HISTORY SEAM: when the account-history endpoint lands, this is
-    // where the carried thread is POSTed to it, and where the account's stored
-    // conversation should be fetched and take precedence over the local copy.
     if (previous === null && identity) {
       const carried = messagesRef.current;
       clearHistory(null);
       if (carried.length > 1) {
+        // Deliberately NOT replaced by the server copy. What is on screen was
+        // asked seconds ago; the stored thread may be a week old, and dropping
+        // a live conversation to show an old one at the moment someone signs in
+        // is the more surprising of the two. Those messages were sent before
+        // there was a token, so the backend holds them against the session
+        // rather than the account — everything from here on is filed correctly,
+        // and the "New conversation" button reaches the stored thread.
         saveHistory(identity, { messages: carried, sessionId: sessionIdRef.current });
         savedCountRef.current = carried.length;
       } else {
+        // Nothing worth carrying, so this is just "sign in and pick up where
+        // you left off" — local first, then the account's own record.
         restore(identity);
+        restoreFromServer(ticket);
       }
       return;
     }
@@ -595,7 +704,8 @@ export default function AiChatWidget() {
     clearHistory(previous);
     startFresh();
     restore(identity);
-  }, [authLoading, identity, restore, startFresh]);
+    if (identity) restoreFromServer(ticket);
+  }, [authLoading, identity, restore, restoreFromServer, startFresh]);
 
   /**
    * Persists on each new message.
