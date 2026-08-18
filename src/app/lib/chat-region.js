@@ -68,7 +68,24 @@ export function isRegionLocked() {
   const override = String(process.env.CHAT_REGION_LOCK ?? "").trim().toLowerCase();
   if (override === "on" || override === "true" || override === "1") return true;
   if (override === "off" || override === "false" || override === "0") return false;
-  return process.env.VERCEL_ENV === "production";
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TEMPORARILY DISABLED — 18 Aug 2026, for demo and testing from the
+  // Philippines. With this commented out the assistant is open to every country
+  // on production, which is the spend the US/CA restriction exists to bound.
+  //
+  // TO RESTORE: delete the `return false` below and uncomment the line under
+  // it. Nothing else in this file changed, so that single edit puts the
+  // restriction back exactly as it was.
+  //
+  // NOTE: a code change was not actually required for this. Setting
+  // CHAT_REGION_LOCK=off in the Vercel dashboard lifts the restriction with no
+  // deploy and is reversed just as quickly — which is what the override above
+  // is for. Prefer that next time; this edit has to be remembered, and an env
+  // var does not.
+  // ───────────────────────────────────────────────────────────────────────────
+  return false;
+  // return process.env.VERCEL_ENV === "production";
 }
 
 /**
