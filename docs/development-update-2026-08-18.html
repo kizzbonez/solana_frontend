@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Development Update — 12–18 August 2026</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+
+  :root {
+    --ink:      #17181a;
+    --ink-soft: #3d4045;
+    --ink-mute: #6e7278;
+    --rule:     #dcdee1;
+    --rule-lt:  #eceef0;
+    --accent:   #E85D26;
+    --accent-dk:#C44B18;
+    --wash:     #faf7f5;
+    --good:     #1f7a4d;
+    --warn:     #9a5b00;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.52;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.011em; }
+
+  /* ── Masthead ───────────────────────────────────────────── */
+  .masthead { border-bottom: 2.5px solid var(--accent); padding-bottom: 11px; margin-bottom: 20px; }
+  .eyebrow {
+    font-size: 7.6pt; font-weight: 700; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent-dk); margin-bottom: 7px;
+  }
+  h1 { font-size: 21pt; line-height: 1.16; }
+  .subtitle { margin-top: 7px; font-size: 10pt; color: var(--ink-soft); }
+  .meta { margin-top: 3px; font-size: 8.6pt; color: var(--ink-mute); }
+
+  /* ── Stat band ──────────────────────────────────────────── */
+  .stats {
+    display: flex; gap: 0; margin: 0 0 22px;
+    border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+    background: var(--wash); break-inside: avoid;
+  }
+  .stat { flex: 1; padding: 11px 13px; border-right: 1px solid var(--rule); }
+  .stat:last-child { border-right: 0; }
+  .stat .n { font-size: 17pt; font-weight: 680; line-height: 1; color: var(--accent-dk); }
+  .stat .l {
+    font-size: 7.4pt; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--ink-mute); margin-top: 5px; font-weight: 600;
+  }
+
+  /* ── Sections ───────────────────────────────────────────── */
+  section { margin-bottom: 21px; break-inside: avoid-page; }
+  h2 {
+    font-size: 12.6pt; padding-bottom: 5px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tagline { font-size: 8.8pt; color: var(--ink-mute); margin-bottom: 10px; font-style: italic; }
+
+  .item { margin-bottom: 11px; padding-left: 11px; border-left: 2.5px solid var(--rule-lt); break-inside: avoid; }
+  .item:last-child { margin-bottom: 0; }
+  .item.key { border-left-color: var(--accent); }
+  h3 { font-size: 10.2pt; margin-bottom: 2px; }
+  .item p { margin: 2px 0 0; color: var(--ink-soft); }
+  .sha {
+    font-family: "Cascadia Mono", Consolas, monospace; font-size: 7.8pt;
+    color: var(--ink-mute); font-weight: 500;
+  }
+
+  code {
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: 8.6pt; background: #f2f3f4; padding: 0.5px 3.5px;
+    border-radius: 3px; color: var(--ink);
+  }
+
+  /* ── Callouts ───────────────────────────────────────────── */
+  .callout {
+    border: 1px solid var(--rule); border-left: 3px solid var(--warn);
+    background: #fffdf8; border-radius: 5px; padding: 10px 13px;
+    margin-top: 11px; break-inside: avoid;
+  }
+  .callout.ok { border-left-color: var(--good); background: #f7fcf9; }
+  .callout h3 { font-size: 9.6pt; margin-bottom: 3px; }
+  .callout p { margin: 3px 0 0; font-size: 9.4pt; color: var(--ink-soft); }
+
+  /* ── Table ──────────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 8.9pt; }
+  th {
+    text-align: left; font-size: 7.4pt; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-mute); font-weight: 700;
+    padding: 0 8px 5px 0; border-bottom: 1px solid var(--rule);
+  }
+  td { padding: 4.5px 8px 4.5px 0; border-bottom: 1px solid var(--rule-lt); vertical-align: top; }
+  tr { break-inside: avoid; }
+  td.d { white-space: nowrap; color: var(--ink-mute); font-size: 8.3pt; }
+  td.h { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8pt; color: var(--ink-mute); }
+
+  .tag {
+    display: inline-block; font-size: 7.2pt; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 1px 5px; border-radius: 3px; white-space: nowrap;
+  }
+  .t-feat { background: #e8f1fb; color: #1a4f8a; }
+  .t-fix  { background: #fdecea; color: #a3281c; }
+  .t-sec  { background: #f3e9fb; color: #6b2f9e; }
+  .t-doc  { background: #eef0f2; color: #4a4d52; }
+  .t-cho  { background: #fdf2e3; color: #8a5200; }
+
+  .page-break { break-before: page; }
+
+  footer {
+    margin-top: 24px; padding-top: 9px; border-top: 1px solid var(--rule);
+    font-size: 8pt; color: var(--ink-mute); display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="eyebrow">Development Update</div>
+  <h1>AI Shopping Assistant, Admin Security<br>&amp; the Blog Migration</h1>
+  <div class="subtitle">Wednesday 12 August – Tuesday 18 August 2026</div>
+  <div class="meta">Solana Fireplaces · BBQ Grill Outlet · Outdoor Kitchen Outlet — shared Next.js storefront</div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="n">18</div><div class="l">Commits</div></div>
+  <div class="stat"><div class="n">54</div><div class="l">Files changed</div></div>
+  <div class="stat"><div class="n">3,160</div><div class="l">Lines of code added</div></div>
+  <div class="stat"><div class="n">11</div><div class="l">New modules</div></div>
+  <div class="stat"><div class="n">3</div><div class="l">Brands covered</div></div>
+</div>
+
+<section>
+  <h2>1. Admin access secured</h2>
+  <div class="tagline">The week opened by closing a hole that exposed every brand's store data to anyone who asked.</div>
+
+  <div class="item key">
+    <h3>Admin was publicly reachable, and the store data behind it writable <span class="sha">3122589 · d394b8b</span></h3>
+    <p>The <code>/admin</code> gate only enforced when an environment variable was set, and it never was — so every deployment served the admin interface to anyone. The only obstacle was a browser-side token check, which ran <em>after</em> the page and its data had already been sent, and could be removed with developer tools.</p>
+    <p>Worse, the endpoints behind it were unprotected independently. <code>/api/redis</code> accepted unauthenticated reads, writes and deletes against any key — every brand's menus, store settings and page SEO were publicly readable and deletable in a single request, on a Redis instance all three brands share. Three further endpoints had no check at all, one of which walks an entire external catalogue for up to five minutes per call.</p>
+  </div>
+
+  <div class="item">
+    <h3>Operators now sign in with the account they already have <span class="sha">3122589</span></h3>
+    <p>Sign in at <code>/login</code>; if the username is on the allowlist, admin access is granted for eight hours via a signed, tamper-proof cookie. Identity and authority are kept deliberately separate — the cookie proves who you are, the allowlist decides whether you are an admin, and it is read fresh on every request. Removing a name therefore revokes access on the <em>next request</em>, not whenever that person's session happens to expire.</p>
+  </div>
+
+  <div class="item">
+    <h3>Refusals are indistinguishable from a missing page <span class="sha">cc4a263</span></h3>
+    <p>Denied requests return the framework's own 404, byte-for-byte identical to any genuinely missing URL. A "403 Forbidden" confirms there is something worth attacking; this leaves nothing to compare. Each brand also received its own signing secret — verified that a cookie signed for one brand is refused by another.</p>
+  </div>
+
+  <div class="callout ok">
+    <h3>Verified, not assumed</h3>
+    <p>Tested against a running production build per username: all five declared admins admitted, unlisted users refused, and forged, tampered, expired and wrong-secret cookies all rejected. Denied responses were confirmed to carry no store data. Storefront unaffected throughout.</p>
+  </div>
+</section>
+
+<section>
+  <h2>2. AI shopping assistant — built and shipped</h2>
+  <div class="tagline">Nine commits took this from nothing to a working assistant on all three storefronts.</div>
+
+  <div class="item key">
+    <h3>A conversational assistant on every storefront page <span class="sha">9fe49d2 · ff2a463</span></h3>
+    <p>Shoppers can ask what fits their space, what suits their budget, or how two models compare, in plain language. The browser never talks to the backend directly — a server-side proxy keeps credentials private and asserts which brand is asking, so BBQ shoppers can never be answered from Solana's catalogue.</p>
+    <p>Voice input uses the browser's own speech recognition: no dependency, no service, no per-minute cost. Keyboard and screen-reader support was built in from the start, not retrofitted.</p>
+  </div>
+
+  <div class="item key">
+    <h3>Recommendations became real product cards <span class="sha">7b5a1b5</span></h3>
+    <p>The assistant recommends products as links — and <em>every one of those links was broken</em>, pointing at a URL pattern this storefront does not serve. Confirmed against production rather than assumed.</p>
+    <p>Rather than patch the model's URL, the widget now takes only the product identifier and asks our own catalogue for the real thing. The result is a card with the correct link, title, live price and an <strong>Add to cart</strong> button. A recommendation can no longer point at a missing page, and can no longer show a price the model invented — an unrecognised product simply produces no card.</p>
+  </div>
+
+  <div class="item">
+    <h3>Conversations are now kept <span class="sha">c55006f · be623c6</span></h3>
+    <p>Signed-in customers have their conversation stored on the backend as it happens and restored on their next visit — it survives a cleared browser and follows them to another device. Guests, who have no account to store anything against, keep theirs in their own browser for seven days, measured from the last message so an active conversation is never cut off mid-way.</p>
+    <p>Signing in or out moves the conversation with the person, and a signed-out browser retains nothing — on a shared computer, one customer's conversation must never be readable by the next.</p>
+  </div>
+
+  <div class="item">
+    <h3>Usage restricted to the markets we sell to <span class="sha">e265ea0</span></h3>
+    <p>Every message costs a model call, and the catalogue only ships to the US and Canada, so on production the assistant was limited to those two countries while remaining open everywhere else for development and demos.</p>
+  </div>
+
+  <div class="item">
+    <h3>Made to reach the live backend <span class="sha">94ac5bc · e5c0f3a</span></h3>
+    <p>Three faults stood between the assistant and working when the backend went live: a URL form the server treated as missing, an authentication key that turned out not to be interchangeable with the general one, and product links rendered as unclickable text. The visitor's own address is now forwarded too — previously the backend's logs recorded a single address for the entire storefront.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>3. Blog moved off WordPress</h2>
+  <div class="tagline">A separate content system retired, and a page that cost thirteen requests now costs one.</div>
+
+  <div class="item key">
+    <h3>Posts now come from the main backend <span class="sha">c9de7bb</span></h3>
+    <p>The blog previously read from a separate WordPress installation. Listing twelve posts required <strong>thirteen round trips</strong>, because each post needed a further request just to resolve its image. The new endpoint returns everything inline, and an entire module of brand-mapping workarounds was deleted rather than rewritten.</p>
+    <p>Two faults were found only by testing against the live API rather than trusting the specification: the obvious-looking content field is structured data, not text, and would have printed <code>[object Object]</code> on every post page; and brand filtering had to use the backend's own filter, because comparing domains directly would have rejected legitimate posts over a <code>www.</code> prefix.</p>
+    <p>Also fixed: an unknown blog URL previously returned a success response saying "No content available", telling search engines the page existed. It is now a proper 404.</p>
+  </div>
+</section>
+
+<section>
+  <h2>4. Store accuracy &amp; search visibility</h2>
+
+  <div class="item key">
+    <h3>Three different free-shipping promises, now one <span class="sha">2099d1f</span></h3>
+    <p>The storefront simultaneously advertised free shipping over <strong>$499</strong>, over <strong>$1,999</strong> and over <strong>$79.99</strong> — which promise a customer saw depended entirely on which page they happened to land on. All now read $79.99, the confirmed policy.</p>
+  </div>
+
+  <div class="item">
+    <h3>Return policy published as structured data <span class="sha">7b383ed · ffda3a7</span></h3>
+    <p>The return terms were held back as "unconfirmed" when in fact they had been published on the returns page the whole time. Encoded from that page rather than the shorter product-page summary, because the two disagreed on the restocking fee and the page is what a customer is actually shown. This closed the last outstanding item in the client specification that engineering could close, moving the readiness score from <strong>95%</strong> to <strong>97.5%</strong>.</p>
+  </div>
+</section>
+
+<section>
+  <h2>5. Documentation</h2>
+
+  <div class="item">
+    <h3>Porting guides for the second application <span class="sha">65e3c0b · be623c6</span></h3>
+    <p>Complete implementation guides for the AI assistant and the blog, written for the separate application that runs the same backend structure under its own credentials — covering the endpoints, required parameters, regional rules and the non-obvious failure modes discovered here, so they need not be rediscovered.</p>
+  </div>
+
+  <div class="item">
+    <h3>Brand-isolation audit <span class="sha">1272061</span></h3>
+    <p>An audit of what is genuinely separate between the three brands, answering what else changes when an operator edits one. Store settings, SEO, branding, FAQs and caches were all confirmed independent. <strong>One exception was found and documented</strong> — see below.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Needs attention</h2>
+
+  <div class="callout">
+    <h3>The AI assistant is currently open to all countries</h3>
+    <p>The US/Canada restriction was deliberately lifted on 18 August so the assistant can be demonstrated and tested from the Philippines. It is a one-line change, marked in the code with restore instructions. <strong>It should be reverted once the demo concludes</strong> — until then, every country can generate model-call spend across all three brands.</p>
+  </div>
+
+  <div class="callout">
+    <h3>The navigation menu is shared across all three brands</h3>
+    <p>Menu content is stored without a brand prefix, so the menu editor is effectively one editor with three front doors: editing navigation, hero, featured content or collections on any brand changes all three storefronts. Documented rather than fixed, because the repair requires a data migration as well as a code change.</p>
+  </div>
+
+  <div class="callout">
+    <h3>Shipping rates remain unpublished as structured data</h3>
+    <p>Storefront copy is now consistent at $79.99, but a claim on a page is not the same as a rate checkout will honour. Search engines treat this data as a commitment, so the field stays empty until the storefront and checkout are confirmed to agree.</p>
+  </div>
+</section>
+
+<section class="page-break">
+  <h2>Appendix — commit log</h2>
+  <div class="tagline">All 18 commits, 12–18 August 2026, in chronological order.</div>
+
+  <table>
+    <thead>
+      <tr><th style="width:74px">Date</th><th style="width:56px">Ref</th><th style="width:62px">Type</th><th>Change</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">3122589</td><td><span class="tag t-sec">Security</span></td><td>Gate admin on the storefront login with a username allowlist</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">d394b8b</td><td><span class="tag t-sec">Security</span></td><td>Require admin auth on endpoints that read and write store data</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">1272061</td><td><span class="tag t-doc">Docs</span></td><td>Admin access runbook, brand-isolation audit, weekly reports</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">cc4a263</td><td><span class="tag t-sec">Security</span></td><td>Let the framework render the 404 instead of a hand-written one</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">2099d1f</td><td><span class="tag t-fix">Fix</span></td><td>One free-shipping threshold, $79.99, instead of three</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">7b383ed</td><td><span class="tag t-feat">Feature</span></td><td>Publish the return policy as structured data</td></tr>
+      <tr><td class="d">Wed 12 Aug</td><td class="h">ffda3a7</td><td><span class="tag t-doc">Docs</span></td><td>Rescore the readiness report at 97.5%</td></tr>
+      <tr><td class="d">Thu 13 Aug</td><td class="h">9fe49d2</td><td><span class="tag t-feat">Feature</span></td><td>Proxy the backend assistant behind a server-side endpoint</td></tr>
+      <tr><td class="d">Thu 13 Aug</td><td class="h">ff2a463</td><td><span class="tag t-feat">Feature</span></td><td>AI assistant widget on every storefront page</td></tr>
+      <tr><td class="d">Thu 13 Aug</td><td class="h">c9de7bb</td><td><span class="tag t-feat">Feature</span></td><td>Read blog posts from the backend API, retiring WordPress</td></tr>
+      <tr><td class="d">Thu 13 Aug</td><td class="h">94ac5bc</td><td><span class="tag t-fix">Fix</span></td><td>Reach the live assistant endpoint; make its links clickable</td></tr>
+      <tr><td class="d">Fri 14 Aug</td><td class="h">e5c0f3a</td><td><span class="tag t-feat">Feature</span></td><td>Forward the visitor's IP to the assistant backend</td></tr>
+      <tr><td class="d">Fri 14 Aug</td><td class="h">7b5a1b5</td><td><span class="tag t-feat">Feature</span></td><td>Product cards for the assistant's recommendations</td></tr>
+      <tr><td class="d">Mon 17 Aug</td><td class="h">e265ea0</td><td><span class="tag t-feat">Feature</span></td><td>Serve the AI assistant to the US and Canada only</td></tr>
+      <tr><td class="d">Mon 17 Aug</td><td class="h">c55006f</td><td><span class="tag t-feat">Feature</span></td><td>Keep guest conversations in the browser for seven days</td></tr>
+      <tr><td class="d">Tue 18 Aug</td><td class="h">65e3c0b</td><td><span class="tag t-doc">Docs</span></td><td>Porting guide for the blogs feature</td></tr>
+      <tr><td class="d">Tue 18 Aug</td><td class="h">be623c6</td><td><span class="tag t-feat">Feature</span></td><td>Store signed-in conversations on the backend</td></tr>
+      <tr><td class="d">Tue 18 Aug</td><td class="h">b1bd889</td><td><span class="tag t-cho">Chore</span></td><td>Lift the US/CA restriction for the Philippines demo</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <span>Development Update · 12–18 August 2026</span>
+  <span>Generated 18 August 2026</span>
+</footer>
+
+</body>
+</html>
