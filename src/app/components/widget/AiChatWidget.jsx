@@ -40,6 +40,8 @@ const AVAILABILITY_KEY = "sf:chat-available";
  * dragging a month of them into the panel every time it opens.
  */
 const HISTORY_LIMIT = 10;
+/** /api/chat/products accepts at most this many handles per request. */
+const PRODUCT_BATCH_SIZE = 8;
 const GREETING =
   "Hi! Ask me anything about the products here — what fits your space, what's in your budget, or how two models compare.";
 
@@ -106,6 +108,24 @@ const stripProductUrls = (text) =>
     .replace(/[ \t]*([:\-–—])[ \t]*$/gm, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+/**
+ * A reply as the transcript should hold it: prose with the dead product URLs
+ * taken out, and the handles those URLs named kept alongside.
+ *
+ * Every assistant message goes through here exactly once, whether it arrived
+ * from a live reply or from stored history. That matters because the backend
+ * stores what it wrote — product URLs and all — so restored history is raw text
+ * in precisely the form a fresh reply arrives in. Handing it straight to the
+ * renderer put the model's broken /product/{handle} links back on screen as
+ * clickable text, which is the fault that product cards exist to solve.
+ *
+ * It also means history needs nothing new from the backend: the handles were
+ * never lost, they were sitting in the stored prose waiting to be read out.
+ */
+function normalizeReply(raw) {
+  return { text: stripProductUrls(raw), handles: extractHandles(raw) };
+}
 
 function RichText({ text }) {
   const parts = String(text).split(URL_SPLIT);
@@ -261,8 +281,16 @@ export default function AiChatWidget() {
   // Keyed by handle so two cards for different products don't share a spinner.
   const [addingHandle, setAddingHandle] = useState(null);
   const [addedHandles, setAddedHandles] = useState([]);
-  // The current recommendation shelf, kept out of the transcript entirely.
-  const [suggestions, setSuggestions] = useState([]);
+  /**
+   * Every product the conversation has recommended, keyed by handle.
+   *
+   * A map rather than one array of "current" suggestions, because cards now
+   * belong to the reply that recommended them and several replies are on screen
+   * at once. Keying by handle also means a product mentioned twice is fetched
+   * once, and a card is drawn the moment its handle resolves regardless of
+   * which reply asked for it.
+   */
+  const [productsByHandle, setProductsByHandle] = useState({});
   const [speechSupported, setSpeechSupported] = useState(false);
 
   const scrollRef = useRef(null);
@@ -270,9 +298,10 @@ export default function AiChatWidget() {
   const buttonRef = useRef(null);
   const recognitionRef = useRef(null);
   const typingTimerRef = useRef(null);
-  // Which reply the shelf belongs to, so a slow lookup for an older answer
-  // cannot land after a newer one.
-  const latestReplyRef = useRef(null);
+  // Handles already sent to the catalogue. Keeps a restore from re-requesting
+  // what is on screen, and keeps an unrecognised handle from being asked for
+  // again every time the conversation is reopened.
+  const requestedHandlesRef = useRef(new Set());
   // Bumped on every identity change, so a history response for the person who
   // just signed out cannot land in the session of the one who signed in.
   const historyTicketRef = useRef(0);
@@ -361,35 +390,60 @@ export default function AiChatWidget() {
   );
 
   /**
-   * Resolves the handles the latest reply mentioned into real products.
+   * Turns handles into real products, for any reply that mentioned them.
    *
-   * The cards are deliberately NOT part of the transcript. They are a single
-   * shelf at the foot of the panel showing what the assistant is currently
-   * recommending, so the conversation above stays a plain back-and-forth and
-   * the products are always in the same place rather than buried at whatever
-   * scroll position their reply happens to sit at.
+   * Resolution is deliberately detached from which reply asked. Each handle is
+   * looked up once and dropped into the map; the cards under a message are then
+   * simply whichever of its own handles have arrived. That removes the race the
+   * old single shelf had to guard against — a slow lookup landing after a newer
+   * reply used to overwrite the wrong reply's products, and now it cannot,
+   * because nothing is being overwritten.
    *
-   * Runs alongside the type-out rather than blocking it, so the text appears
-   * immediately and the shelf fills in beneath.
+   * Cards are always resolved from the catalogue rather than stored with the
+   * conversation, so a thread reopened next week shows today's prices and
+   * stock, not what was true when the answer was given.
    */
-  const attachProducts = useCallback(async (requestId, handles) => {
-    if (!handles?.length) return;
+  const resolveHandles = useCallback(async (handles) => {
+    // Asked-for, not answered-for: a handle the catalogue does not recognise
+    // must not be retried on every restore, and it is the unknown ones that
+    // would otherwise be requested forever.
+    const fresh = [...new Set((handles || []).filter(Boolean))].filter(
+      (h) => !requestedHandlesRef.current.has(h),
+    );
+    if (!fresh.length) return;
+    fresh.forEach((h) => requestedHandlesRef.current.add(h));
 
-    try {
-      const res = await fetch(
-        `/api/chat/products?handles=${encodeURIComponent(handles.join(","))}`,
-      );
-      if (!res.ok) return;
-      const { products } = await res.json();
-      if (!products?.length) return;
-
-      // Ignore a slow lookup whose reply has already been superseded, so an
-      // earlier answer cannot overwrite the suggestions for a later one.
-      if (latestReplyRef.current !== requestId) return;
-      setSuggestions(products);
-    } catch {
-      // The shelf is an enhancement — the reply text still stands without it.
+    // The endpoint caps a request at 8 handles, which a restored conversation
+    // can easily exceed. Chunked here rather than raising the cap: the cap is
+    // what bounds a crafted request, and it should not be widened to suit a
+    // caller that can just as well ask twice.
+    const batches = [];
+    for (let i = 0; i < fresh.length; i += PRODUCT_BATCH_SIZE) {
+      batches.push(fresh.slice(i, i + PRODUCT_BATCH_SIZE));
     }
+
+    await Promise.all(
+      batches.map(async (batch) => {
+        try {
+          const res = await fetch(
+            `/api/chat/products?handles=${encodeURIComponent(batch.join(","))}`,
+          );
+          if (!res.ok) return;
+          const { products } = await res.json();
+          if (!products?.length) return;
+
+          setProductsByHandle((prev) => {
+            const next = { ...prev };
+            products.forEach((p) => {
+              next[p.handle] = p;
+            });
+            return next;
+          });
+        } catch {
+          // Cards are an enhancement — the reply text still stands without them.
+        }
+      }),
+    );
   }, []);
 
   /** Reveals a reply a character at a time. Skipped for reduced-motion users. */
@@ -398,8 +452,8 @@ export default function AiChatWidget() {
       clearInterval(typingTimerRef.current);
 
       // The prose keeps its sentences; the dead product URLs come out and are
-      // replaced by cards.
-      const text = stripProductUrls(raw);
+      // replaced by cards. Same normalisation restored history goes through.
+      const { text, handles } = normalizeReply(raw);
 
       const reduced =
         typeof window !== "undefined" &&
@@ -411,14 +465,12 @@ export default function AiChatWidget() {
       // as 0 and the cards were attached to messages[0], the greeting, which is
       // why they rendered above the question instead of under the reply.
       const id = nextMessageId();
-      latestReplyRef.current = id;
 
-      // `full` and `handles` exist for persistence, not for rendering. The
-      // displayed `text` is a growing slice during the animation, and the
-      // product URLs are stripped out of the prose — so neither the complete
-      // answer nor the products it recommended could be recovered from what is
-      // on screen when the conversation is written to storage.
-      const handles = extractHandles(raw);
+      // `full` exists for persistence, not for rendering: the displayed `text`
+      // is a growing slice during the animation, so the complete answer could
+      // not be recovered from what is on screen when the conversation is
+      // written to storage. `handles` is carried for the same reason — the
+      // product URLs are gone from the prose by this point.
       const base = { id, role: "assistant", full: text, handles };
 
       setMessages((prev) => [
@@ -426,7 +478,9 @@ export default function AiChatWidget() {
         reduced ? { ...base, text } : { ...base, text: "", typing: true },
       ]);
 
-      attachProducts(id, handles);
+      // Runs alongside the type-out rather than blocking it, so the text
+      // appears immediately and its cards fill in underneath.
+      resolveHandles(handles);
 
       if (reduced) return;
 
@@ -444,7 +498,7 @@ export default function AiChatWidget() {
         if (done) clearInterval(typingTimerRef.current);
       }, TYPING_SPEED_MS);
     },
-    [attachProducts],
+    [resolveHandles],
   );
 
   const send = useCallback(
@@ -454,10 +508,8 @@ export default function AiChatWidget() {
 
       setError(null);
       setInput("");
-      // The shelf describes the answer on screen, so it clears the moment a new
-      // question is asked rather than showing the previous reply's products
-      // next to a reply that has not arrived yet.
-      setSuggestions([]);
+      // Nothing to clear: every reply keeps its own cards, so asking a new
+      // question no longer has to take the previous answer's products away.
       setMessages((prev) => [...prev, { id: nextMessageId(), role: "user", text: message }]);
       setSending(true);
 
@@ -521,12 +573,12 @@ export default function AiChatWidget() {
   /** Back to an empty conversation, in memory. */
   const startFresh = useCallback(() => {
     clearInterval(typingTimerRef.current);
-    latestReplyRef.current = null;
     messageSeq.current = 0;
     savedCountRef.current = 0;
+    requestedHandlesRef.current = new Set();
     setMessages([{ id: "m0", role: "assistant", text: GREETING }]);
     setSessionId(null);
-    setSuggestions([]);
+    setProductsByHandle({});
     setAddedHandles([]);
     setError(null);
   }, []);
@@ -534,36 +586,48 @@ export default function AiChatWidget() {
   /** Puts a conversation on screen, wherever it was read from. */
   const apply = useCallback(
     ({ messages: restored, sessionId: restoredSession }) => {
+      // Two sources arrive here in different states. The locally stored copy
+      // has already been normalised — its text is stripped and its handles were
+      // saved alongside. Server history has not: it is the reply exactly as the
+      // assistant wrote it, product URLs still in the prose.
+      //
+      // Preferring stored handles and falling back to reading them out of the
+      // text covers both without the caller having to say which it is. That
+      // fallback is the whole reason restored history can show cards at all —
+      // the handles were never lost, only left in the sentence.
+      const normalized = restored.map((m) => {
+        if (m.role !== "assistant") return m;
+        const { text, handles } = normalizeReply(m.text);
+        return { ...m, text, handles: m.handles?.length ? m.handles : handles };
+      });
+
       // Continue the id sequence past everything restored. Starting from zero
-      // again would hand a new reply the id of an old one, and the product
-      // shelf would attach itself to the wrong message — the same failure that
-      // once put the cards above the question.
+      // again would hand a new reply the id of an old one, and its cards would
+      // attach to the wrong message — the same failure that once put the cards
+      // above the question.
       //
       // Server-side ids look like "h3q" and deliberately do not match: they
       // cannot collide with the "m<n>" sequence, so a restored server thread
       // leaves the counter where it is and new messages carry on from m1.
-      messageSeq.current = restored.reduce((max, m) => {
+      messageSeq.current = normalized.reduce((max, m) => {
         const n = /^m(\d+)$/.exec(m.id ?? "")?.[1];
         return n ? Math.max(max, Number(n)) : max;
       }, 0);
 
-      setMessages(restored);
+      setMessages(normalized);
       setSessionId(restoredSession);
-      savedCountRef.current = restored.length;
+      savedCountRef.current = normalized.length;
 
-      // The shelf is rebuilt from stored handles rather than stored products,
-      // so a conversation reopened next week shows today's prices and stock
-      // instead of what was true when the answer was given.
-      setSuggestions([]);
-      const lastWithProducts = [...restored]
-        .reverse()
-        .find((m) => m.role === "assistant" && m.handles?.length);
-      if (lastWithProducts) {
-        latestReplyRef.current = lastWithProducts.id;
-        attachProducts(lastWithProducts.id, lastWithProducts.handles);
-      }
+      // Cards are rebuilt from handles rather than from stored products, so a
+      // conversation reopened next week shows today's prices and stock instead
+      // of what was true when the answer was given. Every reply's handles are
+      // resolved, not just the last one's, because every reply keeps its own
+      // cards now.
+      setProductsByHandle({});
+      requestedHandlesRef.current = new Set();
+      resolveHandles(normalized.flatMap((m) => m.handles || []));
     },
-    [attachProducts],
+    [resolveHandles],
   );
 
   /** Puts a stored conversation back on screen. Returns whether there was one. */
@@ -736,10 +800,14 @@ export default function AiChatWidget() {
       top: scrollRef.current.scrollHeight,
       behavior: "smooth",
     });
-    // `suggestions` is in here too: the shelf lands after the reply has
-    // rendered, and without it the panel would stay put and leave the cards
-    // below the fold.
-  }, [messages, sending, error, suggestions]);
+    // `productsByHandle` is in here too: cards land after their reply has
+    // rendered, and without it the panel would stay put and leave them below
+    // the fold.
+    //
+    // Note this only scrolls when a card resolves, which for a restored
+    // conversation means landing at the bottom — the newest exchange, which is
+    // where someone reopening a thread expects to be.
+  }, [messages, sending, error, productsByHandle]);
 
   // Escape closes; focus moves into the input on open and back to the button on
   // close, so the modal is usable from the keyboard alone.
@@ -910,25 +978,57 @@ export default function AiChatWidget() {
               className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
               aria-live="polite"
             >
-              {messages.map((m, i) => (
-                <div
-                  key={m.id ?? i}
-                  className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
-                      m.role === "user"
-                        ? "rounded-br-sm bg-theme-600 text-white"
-                        : "rounded-bl-sm bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
-                    }`}
-                  >
-                    <RichText text={m.text} />
-                    {m.typing && (
-                      <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-current align-middle" />
+              {messages.map((m, i) => {
+                // Only the handles that have actually resolved. An unknown one
+                // draws nothing rather than a placeholder, which is what keeps
+                // a card from ever pointing at a page that is not there.
+                const cards = (m.handles || [])
+                  .map((h) => productsByHandle[h])
+                  .filter(Boolean);
+
+                return (
+                  <div key={m.id ?? i}>
+                    <div
+                      className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
+                          m.role === "user"
+                            ? "rounded-br-sm bg-theme-600 text-white"
+                            : "rounded-bl-sm bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
+                        }`}
+                      >
+                        <RichText text={m.text} />
+                        {m.typing && (
+                          <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse bg-current align-middle" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* The products this particular reply recommended, under
+                        the reply itself. Every answer keeps its own, so
+                        scrolling back through a restored conversation shows
+                        what was suggested at each point rather than only what
+                        the most recent question turned up. */}
+                    {cards.length > 0 && (
+                      <section
+                        aria-label="Suggested products"
+                        className="mt-2 max-w-[85%] space-y-2"
+                      >
+                        {cards.map((p) => (
+                          <ProductCard
+                            key={p.handle}
+                            product={p}
+                            onAdd={handleAddToCart}
+                            adding={addingHandle === p.handle}
+                            added={addedHandles.includes(p.handle)}
+                          />
+                        ))}
+                      </section>
                     )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               {sending && (
                 <div className="flex justify-start">
@@ -950,26 +1050,6 @@ export default function AiChatWidget() {
                 </p>
               )}
 
-              {/* Recommendation shelf — deliberately the last thing in the
-                  panel and outside the transcript, so products always appear
-                  in one predictable place rather than wherever their reply
-                  happens to have scrolled to. */}
-              {suggestions.length > 0 && (
-                <section aria-label="Suggested products" className="space-y-2 pt-1">
-                  <h3 className="px-0.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Suggested products
-                  </h3>
-                  {suggestions.map((p) => (
-                    <ProductCard
-                      key={p.handle}
-                      product={p}
-                      onAdd={handleAddToCart}
-                      adding={addingHandle === p.handle}
-                      added={addedHandles.includes(p.handle)}
-                    />
-                  ))}
-                </section>
-              )}
             </div>
 
             <form
