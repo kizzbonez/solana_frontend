@@ -300,6 +300,27 @@ export const BaseNavObj = {
 
 export const BaseNavKeys = Object.keys(BaseNavObj);
 
+/**
+ * Whether a menu item should appear in the storefront navigation.
+ *
+ * Set from the menu builder's "Show in navigation" toggle, which writes
+ * `nav_visibility` on the item.
+ *
+ * Absent counts as visible. Every item in the menu predates the toggle, and
+ * most still carry no value at all — treating a missing field as hidden would
+ * empty the navigation on all three brands the moment this shipped. Only an
+ * explicit `false` hides anything.
+ *
+ * This governs *display*, not existence: the item's page is still generated and
+ * still reachable by URL. Hiding a link is a merchandising decision, and
+ * unpublishing a page is not, so the toggle does only what it says.
+ *
+ * Note the menu is stored under one global Redis key shared by all three
+ * brands, so hiding an item hides it on every storefront. See
+ * docs/brand-isolation.md.
+ */
+export const isNavVisible = (item) => item?.nav_visibility !== false;
+
 // helper object for no. of burners filter
 export const burnerBuckets = {
   "1 Burner": ["1", "1 Burner", "one"],
@@ -439,7 +460,7 @@ export function debounce(fn, delay = 300) {
 }
 
 //  varaible used to exclude products by brand from displaying on the app
-export const exclude_brands = ["Cedar Creek Fireplaces", "American Fire Glass"];
+export const exclude_brands = ["Cedar Creek Fireplaces", "American Fire Glass", "Bull Outdoor Products"];
 
 //  varaible used to exclude products by collections from displaying on the app
 export const exclude_collections = ["Dimplex Fireplace Accessories"];

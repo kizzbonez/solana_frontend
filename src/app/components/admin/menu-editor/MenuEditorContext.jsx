@@ -143,6 +143,14 @@ export function MenuEditorProvider({
         patchMenuItem((prev) => ({ ...prev, contact_number: value }));
       }
 
+      if (name === "nav-visibility") {
+        // Stored as a real boolean, not "show"/"hide" like price_visibility
+        // below. The existing menu data already uses `nav_visibility: true`,
+        // and matching what is in Redis matters more here than matching the
+        // field next to it.
+        patchMenuItem((prev) => ({ ...prev, nav_visibility: checked }));
+      }
+
       if (name === "price-visibility") {
         patchMenuItem((prev) => ({
           ...prev,

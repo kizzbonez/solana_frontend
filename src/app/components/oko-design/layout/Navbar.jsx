@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { BASE_URL } from "@/app/lib/helpers";
+import { BASE_URL, isNavVisible } from "@/app/lib/helpers";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import CartButton from "@/app/components/oko-design/ui/CartButton";
@@ -42,10 +42,19 @@ export default function Navbar({ logo }) {
   }, [menuOpen]);
 
   const NAV_LINKS = useMemo(() => {
-    return solana_menu_object.filter(
-      ({ name }) =>
-        !["Search", "Home", "Brands", "Current Deals"].includes(name),
-    );
+    return solana_menu_object
+      .filter(
+        ({ name }) =>
+          !["Search", "Home", "Brands", "Current Deals"].includes(name),
+      )
+      // The menu builder's "Show in navigation" toggle. Applied to children as
+      // well, so hiding a single brand or sub-category takes it out of the
+      // dropdown without removing the whole parent.
+      .filter(isNavVisible)
+      .map((item) => ({
+        ...item,
+        children: (item.children || []).filter(isNavVisible),
+      }));
   }, [solana_menu_object]);
 
   return (

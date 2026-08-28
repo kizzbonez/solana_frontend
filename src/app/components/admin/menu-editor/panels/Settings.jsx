@@ -137,6 +137,22 @@ export default function Settings() {
 
   return (
     <div className="flex flex-col gap-8">
+      <Section title="Navigation">
+        <Toggle
+          label="Show in navigation"
+          name="nav-visibility"
+          id="nav-visibility"
+          // Absent means visible. Every item predates this toggle, so treating
+          // a missing value as "hidden" would empty the nav the moment this
+          // shipped — only an explicit false hides anything.
+          checked={menuItem?.nav_visibility !== false}
+          onChange={handleSettingsChange}
+          hint="Turn off to hide this item from the storefront menu. The page itself stays reachable by URL — this controls the menu only. Remember the menu is shared by all three brands, so hiding an item hides it everywhere."
+        />
+      </Section>
+
+      <Divider />
+
       <Section title="Pricing">
         <Toggle
           label="Price visible"

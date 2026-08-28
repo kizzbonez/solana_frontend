@@ -9,7 +9,17 @@ import { unstable_cache } from "next/cache";
 
 import { keys, redis } from "@/app/lib/redis";
 import { STORE_NAME } from "@/app/lib/store_constants";
-import { getRootByUrl, getPageData, BASE_URL, BaseNavKeys, ES_INDEX, ISBBQ, ISOKO } from "@/app/lib/helpers";
+import {
+  getRootByUrl,
+  getPageData,
+  BASE_URL,
+  BaseNavKeys,
+  ES_INDEX,
+  ISBBQ,
+  ISOKO,
+  exclude_brands,
+  isNavVisible,
+} from "@/app/lib/helpers";
 import { fetchCollectionsCount } from "@/app/lib/fn_server";
 import { internalHeaders } from "@/app/lib/rate-limit";
 
@@ -100,6 +110,31 @@ const getMenuData = unstable_cache(
   { revalidate: 86400, tags: ["nav-menu"] },
 );
 
+/**
+ * The children a listing page should actually show.
+ *
+ * Two separate reasons an entry is dropped, and they are not interchangeable:
+ *
+ *   nav_visibility   an operator hid it from the menu builder
+ *   exclude_brands   the brand is suppressed catalogue-wide
+ *
+ * The second is what keeps /brands honest. Excluded brands are filtered out of
+ * Elasticsearch by publishedQuery, so their products disappear everywhere —
+ * but the brand links on /brands come from the Redis menu, which knows nothing
+ * about that list. Left alone, /brands advertises a brand whose page then
+ * renders empty, and disagrees with /categories, which reads the same list from
+ * the catalogue and does drop it.
+ *
+ * Harmless on non-brand pages: a category name is never in exclude_brands.
+ */
+const listingChildren = (children = []) =>
+  children.filter(
+    (child) =>
+      isNavVisible(child) &&
+      !exclude_brands.includes(child?.origin_name) &&
+      !exclude_brands.includes(child?.name),
+  );
+
 const flattenNav = (navItems) => {
   const result = [];
   const extractLinks = (items) => {
@@ -148,10 +183,18 @@ export default async function GenericCategoryPage({ params }) {
       is_base_nav: !["On Sale", "New Arrivals"].includes(i?.name),
     })),
   );
-  const pageData = getPageData(slug, flatData);
-  const url = pageData?.url;
+  const rawPageData = getPageData(slug, flatData);
+  const url = rawPageData?.url;
 
-  if (!pageData || !url) return notFound();
+  if (!rawPageData || !url) return notFound();
+
+  // Filtered once here rather than in each theme's BasePlp, so the three
+  // storefronts cannot drift on which brands they list.
+  const pageData = {
+    ...rawPageData,
+    children: listingChildren(rawPageData.children),
+  };
+
   if (pageData.is_base_nav) {
     if (ISOKO) {
       return (
@@ -177,7 +220,11 @@ export default async function GenericCategoryPage({ params }) {
   const rootNav = getRootByUrl(menuData, url);
   if (!rootNav) return notFound();
 
-  const children = rootNav?.children || [];
+  // Same filter as the listing above. These become the subcategory tabs on a
+  // gallery page, and they come from getRootByUrl rather than pageData — so
+  // without this a hidden item stays out of the menu and the /brands list, then
+  // reappears as a tab here.
+  const children = listingChildren(rootNav?.children);
   const collection_ids = children
     .map((item) => item?.collection_display?.id)
     .filter(Boolean);
