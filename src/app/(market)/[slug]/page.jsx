@@ -152,6 +152,10 @@ export async function generateStaticParams() {
   const flatData = flattenNav(menuData);
   return flatData
     .filter((item) => item.url)
+    // No point prebuilding a page that answers 404. Not a security boundary —
+    // dynamicParams is on, so an un-hidden item renders on demand and is picked
+    // up by the next build rather than staying missing.
+    .filter(isNavVisible)
     .map((item) => ({ slug: item.url }));
 }
 
@@ -161,7 +165,10 @@ export async function generateMetadata({ params }) {
   const flatData = flattenNav(menuData);
   const pageData = getPageData(slug, flatData);
 
-  if (!pageData) return {};
+  // Hidden items 404 below, so they must not advertise a title and description
+  // — metadata for a page that does not exist is what puts it in a search
+  // result that then dead-ends.
+  if (!pageData || !isNavVisible(pageData)) return {};
 
   return {
     title:
@@ -187,6 +194,19 @@ export default async function GenericCategoryPage({ params }) {
   const url = rawPageData?.url;
 
   if (!rawPageData || !url) return notFound();
+
+  // Hidden in the menu means gone, not merely unlinked.
+  //
+  // Left reachable, these rendered as a real page with a heading, a filter
+  // sidebar and no products — which reads as a broken storefront rather than a
+  // deliberate removal, and stays indexable. The case that forced it: a brand
+  // added to exclude_brands still had its menu pages, so every one of them
+  // became a live, empty, crawlable page.
+  //
+  // Only the listing route. A product still sells at its own URL — hiding a
+  // menu entry is a navigation decision and must not silently unpublish the
+  // catalogue underneath it.
+  if (!isNavVisible(rawPageData)) return notFound();
 
   // Filtered once here rather than in each theme's BasePlp, so the three
   // storefronts cannot drift on which brands they list.
