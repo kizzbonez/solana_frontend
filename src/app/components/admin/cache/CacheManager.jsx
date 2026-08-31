@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   Database,
+  Globe,
   Info,
   Layers,
   Lock,
@@ -44,6 +45,190 @@ function Chip({ children, tone = "zinc" }) {
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * Clear a *different* deployment's cache from this one.
+ *
+ * Deliberately separate from the button above, in state as well as in markup.
+ * That button mutates this deployment; this one reaches across the network to
+ * production, and the two should never be one control with a mode — the cost of
+ * confusing them is clearing a live storefront while meaning to clear localhost.
+ *
+ * Rendered only on development builds, matching the server route's own guard.
+ * The check here is presentation: the route refuses regardless, so a stale
+ * bundle or a hand-made request gains nothing.
+ */
+function RemoteCacheClear() {
+  const [meta, setMeta] = useState(null);
+  const [target, setTarget] = useState("");
+  const [running, setRunning] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const isDev = process.env.NODE_ENV !== "production";
+
+  useEffect(() => {
+    if (!isDev) return;
+    fetch("/api/cache/clear-remote", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!data?.targets?.length) return;
+        setMeta(data);
+        setTarget((prev) => prev || data.targets[0]);
+      })
+      .catch(() => {
+        /* the section simply stays unusable — nothing to recover here */
+      });
+  }, [isDev]);
+
+  if (!isDev) return null;
+
+  const run = async () => {
+    setRunning(true);
+    setConfirming(false);
+    setError(null);
+    setResult(null);
+    try {
+      const res = await fetch("/api/cache/clear-remote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.status === "error") {
+        setError(data?.error || `Request failed (${res.status}).`);
+        return;
+      }
+      setResult(data);
+    } catch (e) {
+      setError(e?.message || "Request failed.");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const remote = result?.remote;
+
+  return (
+    <section className="rounded-xl border border-amber-200 bg-amber-50/40 p-4 sm:p-5 dark:border-amber-500/20 dark:bg-amber-500/5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-2 text-base font-semibold text-zinc-900 dark:text-white">
+            <Globe className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            Clear a deployed site&apos;s cache
+            <span className="rounded-md bg-zinc-200 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-white/10 dark:text-zinc-300">
+              dev only
+            </span>
+          </h3>
+          <p className="mt-1 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
+            Runs the same clear as above, but against the chosen live site. Use
+            after editing the shared menu or store settings, which land in Redis
+            immediately while each deployment keeps its own render cached for 24
+            hours.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Target site
+          </span>
+          <select
+            value={target}
+            onChange={(e) => {
+              setTarget(e.target.value);
+              setConfirming(false);
+              setResult(null);
+              setError(null);
+            }}
+            disabled={!meta?.targets?.length || running}
+            className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 disabled:opacity-50 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-100"
+          >
+            {(meta?.targets || []).map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+            {!meta?.targets?.length && <option value="">No targets configured</option>}
+          </select>
+        </label>
+
+        {confirming ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={run}
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden="true" />
+              Yes, clear {target}
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirming(false)}
+              className="rounded-xl px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            disabled={running || !target}
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 className={`h-4 w-4 ${running ? "animate-pulse" : ""}`} aria-hidden="true" />
+            {running ? "Clearing…" : "Clear remote cache"}
+          </button>
+        )}
+      </div>
+
+      {meta && meta.configured === false && (
+        <p className="mt-3 text-xs text-amber-800 dark:text-amber-300">
+          REVALIDATE_SECRET is not set locally, so this cannot authenticate
+          against the remote site.
+        </p>
+      )}
+
+      {error && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 break-words">{error}</span>
+        </div>
+      )}
+
+      {result && (
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-800 dark:text-emerald-300">
+            <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+            Cleared {result.target} in {fmtDuration(result.tookMs)}
+          </p>
+          <div className="mt-2 divide-y divide-emerald-100 dark:divide-emerald-500/10">
+            <StatusRow label="Tags busted">{remote?.tags?.length ?? "—"}</StatusRow>
+            <StatusRow label="Paths revalidated">{remote?.paths?.length ?? "—"}</StatusRow>
+            <StatusRow label="Redis keys deleted">
+              {remote?.redisKeysDeleted != null
+                ? remote.redisKeysDeleted.toLocaleString()
+                : "—"}
+            </StatusRow>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-3 flex items-start gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+        <Info className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+        <span>
+          Only hosts on the server&apos;s allowlist can be targeted, because this
+          sends a shared secret to whatever it is pointed at. Add others with
+          CACHE_REMOTE_TARGETS.
+        </span>
+      </p>
+    </section>
   );
 }
 
@@ -237,6 +422,8 @@ export default function CacheManager() {
           )}
         </div>
       </section>
+
+      <RemoteCacheClear />
 
       {/* ── What gets cleared ── */}
       <section>
