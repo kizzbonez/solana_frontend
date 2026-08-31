@@ -1,5 +1,39 @@
 import { ES_INDEX, formatProduct } from "../../../../app/lib/helpers";
 import { withRateLimit } from "@/app/lib/rate-limit";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
+
+/**
+ * Applies the catalogue exclusions to whatever the caller asked for.
+ *
+ * The callers here are browser components that build their own Elasticsearch
+ * query and post it — autocomplete, "you may also like", the open-box strip.
+ * They used to carry the exclusion list themselves, which made it advisory:
+ * a client that omitted it, or one running a cached bundle with last week's
+ * list, saw suppressed brands anyway.
+ *
+ * Wrapping rather than merging. The incoming query keeps its own shape as a
+ * `must`, and the exclusions sit beside it as a `must_not` that cannot be
+ * overridden by anything the caller sent — so this is enforcement, not a
+ * suggestion, and it holds however the client query is structured.
+ */
+async function withExclusions(queryBody) {
+  const { brands, collections } = await getCatalogExclusions();
+  if (!brands.length && !collections.length) return queryBody;
+
+  const inner = queryBody?.query;
+  return {
+    ...queryBody,
+    query: {
+      bool: {
+        ...(inner ? { must: [inner] } : {}),
+        must_not: [
+          { terms: { "brand.keyword": brands } },
+          { terms: { "collections.name.keyword": collections } },
+        ],
+      },
+    },
+  };
+}
 
 // Module-level cache — survives across requests, resets on server restart.
 // Keyed by the serialised query body so every unique ES query gets its own entry.
@@ -15,9 +49,11 @@ async function autocompleteSearch(req, res) {
   const ESURL = process.env.NEXT_ES_URL;
   const ESShard = ES_INDEX;
   const ESApiKey = `apiKey ${process.env.NEXT_ES_API_KEY}`;
-  const queryBody = req.body;
+  const queryBody = await withExclusions(req.body);
 
   // ── Server cache check ──────────────────────────────────────────────────────
+  // Keyed on the query *after* exclusions are applied, so a change to the list
+  // cannot be served from an entry built under the previous one.
   const cacheKey = JSON.stringify(queryBody);
   const hit = cache.get(cacheKey);
   if (hit && Date.now() - hit.ts < CACHE_TTL) {

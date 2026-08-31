@@ -5,11 +5,10 @@ import crypto from "crypto";
 import {
   BaseNavObj,
   ES_INDEX,
-  exclude_brands,
-  exclude_collections,
   main_products,
   shouldApplyMainProductSort,
 } from "../../../app/lib/helpers";
+import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
 import {
@@ -99,19 +98,21 @@ async function searchkit(req, res) {
     let filter_value = null;
     let filter_option = null;
     let filter_type = null;
-    // filter out Bull Outdoor Products
+    // Suppressed brands and collections, from Redis via /admin/catalog-exclusions.
+    const { brands: excludedBrands, collections: excludedCollections } =
+      await getCatalogExclusions();
     let filter_query = [
       {
         bool: {
           must_not: [
             {
               terms: {
-                "brand.keyword": exclude_brands,
+                "brand.keyword": excludedBrands,
               },
             },
             {
               terms: {
-                "collections.name.keyword": exclude_collections,
+                "collections.name.keyword": excludedCollections,
               },
             },
           ],

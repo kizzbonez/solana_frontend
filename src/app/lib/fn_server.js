@@ -1,8 +1,6 @@
 "use server";
 import {
   ES_INDEX,
-  exclude_brands,
-  exclude_collections,
   createSlug,
   mapCategoryResults,
   mapBrandResults,
@@ -10,6 +8,7 @@ import {
 } from "@/app/lib/helpers";
 import { accentuateSpecLabels } from "@/app/lib/filter-helper";
 import { unstable_cache } from "next/cache";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 
 // ─── Private: Elasticsearch ──────────────────────────────────────────────────
 
@@ -36,16 +35,26 @@ async function esSearch(body, cacheOptions = {}) {
   return res.json();
 }
 
-// Shared filter used by all catalogue aggregation queries
-const publishedQuery = {
-  bool: {
-    must: [{ term: { published: true } }],
-    must_not: [
-      { terms: { "brand.keyword": exclude_brands } },
-      { terms: { "collections.name.keyword": exclude_collections } },
-    ],
-  },
-};
+/**
+ * Shared filter used by all catalogue aggregation queries.
+ *
+ * A function rather than the constant it used to be, because the exclusion
+ * lists now come from Redis and cannot be read at import time. Every caller
+ * awaits it; the read behind it is cached and tagged, so this is a map lookup
+ * rather than a round trip on all but the first call after a change.
+ */
+async function publishedQuery() {
+  const { brands, collections } = await getCatalogExclusions();
+  return {
+    bool: {
+      must: [{ term: { published: true } }],
+      must_not: [
+        { terms: { "brand.keyword": brands } },
+        { terms: { "collections.name.keyword": collections } },
+      ],
+    },
+  };
+}
 
 // ─── Private: Category metadata ──────────────────────────────────────────────
 
@@ -222,7 +231,7 @@ export async function fetchUniqueCategories() {
     const data = await esSearch(
       {
         size: 0,
-        query: publishedQuery,
+        query: await publishedQuery(),
         aggs: {
           unique_categories: {
             terms: { field: "accentuate_data.category", size: 15 },
@@ -248,7 +257,7 @@ export async function fetchBrands() {
     const data = await esSearch(
       {
         size: 0,
-        query: publishedQuery,
+        query: await publishedQuery(),
         aggs: {
           unique_brands: {
             terms: {
@@ -596,6 +605,8 @@ function mergeRelatedProducts(data, keys) {
 export async function fetchSearchResults(searchTerm) {
   try {
     if (!searchTerm) return null;
+    const { brands: excludedBrands, collections: excludedCollections } =
+      await getCatalogExclusions();
     const query = {
       query: {
         bool: {
@@ -623,8 +634,8 @@ export async function fetchSearchResults(searchTerm) {
             },
           ],
           must_not: [
-            { terms: { "brand.keyword": exclude_brands } },
-            { terms: { "collections.name.keyword": exclude_collections } },
+            { terms: { "brand.keyword": excludedBrands } },
+            { terms: { "collections.name.keyword": excludedCollections } },
           ],
         },
       },
@@ -686,7 +697,7 @@ export async function fetchSearchResults(searchTerm) {
 async function _fetchCollectionsCount(collection_ids) {
   const query = {
     size: 0,
-    query: publishedQuery,
+    query: await publishedQuery(),
     aggs: {
       counts_per_collection: {
         terms: {
@@ -719,6 +730,8 @@ export async function fetchCollectionsCount(collection_ids) {
 
 async function _getYMALProducts(seed) {
   try {
+    const { brands: excludedBrands, collections: excludedCollections } =
+      await getCatalogExclusions();
     const query = {
       size: 4,
       query: {
@@ -738,12 +751,12 @@ async function _getYMALProducts(seed) {
               must_not: [
                 {
                   terms: {
-                    "brand.keyword": exclude_brands,
+                    "brand.keyword": excludedBrands,
                   },
                 },
                 {
                   terms: {
-                    "collections.name.keyword": exclude_collections,
+                    "collections.name.keyword": excludedCollections,
                   },
                 },
               ],

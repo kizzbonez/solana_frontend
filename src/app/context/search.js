@@ -13,8 +13,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 import {
   BASE_URL,
-  exclude_brands,
-  exclude_collections,
   createSlug,
   main_products,
   shouldApplyMainProductSort,
@@ -221,10 +219,6 @@ export const SearchProvider = ({ children }) => {
               ],
             },
           },
-          must_not: [
-            { terms: { "brand.keyword": exclude_brands } },
-            { terms: { "collections.name.keyword": exclude_collections } },
-          ],
         },
       },
       size: SEARCH_RESULT_SIZE,

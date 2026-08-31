@@ -1,8 +1,7 @@
 import {
   ES_INDEX,
-  exclude_brands,
-  exclude_collections,
 } from "../../../../app/lib/helpers";
+import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -12,6 +11,10 @@ export default async function handler(req, res) {
   const {
     query: { id },
   } = req;
+
+  // Suppressed brands and collections, from Redis via /admin/catalog-exclusions.
+  const { brands: excludedBrands, collections: excludedCollections } =
+    await getCatalogExclusions();
 
   try {
     const url = `${process.env.NEXT_SOLANA_BACKEND_URL}/api/collections/collection-products/${id}`;
@@ -62,12 +65,12 @@ export default async function handler(req, res) {
           must_not: [
             {
               terms: {
-                "brand.keyword": exclude_brands, // Placeholder for actual array
+                "brand.keyword": excludedBrands,
               },
             },
             {
               terms: {
-                "collections.name.keyword": exclude_collections, // Placeholder for actual array
+                "collections.name.keyword": excludedCollections,
               },
             },
           ],

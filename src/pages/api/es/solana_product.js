@@ -1,8 +1,7 @@
 import {
   ES_INDEX,
-  exclude_brands,
-  exclude_collections,
 } from "../../../app/lib/helpers";
+import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
 import { accentuateSpecLabels } from "../../../app/lib/filter-helper";
 
 //  this hook is used for searching products
@@ -10,6 +9,10 @@ export default async function handler(req, res) {
   const ESURL = process.env.NEXT_ES_URL;
   const ESShard = ES_INDEX;
   const ESApiKey = `apiKey ${process.env.NEXT_ES_API_KEY}`;
+
+  // Suppressed brands and collections, from Redis via /admin/catalog-exclusions.
+  const { brands: excludedBrands, collections: excludedCollections } =
+    await getCatalogExclusions();
 
   const fetchConfig = {
     method: req.method,
@@ -88,12 +91,12 @@ export default async function handler(req, res) {
                       must_not: [
                         {
                           terms: {
-                            "brand.keyword": exclude_brands,
+                            "brand.keyword": excludedBrands,
                           },
                         },
                         {
                           terms: {
-                            "collections.name.keyword": exclude_collections,
+                            "collections.name.keyword": excludedCollections,
                           },
                         },
                       ],

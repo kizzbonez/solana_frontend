@@ -194,6 +194,19 @@ export const getProductsByCollectionId = async (collection_id) => {
   }
 };
 
+/**
+ * NOT MIGRATED to the Redis-backed exclusion list, deliberately.
+ *
+ * This module is imported by ~27 client components (newsletter widgets, the
+ * cart and auth contexts), so pulling lib/catalog-exclusions.js in here would
+ * drag the Redis client into the browser bundle.
+ *
+ * It is also unused: the search page imports fetchSearchResults from
+ * lib/fn_server.js, which is the migrated copy. This one is a duplicate left
+ * behind, and it keeps the static list so behaviour is unchanged if anything
+ * still reaches it. Delete it rather than migrate it — but check for callers
+ * first, since the two share a name.
+ */
 export const fetchSearchResults = async (searchTerm) => {
   try {
     const query = {

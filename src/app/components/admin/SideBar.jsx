@@ -17,6 +17,7 @@ import {
   Rss,
   Settings,
   Trash2,
+  EyeOff,
   X,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
@@ -49,7 +50,10 @@ const NAV_GROUPS = [
   },
   {
     label: "Configuration",
-    items: [{ name: "Store Settings", url: "/admin/settings", icon: Settings }],
+    items: [
+      { name: "Store Settings", url: "/admin/settings", icon: Settings },
+      { name: "Catalogue Exclusions", url: "/admin/catalog-exclusions", icon: EyeOff },
+    ],
   },
   {
     label: "Maintenance",

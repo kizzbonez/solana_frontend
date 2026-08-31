@@ -1,4 +1,5 @@
-import { ES_INDEX, exclude_brands, exclude_collections } from "@/app/lib/helpers";
+import { ES_INDEX } from "@/app/lib/helpers";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 import { STORE_NAME } from "@/app/lib/store_constants";
 import { STORE_ID } from "@/app/lib/store";
 import { productPath } from "@/app/lib/listing-data";
@@ -61,6 +62,8 @@ async function handler(req) {
     return bad("min_price cannot be greater than max_price");
   }
 
+  const { brands: excludedBrands, collections: excludedCollections } =
+    await getCatalogExclusions();
   const filter = [{ term: { published: true } }];
   if (brand) filter.push({ term: { "brand.keyword": brand } });
   if (category) filter.push({ term: { "accentuate_data.category": category } });
@@ -86,8 +89,8 @@ async function handler(req) {
       bool: {
         filter,
         must_not: [
-          { terms: { "brand.keyword": exclude_brands } },
-          { terms: { "collections.name.keyword": exclude_collections } },
+          { terms: { "brand.keyword": excludedBrands } },
+          { terms: { "collections.name.keyword": excludedCollections } },
         ],
         ...(q
           ? {

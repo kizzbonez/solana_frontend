@@ -2,9 +2,8 @@ import {
   ES_INDEX,
   createSlug,
   stripHtmlTags,
-  exclude_brands,
-  exclude_collections,
 } from "@/app/lib/helpers";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 import { getStoreSettings } from "@/app/lib/store-settings";
 
 // Google Merchant Center product feed, served at /products_sitemap.xml.
@@ -244,6 +243,8 @@ function buildShopifyItems(product, domain) {
 // ─── Self mode (Elasticsearch) ───────────────────────────────────────────────
 
 async function fetchEsProducts() {
+  const { brands: excludedBrands, collections: excludedCollections } =
+    await getCatalogExclusions();
   const products = [];
   let searchAfter = null;
 
@@ -258,8 +259,8 @@ async function fetchEsProducts() {
         bool: {
           must: [{ term: { published: true } }],
           must_not: [
-            { terms: { "brand.keyword": exclude_brands || [] } },
-            { terms: { "collections.name.keyword": exclude_collections || [] } },
+            { terms: { "brand.keyword": excludedBrands } },
+            { terms: { "collections.name.keyword": excludedCollections } },
           ],
           filter: [
             { exists: { field: "brand.keyword" } },

@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import ProductCard from "@/app/components/atom/ProductCard";
 import ProductCardLoader from "@/app/components/atom/ProductCardLoader";
 import {
-  exclude_brands,
-  exclude_collections,
   formatProduct,
 } from "@/app/lib/helpers";
 import ProductGrid from "@/app/components/new-design/sections/sp/ProductGrid";
@@ -35,18 +33,8 @@ export default function YouMayAlsoLike({ displayItems }) {
                       },
                     },
                   ],
-                  must_not: [
-                    {
-                      terms: {
-                        "brand.keyword": exclude_brands,
-                      },
-                    },
-                    {
-                      terms: {
-                        "collections.name.keyword": exclude_collections,
-                      },
-                    },
-                  ],
+                  // Exclusions are applied by /api/es/shopify/search from the
+                  // list in Redis, so they are deliberately not repeated here.
                 },
               },
               random_score: {

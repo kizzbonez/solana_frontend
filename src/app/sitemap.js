@@ -1,4 +1,5 @@
-import { ES_INDEX, createSlug, exclude_brands, exclude_collections } from "./lib/helpers";
+import { ES_INDEX, createSlug } from "./lib/helpers";
+import { getCatalogExclusions } from "./lib/catalog-exclusions";
 
 export const revalidate = 3600;
 
@@ -31,12 +32,12 @@ async function fetchAllProducts() {
             must_not: [
               {
                 terms: {
-                  "brand.keyword": exclude_brands || [],
+                  "brand.keyword": excludedBrands,
                 },
               },
               {
                 terms: {
-                  "collections.name.keyword": exclude_collections || [],
+                  "collections.name.keyword": excludedCollections,
                 },
               },
             ],
@@ -137,6 +138,7 @@ async function fetchAllCategories() {
 }
 
 export default async function sitemap() {
+  const { brands: excludedBrands } = await getCatalogExclusions();
   // Every URL here is absolute. Publishing them against a placeholder domain
   // would hand Google thousands of dead links and they would be cached and
   // crawled before anyone noticed, so an unset base URL yields an empty
@@ -190,7 +192,7 @@ export default async function sitemap() {
 
   // Brand URLs
   const brandUrls = brands
-    .filter((brand) => brand && !exclude_brands?.includes(brand))
+    .filter((brand) => brand && !excludedBrands.includes(brand))
     .map((brand) => ({
       url: `${BASE_URL}/${createSlug(brand)}`,
       lastModified: new Date().toISOString(),

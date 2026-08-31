@@ -17,9 +17,9 @@ import {
   ES_INDEX,
   ISBBQ,
   ISOKO,
-  exclude_brands,
   isNavVisible,
 } from "@/app/lib/helpers";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 import { fetchCollectionsCount } from "@/app/lib/fn_server";
 import { internalHeaders } from "@/app/lib/rate-limit";
 
@@ -125,14 +125,17 @@ const getMenuData = unstable_cache(
  * renders empty, and disagrees with /categories, which reads the same list from
  * the catalogue and does drop it.
  *
- * Harmless on non-brand pages: a category name is never in exclude_brands.
+ * Harmless on non-brand pages: a category name is never in the brand list.
+ *
+ * Takes the list as an argument rather than reading it, so this stays a pure
+ * function and the single Redis read happens once per render in the caller.
  */
-const listingChildren = (children = []) =>
+const listingChildren = (children = [], excludedBrands = []) =>
   children.filter(
     (child) =>
       isNavVisible(child) &&
-      !exclude_brands.includes(child?.origin_name) &&
-      !exclude_brands.includes(child?.name),
+      !excludedBrands.includes(child?.origin_name) &&
+      !excludedBrands.includes(child?.name),
   );
 
 const flattenNav = (navItems) => {
@@ -195,6 +198,8 @@ export default async function GenericCategoryPage({ params }) {
 
   if (!rawPageData || !url) return notFound();
 
+  const { brands: excludedBrands } = await getCatalogExclusions();
+
   // Hidden in the menu means gone, not merely unlinked.
   //
   // Left reachable, these rendered as a real page with a heading, a filter
@@ -212,7 +217,7 @@ export default async function GenericCategoryPage({ params }) {
   // storefronts cannot drift on which brands they list.
   const pageData = {
     ...rawPageData,
-    children: listingChildren(rawPageData.children),
+    children: listingChildren(rawPageData.children, excludedBrands),
   };
 
   if (pageData.is_base_nav) {
@@ -244,7 +249,7 @@ export default async function GenericCategoryPage({ params }) {
   // gallery page, and they come from getRootByUrl rather than pageData — so
   // without this a hidden item stays out of the menu and the /brands list, then
   // reappears as a tab here.
-  const children = listingChildren(rootNav?.children);
+  const children = listingChildren(rootNav?.children, excludedBrands);
   const collection_ids = children
     .map((item) => item?.collection_display?.id)
     .filter(Boolean);

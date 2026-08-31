@@ -13,8 +13,6 @@ import Image from "next/image";
 import {
   BASE_URL,
   createSlug,
-  exclude_brands,
-  exclude_collections,
 } from "@/app/lib/helpers";
 import { useQuickView } from "@/app/context/quickview";
 import ProductCard from "@/app/components/atom/ProductCard";
@@ -56,18 +54,10 @@ export default function HomePageShopOpenBox() {
               },
             },
           ],
-          must_not: [
-            {
-              terms: {
-                "brand.keyword": exclude_brands, // Placeholder for actual array
-              },
-            },
-            {
-              terms: {
-                "collections.name.keyword": exclude_collections, // Placeholder for actual array
-              },
-            },
-          ],
+          // Exclusions are applied by /api/es/shopify/search from the list in
+          // Redis, so they are deliberately not repeated here — a copy in the
+          // query body would pin the list this bundle shipped with and block
+          // un-excluding a brand from the admin.
         },
       },
     };
