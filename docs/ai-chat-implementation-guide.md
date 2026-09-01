@@ -805,3 +805,129 @@ forgotten — on a shared computer that is the only control the person actually 
 - `docs/chat-history.md` — the persistence design in more depth
 - `docs/brand-isolation.md` — why `store` is never taken from the client
 - `docs/agentic-ai-readiness.md` — why the storefront stays readable without JS
+
+---
+
+## 13. History and product cards, end to end
+
+This section is the one to read if you are implementing the feature elsewhere.
+Everything above describes a piece; this describes how a conversation gets back
+on screen — including its product cards — after a refresh.
+
+### The two kinds of visitor
+
+|  | Signed in | Guest |
+|---|---|---|
+| Where the conversation lives | The backend, keyed to the account | `localStorage`, in that browser |
+| How long | As long as the backend keeps it | 7 days from the **last** message |
+| Survives a cleared browser | Yes | No |
+| Follows them to another device | Yes | No |
+| Written by | `POST /api/chat` carrying `X-User-Token` | The widget, on each new message |
+| Read by | `GET /api/chat/history?limit=10` | `loadHistory(identity)` |
+
+Both paths end in the same place: an array of `{ id, role, text }` handed to one
+`apply()` function. Nothing downstream knows or cares which source it came from.
+
+### What happens on page load
+
+```
+auth settles (never act before this — see below)
+        │
+        ├─ guest ──────► loadHistory(null) ──────────► apply()
+        │
+        └─ signed in ──► loadHistory(userId) ────────► apply()      ← instant, from localStorage
+                                    │
+                                    └─ then GET /api/chat/history ─► apply()   ← replaces it if the server has more
+```
+
+The local copy is rendered **first, even for signed-in visitors**, and the server
+copy replaces it when it arrives. That ordering is deliberate: the panel fills
+instantly instead of waiting on a network call, and a slow or failed lookup
+leaves what is already on screen rather than blanking it. For a signed-in
+visitor on a new device there is no local copy, so the server response simply
+fills an empty panel.
+
+**Gate everything on `authLoading`.** Auth reports logged-out on the first render
+and resolves a moment later. Acting before it settles reads a signed-in visitor
+as a guest, and the sign-out branch then wipes their thread. Track the previous
+identity in a ref where `undefined` means "not settled yet" and `null` means
+"guest" — they are different states and conflating them is the single easiest way
+to lose someone's conversation.
+
+### Why product cards survive a refresh
+
+This is the part that looks impossible at first, because the history endpoint
+returns only text. It works because **the handles are inside that text**.
+
+The backend stores the reply exactly as the assistant wrote it, product URLs and
+all. Stored history is therefore raw text in precisely the form a live reply
+arrives in, so the same parser handles both:
+
+```
+raw reply (from /api/chat, or from /api/chat/history)
+        │
+   normalizeReply(raw)
+        ├─ handles = extractHandles(raw)      ← /product/{handle} pulled out of the prose
+        └─ text    = stripProductUrls(raw)    ← the dead URLs removed from the sentence
+        │
+   message = { id, role, text, handles }
+        │
+   resolveHandles(handles) ──► GET /api/chat/products?handles=a,b,c
+        │
+   productsByHandle[handle] = { title, price, image, url, cartItem }
+        │
+   cards render under that message, from its own handles
+```
+
+Nothing about the cards is persisted. Only handles are stored — never resolved
+products — so a conversation reopened next week shows **today's** price and
+stock rather than what was true when the answer was given. An item that has
+since been delisted simply resolves to nothing and no card is drawn.
+
+Four consequences worth designing for:
+
+- **One normalisation point.** Both sources go through `normalizeReply()`. Skip
+  it on the history path and you get the model's `/product/{handle}` links back
+  on screen as clickable text, and every one of them 404s.
+- **Prefer stored handles, fall back to parsing.** The local copy already has
+  `handles` saved alongside; server history does not. `apply()` uses the stored
+  ones when present and reads them out of the text otherwise, which covers both
+  without the caller declaring which it holds.
+- **Key resolved products by handle, not by message.** A map means a product
+  mentioned in two replies is fetched once, and — more importantly — a slow
+  lookup cannot overwrite the wrong reply's cards, because nothing is being
+  overwritten. That removes a race rather than guarding against it.
+- **Chunk the lookups.** `/api/chat/products` accepts 8 handles per request. A
+  restored conversation easily exceeds that, so batch client-side rather than
+  raising the cap — the cap is what bounds a crafted request.
+
+### Cards belong to their message, not to the panel
+
+Every assistant message renders its own cards beneath it, rather than one shelf
+at the foot of the panel showing the latest answer's products. With history in
+play this is the only arrangement that works: scrolling back through a restored
+conversation has to show what was recommended *at each point*, and a single shelf
+can only ever show one answer's worth.
+
+### Moving between identities
+
+| Transition | What happens |
+|---|---|
+| First settle | Prune expired entries; if guest, also clear any account histories left in this browser; restore |
+| Guest → signed in, mid-conversation | The thread on screen **stays** and is saved under the account. It was asked seconds ago; the stored thread may be a week old, and replacing a live conversation at the moment someone signs in is the more surprising of the two |
+| Guest → signed in, nothing to carry | Restore the account's local copy, then let the server copy replace it |
+| Signs out, or switches account | Clear the previous identity's local copy, reset the panel, load the new identity's |
+
+A signed-out browser must retain nothing. On a shared computer, "continue where
+you left off" is not worth one person reading another's conversation.
+
+### Guards a late response needs
+
+Two, and both are the same class of bug:
+
+- **An identity ticket**, bumped on every identity change. A history response for
+  the person who just signed out must not land in the session of the one who
+  signed in.
+- **A transcript-length check**, captured when the request starts. Anything typed
+  while it was in flight means the answer is stale, and applying it would wipe
+  what the visitor just said.

@@ -105,6 +105,11 @@ const stripProductUrls = (text) =>
     .replace(/[ \t]+/g, " ")
     .replace(/[ \t]*\n[ \t]*/g, "\n")
     .replace(/\(\s*\)|\[\s*\]/g, "")
+    // The assistant labels its links — "- URL: https://…", "Link: https://…" —
+    // so removing the URL strands the label pointing at nothing. Only dropped
+    // when the label is all that is left on the line; a sentence ending in the
+    // word "link" keeps it.
+    .replace(/^[ \t]*[-*•]?[ \t]*(?:url|link|product link|view)[ \t]*:?[ \t]*\n?/gim, "")
     .replace(/[ \t]*([:\-–—])[ \t]*$/gm, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
