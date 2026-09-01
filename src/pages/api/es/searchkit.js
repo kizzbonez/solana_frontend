@@ -8,7 +8,7 @@ import {
   main_products,
   shouldApplyMainProductSort,
 } from "../../../app/lib/helpers";
-import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 
 import COLLECTIONS_BY_CATEGORY from "../../../app/data/collections_by_category";
 import {

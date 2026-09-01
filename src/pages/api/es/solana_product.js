@@ -1,7 +1,7 @@
 import {
   ES_INDEX,
 } from "../../../app/lib/helpers";
-import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 import { accentuateSpecLabels } from "../../../app/lib/filter-helper";
 
 //  this hook is used for searching products

@@ -1,7 +1,7 @@
 import {
   ES_INDEX,
 } from "../../../../app/lib/helpers";
-import { getCatalogExclusions } from "../../../app/lib/catalog-exclusions";
+import { getCatalogExclusions } from "@/app/lib/catalog-exclusions";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
