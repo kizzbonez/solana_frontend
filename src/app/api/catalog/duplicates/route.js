@@ -12,7 +12,14 @@ import { withRouteRateLimit } from "@/app/lib/rate-limit";
  *   ?min=3                only groups of at least three (default 2)
  *   ?limit=50             groups returned per field (default 25, max 200)
  *   ?brand=Blaze%20Grills restrict to one brand
+ *   ?published=true       only products the storefront actually shows
  *   ?samples=0            counts only, no example documents
+ *
+ * `published=true` is usually what you want. The storefront never renders an
+ * unpublished product, so a SKU on one live record and three drafts is not a
+ * duplicate anyone can encounter — and counting it as one buries the handful
+ * that are genuinely on sale twice. Filtering happens in the query rather than
+ * afterwards, so those groups disappear entirely instead of shrinking to one.
  *
  * Answers the question "is anything duplicated in the catalogue, and which
  * records are they" in one request, so a bad import can be spotted without
@@ -132,9 +139,20 @@ async function handler(request) {
   const brand = (sp.get("brand") || "").trim();
   const withSamples = sp.get("samples") !== "0";
 
-  const query = brand
-    ? { bool: { filter: [{ term: { "brand.keyword": brand } }] } }
-    : { match_all: {} };
+  // Tri-state: true, false, or unset for everything. `false` is genuinely
+  // useful too — it finds duplicates among drafts before they are published.
+  const publishedParam = (sp.get("published") || "").trim().toLowerCase();
+  const publishedFilter = ["true", "1", "yes"].includes(publishedParam)
+    ? true
+    : ["false", "0", "no"].includes(publishedParam)
+      ? false
+      : null;
+
+  const filters = [
+    ...(brand ? [{ term: { "brand.keyword": brand } }] : []),
+    ...(publishedFilter === null ? [] : [{ term: { published: publishedFilter } }]),
+  ];
+  const query = filters.length ? { bool: { filter: filters } } : { match_all: {} };
 
   try {
     const results = {};
@@ -224,6 +242,8 @@ async function handler(request) {
       index: ES_INDEX,
       totalDocuments,
       scope: brand || "all brands",
+      published:
+        publishedFilter === null ? "all" : publishedFilter ? "live only" : "unpublished only",
       minGroupSize: min,
       summary: {
         fieldsChecked: fields,
